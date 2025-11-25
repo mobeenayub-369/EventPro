@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'dashboard/css/dashboard.css' %}">
+{% endblock %}
+
+{% block title %}Organizer Dashboard - EventPro{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>Organizer Dashboard</h1>
+        <p>Manage your events and track performance</p>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-calendar-alt"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ total_events }}</h3>
+                <p>Total Events</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-play-circle"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ active_events }}</h3>
+                <p>Active Events</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-ticket-alt"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ total_bookings }}</h3>
+                <p>Total Bookings</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-money-bill-wave"></i>
+            </div>
+            <div class="stat-info">
+                <h3>Rs. {{ total_revenue }}</h3>
+                <p>Total Revenue</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-content">
+        <div class="content-grid">
+            <!-- Recent Events -->
+            <div class="content-card">
+                <div class="card-header">
+                    <h3>Recent Events</h3>
+                    <a href="{% url 'organizer_events' %}" class="view-all">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_events %}
+                    <div class="events-list">
+                        {% for event in recent_events %}
+                        <div class="event-item">
+                            <div class="event-image">
+                                {% if event.image %}
+                                    <img src="{{ event.image.url }}" alt="{{ event.title }}">
+                                {% else %}
+                                    <div class="event-image-placeholder">
+                                        <i class="fas fa-calendar-alt"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="event-details">
+                                <h4>{{ event.title }}</h4>
+                                <p class="event-date">{{ event.date|date:"M j, Y" }}</p>
+                                <span class="status-badge status-{{ event.is_active|yesno:'active,inactive' }}">
+                                    {{ event.is_active|yesno:"Active,Inactive" }}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <p>No events created yet</p>
+                        <a href="{% url 'create_event' %}" class="btn btn-primary btn-sm">Create Event</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Recent Bookings -->
+            <div class="content-card">
+                <div class="card-header">
+                    <h3>Recent Bookings</h3>
+                    <a href="{% url 'organizer_bookings' %}" class="view-all">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_bookings %}
+                    <div class="bookings-list">
+                        {% for booking in recent_bookings %}
+                        <div class="booking-item">
+                            <div class="booking-info">
+                                <h4>{{ booking.event.title }}</h4>
+                                <p class="booking-user">{{ booking.user.username }}</p>
+                                <p class="booking-date">{{ booking.created_at|date:"M j, Y" }}</p>
+                            </div>
+                            <div class="booking-meta">
+                                <span class="amount">Rs. {{ booking.total_amount }}</span>
+                                <span class="status-badge status-{{ booking.booking_status }}">
+                                    {{ booking.get_booking_status_display }}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <p>No bookings yet</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'wishlist/css/wishlist.css' %}">
+{% endblock %}
+
+{% block title %}Clear Wishlist - EventPro{% endblock %}
+
+{% block content %}
+<div class="clear-wishlist-container">
+    <div class="clear-confirmation">
+        <i class="fas fa-exclamation-triangle"></i>
+        <h2>Clear Your Wishlist?</h2>
+        <p>
+            Are you sure you want to remove all <strong>{{ wishlist.items_count }}</strong> events from your wishlist? 
+            This action cannot be undone and you'll lose all your saved events.
+        </p>
+        
+        <form method="POST">
+            {% csrf_token %}
+            <div class="confirmation-actions">
+                <button type="submit" class="btn btn-danger btn-large">
+                    <i class="fas fa-trash"></i>
+                    Yes, Clear Wishlist
+                </button>
+                <a href="{% url 'wishlist_detail' %}" class="btn btn-outline">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

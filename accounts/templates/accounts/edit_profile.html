@@ -1,0 +1,266 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'accounts/css/accounts.css' %}">
+{% endblock %}
+
+{% block title %}Edit Profile - EventPro{% endblock %}
+
+{% block content %}
+<div class="edit-profile-container">
+    <div class="profile-form-card">
+        <h2>Update Your EventPro Profile</h2>
+        
+        <!-- Display messages -->
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="POST" enctype="multipart/form-data" class="profile-form">
+            {% csrf_token %}
+
+            <!-- Profile Picture Section -->
+            <div class="form-section">
+                <h4>Profile Picture</h4>
+                <div class="form-group">
+                    <label><strong>Current Profile Picture</strong></label>
+                    <div class="current-image-preview">
+                        {% if user.profile_picture %}
+                            <img src="{{ user.profile_picture.url }}" alt="Current Profile Picture" width="100" height="100" style="border-radius: 50%;">
+                        {% else %}
+                            <div class="avatar-placeholder" style="width: 100px; height: 100px; line-height: 100px;">
+                                {{ user.username|first|upper }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Upload New Profile Picture</strong></label>
+                    {{ user_form.profile_picture }}
+                    {% if user_form.profile_picture.errors %}
+                    <div class="error-text">{{ user_form.profile_picture.errors }}</div>
+                    {% endif %}
+                    {% if user_form.profile_picture.help_text %}
+                    <small class="helptext">{{ user_form.profile_picture.help_text }}</small>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Personal Information Section -->
+            <div class="form-section">
+                <h4>Personal Information</h4>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label><strong>Username</strong></label>
+                        {{ user_form.username }}
+                        {% if user_form.username.errors %}
+                        <div class="error-text">{{ user_form.username.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label><strong>Email</strong></label>
+                        {{ user_form.email }}
+                        {% if user_form.email.errors %}
+                        <div class="error-text">{{ user_form.email.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label><strong>First Name</strong></label>
+                        {{ user_form.first_name }}
+                        {% if user_form.first_name.errors %}
+                        <div class="error-text">{{ user_form.first_name.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label><strong>Last Name</strong></label>
+                        {{ user_form.last_name }}
+                        {% if user_form.last_name.errors %}
+                        <div class="error-text">{{ user_form.last_name.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Information Section -->
+            <div class="form-section">
+                <h4>Contact Information</h4>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label><strong>Phone Number</strong></label>
+                        {{ user_form.phone_number }}
+                        {% if user_form.phone_number.errors %}
+                        <div class="error-text">{{ user_form.phone_number.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label><strong>Date of Birth</strong></label>
+                        {{ user_form.date_of_birth }}
+                        {% if user_form.date_of_birth.errors %}
+                        <div class="error-text">{{ user_form.date_of_birth.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Address</strong></label>
+                    {{ user_form.address }}
+                    {% if user_form.address.errors %}
+                    <div class="error-text">{{ user_form.address.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label><strong>City</strong></label>
+                        {{ user_form.city }}
+                        {% if user_form.city.errors %}
+                        <div class="error-text">{{ user_form.city.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label><strong>Country</strong></label>
+                        {{ user_form.country }}
+                        {% if user_form.country.errors %}
+                        <div class="error-text">{{ user_form.country.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bio Section -->
+            <div class="form-section">
+                <h4>About Me</h4>
+                <div class="form-group">
+                    <label><strong>Bio</strong></label>
+                    {{ user_form.bio }}
+                    {% if user_form.bio.errors %}
+                    <div class="error-text">{{ user_form.bio.errors }}</div>
+                    {% endif %}
+                    <small class="helptext">Tell us about yourself (max 150 characters)</small>
+                </div>
+            </div>
+
+            <!-- Social Links Section -->
+            <div class="form-section">
+                <h4>Social Links</h4>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label><strong>Website</strong></label>
+                        {{ profile_form.website }}
+                        {% if profile_form.website.errors %}
+                        <div class="error-text">{{ profile_form.website.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label><strong>Facebook</strong></label>
+                        {{ profile_form.facebook }}
+                        {% if profile_form.facebook.errors %}
+                        <div class="error-text">{{ profile_form.facebook.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label><strong>Instagram</strong></label>
+                        {{ profile_form.instagram }}
+                        {% if profile_form.instagram.errors %}
+                        <div class="error-text">{{ profile_form.instagram.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <a href="{% url 'profile' %}" class="btn btn-outline">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+/* Additional Styles for Edit Profile Form */
+.profile-form input,
+.profile-form textarea,
+.profile-form select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    background: var(--white);
+    margin-top: 5px;
+}
+
+.profile-form input:focus,
+.profile-form textarea:focus,
+.profile-form select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(29, 191, 115, 0.1);
+}
+
+.profile-form textarea {
+    resize: vertical;
+    min-height: 100px;
+    font-family: 'Inter', sans-serif;
+}
+
+.current-image-preview {
+    text-align: center;
+    margin: 15px 0;
+}
+
+.current-image-preview img {
+    border-radius: 50%;
+    border: 3px solid var(--primary);
+    box-shadow: var(--shadow);
+}
+
+.helptext {
+    display: block;
+    font-size: 12px;
+    color: var(--secondary);
+    margin-top: 5px;
+    font-style: italic;
+}
+
+.error-text {
+    color: #dc3545;
+    font-size: 14px;
+    margin-top: 5px;
+    display: block;
+}
+
+.alert {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+.alert-danger {
+    background: #fee;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+}
+
+.alert-success {
+    background: #efffee;
+    border: 1px solid #c6f5d5;
+    color: #1c7237;
+}
+</style>
+{% endblock %}

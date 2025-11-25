@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'pages/css/pages.css' %}">
+{% endblock %}
+
+{% block title %}Create Page - EventPro{% endblock %}
+
+{% block content %}
+<div class="create-page-container">
+    <div class="create-page-card">
+        <div class="create-page-header">
+            <h1>Create New Page</h1>
+            <p>Add static content to your website</p>
+        </div>
+
+        <form method="POST" class="page-form">
+            {% csrf_token %}
+            
+            <!-- Basic Information Section -->
+            <div class="form-section">
+                <h3>Basic Information</h3>
+                
+                <div class="form-group">
+                    <label>Page Title *</label>
+                    {{ form.title }}
+                    {% if form.title.errors %}
+                    <div class="error-text">{{ form.title.errors }}</div>
+                    {% endif %}
+                    <small class="help-text">The main title of your page</small>
+                </div>
+
+                <div class="form-group">
+                    <label>URL Slug</label>
+                    {{ form.slug }}
+                    {% if form.slug.errors %}
+                    <div class="error-text">{{ form.slug.errors }}</div>
+                    {% endif %}
+                    <small class="help-text">URL-friendly version (auto-generated if empty)</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Page Content *</label>
+                    {{ form.content }}
+                    {% if form.content.errors %}
+                    <div class="error-text">{{ form.content.errors }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- SEO Settings Section -->
+            <div class="form-section">
+                <h3>SEO Settings</h3>
+
+                <div class="form-group">
+                    <label>Meta Title</label>
+                    {{ form.meta_title }}
+                    {% if form.meta_title.errors %}
+                    <div class="error-text">{{ form.meta_title.errors }}</div>
+                    {% endif %}
+                    <small class="help-text">Optional: Custom title for search engines</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Meta Description</label>
+                    {{ form.meta_description }}
+                    {% if form.meta_description.errors %}
+                    <div class="error-text">{{ form.meta_description.errors }}</div>
+                    {% endif %}
+                    <small class="help-text">Brief description for search results</small>
+                </div>
+            </div>
+
+            <!-- Page Settings Section -->
+            <div class="form-section">
+                <h3>Page Settings</h3>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Status</label>
+                        {{ form.status }}
+                        {% if form.status.errors %}
+                        <div class="error-text">{{ form.status.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label>Display Order</label>
+                        {{ form.order }}
+                        {% if form.order.errors %}
+                        <div class="error-text">{{ form.order.errors }}</div>
+                        {% endif %}
+                        <small class="help-text">Lower numbers appear first</small>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        {{ form.show_in_header }}
+                        <span class="checkmark"></span>
+                        Show in header navigation
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        {{ form.show_in_footer }}
+                        <span class="checkmark"></span>
+                        Show in footer navigation
+                    </label>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-large">
+                    <i class="fas fa-save"></i>
+                    Create Page
+                </button>
+                <a href="{% url 'page_list' %}" class="btn btn-outline">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

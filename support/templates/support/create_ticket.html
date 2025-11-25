@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'support/css/support.css' %}">
+{% endblock %}
+
+{% block title %}Create Support Ticket - EventPro{% endblock %}
+
+{% block content %}
+<div class="create-ticket-container">
+    <div class="create-ticket-card">
+        <div class="support-header">
+            <h1>Create Support Ticket</h1>
+            <p>We're here to help! Describe your issue and we'll get back to you soon.</p>
+        </div>
+
+        <form method="POST" class="support-form">
+            {% csrf_token %}
+            
+            <div class="form-section">
+                <h3>Ticket Information</h3>
+                
+                <div class="form-group">
+                    <label>Subject *</label>
+                    {{ form.subject }}
+                    {% if form.subject.errors %}
+                    <div class="error-text">{{ form.subject.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label>Description *</label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                    <div class="error-text">{{ form.description.errors }}</div>
+                    {% endif %}
+                    <small class="form-text">Please provide detailed information about your issue.</small>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Ticket Details</h3>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Ticket Type *</label>
+                        {{ form.ticket_type }}
+                        {% if form.ticket_type.errors %}
+                        <div class="error-text">{{ form.ticket_type.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label>Priority *</label>
+                        {{ form.priority }}
+                        {% if form.priority.errors %}
+                        <div class="error-text">{{ form.priority.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-large">
+                    <i class="fas fa-paper-plane"></i>
+                    Submit Ticket
+                </button>
+                <a href="{% url 'support_dashboard' %}" class="btn btn-outline">Cancel</a>
+            </div>
+        </form>
+
+        <!-- Help Tips -->
+        <div class="help-tips">
+            <h4>Before submitting, you might want to:</h4>
+            <ul>
+                <li>Check our <a href="{% url 'faq_list' %}">FAQs</a> for quick answers</li>
+                <li>Include relevant event IDs or order numbers</li>
+                <li>Describe the steps to reproduce the issue</li>
+                <li>Add screenshots if applicable (you can attach files after creating the ticket)</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

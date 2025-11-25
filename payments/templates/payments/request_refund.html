@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'payments/css/payments.css' %}">
+{% endblock %}
+
+{% block title %}Request Refund - EventPro{% endblock %}
+
+{% block content %}
+<div class="request-refund-container">
+    <div class="request-refund-card">
+        <div class="request-refund-header">
+            <h1>Request Refund</h1>
+            <p>Submit a refund request for your payment</p>
+        </div>
+
+        <div class="refund-summary">
+            <h3>Payment Summary</h3>
+            <div class="summary-details">
+                <div class="summary-item">
+                    <span>Payment ID:</span>
+                    <strong>#{{ payment.id }}</strong>
+                </div>
+                <div class="summary-item">
+                    <span>Amount:</span>
+                    <strong class="amount">{{ payment.amount }} {{ payment.currency }}</strong>
+                </div>
+                <div class="summary-item">
+                    <span>Event:</span>
+                    <span>{{ payment.booking.event.title }}</span>
+                </div>
+                <div class="summary-item">
+                    <span>Event Date:</span>
+                    <span>{{ payment.booking.event.date|date:"F j, Y" }}</span>
+                </div>
+            </div>
+        </div>
+
+        <form method="POST" class="refund-form">
+            {% csrf_token %}
+            
+            <div class="form-section">
+                <h3>Refund Reason</h3>
+                
+                <div class="form-group">
+                    <label>Please explain why you are requesting a refund *</label>
+                    {{ form.reason }}
+                    {% if form.reason.errors %}
+                    <div class="error-text">{{ form.reason.errors }}</div>
+                    {% endif %}
+                    <small class="help-text">
+                        Provide detailed explanation for your refund request. This helps us process your request faster.
+                    </small>
+                </div>
+            </div>
+
+            <div class="refund-policy">
+                <h4>Refund Policy</h4>
+                <div class="policy-points">
+                    <div class="policy-item">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Full refunds available up to 48 hours before the event</span>
+                    </div>
+                    <div class="policy-item">
+                        <i class="fas fa-check-circle"></i>
+                        <span>50% refund available up to 24 hours before the event</span>
+                    </div>
+                    <div class="policy-item">
+                        <i class="fas fa-times-circle"></i>
+                        <span>No refunds available within 24 hours of the event</span>
+                    </div>
+                    <div class="policy-item">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Refunds are processed within 5-7 business days</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-warning btn-large">
+                    <i class="fas fa-paper-plane"></i>
+                    Submit Refund Request
+                </button>
+                <a href="{% url 'payment_detail' payment.id %}" class="btn btn-outline">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

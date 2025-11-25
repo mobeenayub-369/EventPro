@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'dashboard/css/dashboard.css' %}">
+{% endblock %}
+
+{% block title %}My Events - EventPro{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>My Events</h1>
+        <p>Manage your events and track their performance</p>
+        <a href="{% url 'create_event' %}" class="btn btn-primary">Create New Event</a>
+    </div>
+
+    {% if events %}
+    <div class="events-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>Event</th>
+                    <th>Date</th>
+                    <th>Location</th>
+                    <th>Price</th>
+                    <th>Status</th>
+                    <th>Bookings</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in events %}
+                <tr>
+                    <td>
+                        <div class="event-info">
+                            {% if event.image %}
+                            <img src="{{ event.image.url }}" alt="{{ event.title }}" class="event-thumbnail">
+                            {% endif %}
+                            <div>
+                                <strong>{{ event.title }}</strong>
+                                <p class="event-category">{{ event.category.name }}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td>{{ event.date|date:"M j, Y" }}</td>
+                    <td>{{ event.location }}</td>
+                    <td>Rs. {{ event.price }}</td>
+                    <td>
+                        <span class="status-badge status-{{ event.is_active|yesno:'active,inactive' }}">
+                            {{ event.is_active|yesno:"Active,Inactive" }}
+                        </span>
+                    </td>
+                    <td>{{ event.bookings.count }}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <a href="{% url 'event_detail' event.slug %}" class="btn btn-outline btn-sm">View</a>
+                            <a href="{% url 'edit_event' event.slug %}" class="btn btn-outline btn-sm">Edit</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-calendar-plus"></i>
+        <h3>No Events Created</h3>
+        <p>You haven't created any events yet. Start by creating your first event!</p>
+        <a href="{% url 'create_event' %}" class="btn btn-primary">Create Your First Event</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

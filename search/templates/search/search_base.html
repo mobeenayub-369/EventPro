@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'search/css/search.css' %}">
+{% endblock %}
+
+{% block content %}
+<!-- Search Bar Component (Header mein use karne ke liye) -->
+<div class="global-search-container">
+    <form method="GET" action="{% url 'advanced_search' %}" class="global-search-form" id="global-search-form">
+        <div class="search-input-group">
+            <input type="text" name="q" class="global-search-input" 
+                   placeholder="Search events, categories, organizers..." 
+                   value="{{ query|default:'' }}" 
+                   id="global-search-input">
+            <button type="submit" class="search-submit-btn">
+                <i class="fas fa-search"></i>
+            </button>
+        </div>
+    </form>
+    
+    <!-- Quick Search Results Dropdown -->
+    <div class="quick-results-dropdown" id="quick-results-dropdown"></div>
+</div>
+
+<!-- Main Content Block -->
+{% block search_content %}
+{% endblock %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Global search functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('global-search-input');
+    const resultsDropdown = document.getElementById('quick-results-dropdown');
+    let searchTimeout;
+    
+    if (searchInput && resultsDropdown) {
+        // Show suggestions on focus
+        searchInput.addEventListener('focus', function() {
+            if (this.value.length >= 2) {
+                fetchSuggestions(this.value);
+            }
+        });
+        
+        // Fetch suggestions on input
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const query = this.value.trim();
+            
+            if (query.length >= 2) {
+                searchTimeout = setTimeout(() => {
+                    fetchSuggestions(query);
+                }, 300);
+            } else {
+                resultsDropdown.style.display = 'none';
+            }
+        });
+        
+        // Hide dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!searchInput.contains(e.target) && !resultsDropdown.contains(e.target)) {
+                resultsDropdown.style.display = 'none';
+            }
+        });
+    }
+    
+    function fetchSuggestions(query) {
+        fetch(`/search/suggestions/?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.suggestions && data.suggestions.length > 0) {
+                    displaySuggestions(data.suggestions, query);
+                } else {
+                    resultsDropdown.style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching suggestions:', error);
+            });
+    }
+    
+    function displaySuggestions(suggestions, query) {
+        // You would implement this to show suggestions in the dropdown
+        console.log('Suggestions:', suggestions);
+        // Implementation would go here to populate the dropdown
+    }
+});
+</script>
+{% endblock %}

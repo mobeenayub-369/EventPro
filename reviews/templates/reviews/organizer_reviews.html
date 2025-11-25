@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'reviews/css/reviews.css' %}">
+{% endblock %}
+
+{% block title %}Event Reviews - EventPro{% endblock %}
+
+{% block content %}
+<div class="organizer-reviews-container">
+    <div class="organizer-reviews-header">
+        <h1>Event Reviews</h1>
+        <p>Manage reviews for your events</p>
+    </div>
+
+    {% if reviews %}
+    <!-- Organizer Rating Summary -->
+    <div class="organizer-stats">
+        <div class="stat-card large">
+            <div class="stat-icon">
+                <i class="fas fa-star"></i>
+            </div>
+            <div class="stat-info">
+                <h2>{{ org_rating_stats.average_rating|default:0|floatformat:1 }}</h2>
+                <p>Average Rating</p>
+                <div class="star-rating">
+                    {% with avg_rating=org_rating_stats.average_rating|default:0 %}
+                        {% for i in "12345" %}
+                            {% if forloop.counter <= avg_rating %}
+                                <i class="fas fa-star"></i>
+                            {% else %}
+                                <i class="far fa-star"></i>
+                            {% endif %}
+                        {% endfor %}
+                    {% endwith %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-comment"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ org_rating_stats.total_reviews|default:0 }}</h3>
+                <p>Total Reviews</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-reply"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ reviews|length|default:0 }}</h3>
+                <p>With Responses</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ reviews|length|default:0 }}</h3>
+                <p>Pending Response</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reviews List -->
+    <div class="organizer-reviews-list">
+        {% for review in reviews %}
+        <div class="organizer-review-card {% if not review.response %}needs-response{% endif %}">
+            <div class="review-header">
+                <div class="reviewer-info">
+                    <div class="reviewer-avatar">
+                        {% if review.user.profile_picture %}
+                            <img src="{{ review.user.profile_picture.url }}" alt="{{ review.user.username }}">
+                        {% else %}
+                            <div class="avatar-placeholder">
+                                {{ review.user.username|first|upper }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="reviewer-details">
+                        <h4>{{ review.user.get_full_name|default:review.user.username }}</h4>
+                        <div class="review-meta">
+                            <span class="review-date">{{ review.created_at|date:"F j, Y" }}</span>
+                            {% if review.is_verified %}
+                            <span class="verified-badge">Verified</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="review-rating">
+                    <div class="star-rating">
+                        {% for i in "12345" %}
+                            {% if forloop.counter <= review.rating %}
+                                <i class="fas fa-star"></i>
+                            {% else %}
+                                <i class="far fa-star"></i>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <span class="rating-text">{{ review.get_rating_display }}</span>
+                </div>
+            </div>
+
+            <div class="review-content">
+                <h3 class="review-title">{{ review.title }}</h3>
+                <p class="review-comment">{{ review.comment }}</p>
+            </div>
+
+            <div class="event-info">
+                <strong>Event:</strong> 
+                <a href="{% url 'event_detail' review.event.slug %}">{{ review.event.title }}</a>
+                • {{ review.event.date|date:"M j, Y" }}
+            </div>
+
+            <div class="organizer-actions">
+                {% if review.response %}
+                <div class="existing-response">
+                    <div class="response-preview">
+                        <strong>Your Response:</strong>
+                        <p>{{ review.response.response_text|truncatewords:20 }}</p>
+                        <a href="{% url 'edit_response' review.id %}" class="btn btn-outline btn-sm">
+                            <i class="fas fa-edit"></i>
+                            Edit Response
+                        </a>
+                    </div>
+                </div>
+                {% else %}
+                <div class="response-actions">
+                    <a href="{% url 'create_response' review.id %}" class="btn btn-primary">
+                        <i class="fas fa-reply"></i>
+                        Respond to Review
+                    </a>
+                    <span class="response-reminder">Respond within 7 days</span>
+                </div>
+                {% endif %}
+                
+                <div class="additional-actions">
+                    <a href="{% url 'review_detail' review.id %}" class="btn btn-outline btn-sm">
+                        <i class="fas fa-eye"></i>
+                        View Full
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if reviews.has_other_pages %}
+    <div class="pagination">
+        {% if reviews.has_previous %}
+        <a href="?page={{ reviews.previous_page_number }}" class="page-link">
+            <i class="fas fa-chevron-left"></i>
+            Previous
+        </a>
+        {% endif %}
+
+        <span class="current-page">
+            Page {{ reviews.number }} of {{ reviews.paginator.num_pages }}
+        </span>
+
+        {% if reviews.has_next %}
+        <a href="?page={{ reviews.next_page_number }}" class="page-link">
+            Next
+            <i class="fas fa-chevron-right"></i>
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <!-- No Reviews State -->
+    <div class="empty-state">
+        <div class="empty-state-icon">
+            <i class="far fa-comment-alt"></i>
+        </div>
+        <h3>No Reviews Yet</h3>
+        <p>Your events haven't received any reviews yet. Reviews will appear here once attendees share their experiences.</p>
+        <a href="{% url 'event_list' %}" class="btn btn-primary">
+            View Your Events
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'support/css/support.css' %}">
+{% endblock %}
+
+{% block title %}My Support Tickets - EventPro{% endblock %}
+
+{% block content %}
+<div class="my-tickets-container">
+    <div class="support-header">
+        <h1>My Support Tickets</h1>
+        <p>View and manage your support requests</p>
+        <a href="{% url 'create_ticket' %}" class="btn btn-primary">Create New Ticket</a>
+    </div>
+
+    <!-- Filters -->
+    <div class="tickets-filters">
+        <form method="GET" class="filter-form">
+            <div class="filter-group">
+                <label for="status">Status:</label>
+                <select name="status" id="status" onchange="this.form.submit()">
+                    <option value="">All Statuses</option>
+                    <option value="open" {% if status_filter =='open' %}selected{% endif %}>Open</option>
+                    <option value="in_progress" {% if status_filter =='in_progress' %}selected{% endif %}>In Progress</option>
+                    <option value="resolved" {% if status_filter =='resolved' %}selected{% endif %}>Resolved</option>
+                    <option value="closed" {% if status_filter =='closed' %}selected{% endif %}>Closed</option>
+                </select>
+            </div>
+        </form>
+    </div>
+
+    {% if page_obj %}
+    <div class="tickets-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>Ticket ID</th>
+                    <th>Subject</th>
+                    <th>Type</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Last Update</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ticket in page_obj %}
+                <tr>
+                    <td>
+                        <strong>#{{ ticket.ticket_id }}</strong>
+                    </td>
+                    <td>
+                        <a href="{% url 'support_ticket_detail' ticket.ticket_id %}" class="ticket-subject">
+                            {{ ticket.subject }}
+                        </a>
+                    </td>
+                    <td>{{ ticket.get_ticket_type_display }}</td>
+                    <td>
+                        <span class="priority-badge priority-{{ ticket.priority }}">
+                            {{ ticket.get_priority_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="status-badge status-{{ ticket.status }}">
+                            {{ ticket.get_status_display }}
+                        </span>
+                    </td>
+                    <td>{{ ticket.created_at|date:"M j, Y" }}</td>
+                    <td>{{ ticket.updated_at|date:"M j, Y" }}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <a href="{% url 'support_ticket_detail' ticket.ticket_id %}" class="btn btn-outline btn-sm" title="View">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+            <a href="?page=1{% if status_filter %}&amp;status={{ status_filter }}{% endif %}" class="page-link">First</a>
+            <a href="?page={{ page_obj.previous_page_number }}{% if status_filter %}&amp;status={{ status_filter }}{% endif %}" class="page-link">Previous</a>
+        {% endif %}
+
+        <span class="current-page">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+        </span>
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if status_filter %}&amp;status={{ status_filter }}{% endif %}" class="page-link">Next</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% if status_filter %}&amp;status={{ status_filter }}{% endif %}" class="page-link">Last</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-ticket-alt"></i>
+        <h3>No Support Tickets</h3>
+        <p>You haven't created any support tickets yet.</p>
+        <a href="{% url 'create_ticket' %}" class="btn btn-primary">Create Your First Ticket</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'bookings/css/bookings.css' %}">
+{% endblock %}
+
+{% block title %}Invoice - EventPro{% endblock %}
+
+{% block content %}
+<div class="invoice-container">
+    <div class="invoice-card">
+        <div class="invoice-header">
+            <div class="invoice-title">
+                <h1>INVOICE</h1>
+                <p>EventPro Booking Receipt</p>
+            </div>
+            <div class="invoice-meta">
+                <div class="invoice-id">#{{ booking.booking_id }}</div>
+                <div class="invoice-date">{{ booking.created_at|date:"F j, Y" }}</div>
+            </div>
+        </div>
+
+        <div class="invoice-body">
+            <div class="from-to">
+                <div class="from">
+                    <h3>From:</h3>
+                    <p><strong>EventPro</strong></p>
+                    <p>123 Event Street</p>
+                    <p>Karachi, Pakistan</p>
+                    <p>contact@eventpro.com</p>
+                </div>
+                <div class="to">
+                    <h3>To:</h3>
+                    <p><strong>{{ booking.user.get_full_name|default:booking.user.username }}</strong></p>
+                    <p>{{ booking.user.email }}</p>
+                    {% if booking.user.phone_number %}
+                    <p>{{ booking.user.phone_number }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="invoice-details">
+                <h3>Booking Details</h3>
+                <table class="invoice-table">
+                    <thead>
+                        <tr>
+                            <th>Description</th>
+                            <th>Date</th>
+                            <th>Location</th>
+                            <th>Quantity</th>
+                            <th>Unit Price</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{ booking.event.title }}</td>
+                            <td>{{ booking.event.date|date:"M j, Y" }}</td>
+                            <td>{{ booking.event.location }}</td>
+                            <td>{{ booking.tickets_count }}</td>
+                            <td>Rs. {{ booking.event.price }}</td>
+                            <td>Rs. {{ booking.total_amount }}</td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="5" class="text-right"><strong>Total Amount:</strong></td>
+                            <td><strong>Rs. {{ booking.total_amount }}</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            {% if booking.payment %}
+            <div class="payment-details">
+                <h3>Payment Information</h3>
+                <div class="payment-info">
+                    <p><strong>Payment ID:</strong> {{ booking.payment.payment_id }}</p>
+                    <p><strong>Payment Method:</strong> {{ booking.payment.payment_method|title }}</p>
+                    <p><strong>Payment Date:</strong> {{ booking.payment.payment_date|date:"F j, Y g:i A" }}</p>
+                    <p><strong>Status:</strong> <span class="status-paid">Paid</span></p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="invoice-footer">
+            <div class="thank-you">
+                <p>Thank you for choosing EventPro!</p>
+                <p>For any queries, contact us at support@eventpro.com</p>
+            </div>
+            <div class="invoice-actions">
+                <button onclick="window.print()" class="btn btn-primary">
+                    <i class="fas fa-print"></i> Print Invoice
+                </button>
+                <a href="{% url 'booking_detail' booking.id %}" class="btn btn-outline">Back to Booking</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

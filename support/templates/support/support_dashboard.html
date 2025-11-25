@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'support/css/support.css' %}">
+{% endblock %}
+
+{% block title %}Support Dashboard - EventPro{% endblock %}
+
+{% block content %}
+<div class="support-dashboard-container">
+    <div class="support-header">
+        <h1>Support Center</h1>
+        <p>Get help with your events and account</p>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+        <a href="{% url 'create_ticket' %}" class="action-btn">
+            <i class="fas fa-plus-circle"></i>
+            Create New Ticket
+        </a>
+        <a href="{% url 'my_tickets' %}" class="action-btn">
+            <i class="fas fa-ticket-alt"></i>
+            View My Tickets
+        </a>
+        <a href="{% url 'faq_list' %}" class="action-btn">
+            <i class="fas fa-question-circle"></i>
+            Browse FAQs
+        </a>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-ticket-alt"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ ticket_stats.total }}</h3>
+                <p>Total Tickets</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #17a2b8;">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ ticket_stats.open }}</h3>
+                <p>Open Tickets</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #ffc107;">
+                <i class="fas fa-spinner"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ ticket_stats.in_progress }}</h3>
+                <p>In Progress</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #28a745;">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ ticket_stats.resolved }}</h3>
+                <p>Resolved</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Tickets -->
+    <div class="recent-tickets">
+        <div class="section-header">
+            <h2>Recent Support Tickets</h2>
+            <a href="{% url 'my_tickets' %}" class="btn btn-outline">View All</a>
+        </div>
+
+        {% if tickets %}
+        <div class="tickets-list">
+            {% for ticket in tickets %}
+            <div class="ticket-card">
+                <div class="ticket-header">
+                    <div class="ticket-info">
+                        <h3>
+                            <a href="{% url 'support_ticket_detail' ticket.ticket_id %}">
+                                {{ ticket.subject }}
+                            </a>
+                        </h3>
+                        <div class="ticket-meta">
+                            <span class="ticket-id">#{{ ticket.ticket_id }}</span>
+                            <span class="ticket-type">{{ ticket.get_ticket_type_display }}</span>
+                            <span class="priority-badge priority-{{ ticket.priority }}">
+                                {{ ticket.get_priority_display }}
+                            </span>
+                            <span class="status-badge status-{{ ticket.status }}">
+                                {{ ticket.get_status_display }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="ticket-date">
+                        {{ ticket.created_at|date:"M j, Y" }}
+                    </div>
+                </div>
+                <p class="ticket-description">
+                    {{ ticket.description|truncatewords:30 }}
+                </p>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-ticket-alt"></i>
+            <h3>No Support Tickets</h3>
+            <p>You haven't created any support tickets yet.</p>
+            <a href="{% url 'create_ticket' %}" class="btn btn-primary">Create Your First Ticket</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Staff Quick Access -->
+    {% if request.user.is_staff %}
+    <div class="staff-section">
+        <div class="section-header">
+            <h2>Staff Tools</h2>
+            <a href="{% url 'staff_ticket_list' %}" class="btn btn-primary">Manage All Tickets</a>
+        </div>
+        
+        <div class="quick-actions">
+            <a href="{% url 'staff_ticket_list' %}?status=open" class="action-btn">
+                <i class="fas fa-exclamation-circle"></i>
+                Open Tickets
+            </a>
+            <a href="{% url 'staff_ticket_list' %}?assigned_to_me=1" class="action-btn">
+                <i class="fas fa-user-check"></i>
+                Assigned to Me
+            </a>
+            <a href="{% url 'staff_ticket_list' %}?priority=urgent" class="action-btn">
+                <i class="fas fa-fire"></i>
+                Urgent Tickets
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

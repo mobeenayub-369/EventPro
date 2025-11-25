@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'bookings/css/bookings.css' %}">
+{% endblock %}
+
+{% block title %}Booking Details - EventPro{% endblock %}
+
+{% block content %}
+<div class="booking-detail-container">
+    <div class="booking-detail-card">
+        <div class="booking-header">
+            <h1>Booking Details</h1>
+            <div class="booking-id">#{{ booking.booking_id }}</div>
+        </div>
+
+        <div class="booking-content">
+            <div class="event-section">
+                <h3>Event Information</h3>
+                <div class="event-details">
+                    {% if booking.event.image %}
+                    <img src="{{ booking.event.image.url }}" alt="{{ booking.event.title }}" class="event-image-large">
+                    {% endif %}
+                    <div class="event-info">
+                        <h2>{{ booking.event.title }}</h2>
+                        <p class="event-description">{{ booking.event.description }}</p>
+                        <div class="event-meta">
+                            <p><i class="fas fa-calendar"></i> {{ booking.event.date|date:"F j, Y" }}</p>
+                            <p><i class="fas fa-clock"></i> {{ booking.event.time|time:"g:i A" }}</p>
+                            <p><i class="fas fa-map-marker-alt"></i> {{ booking.event.location }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="booking-section">
+                <h3>Booking Information</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>Booking Status</label>
+                        <span class="status-badge status-{{ booking.booking_status }}">
+                            {{ booking.get_booking_status_display }}
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <label>Payment Status</label>
+                        <span class="status-badge status-{{ booking.payment_status }}">
+                            {{ booking.get_payment_status_display }}
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <label>Tickets</label>
+                        <span>{{ booking.tickets_count }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Total Amount</label>
+                        <span class="amount">Rs. {{ booking.total_amount }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Booking Date</label>
+                        <span>{{ booking.created_at|date:"F j, Y g:i A" }}</span>
+                    </div>
+                </div>
+            </div>
+
+            {% if booking.special_requests %}
+            <div class="special-requests-section">
+                <h3>Special Requests</h3>
+                <p>{{ booking.special_requests }}</p>
+            </div>
+            {% endif %}
+
+            {% if booking.booking.payment %}
+            <div class="payment-section">
+                <h3>Payment Information</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>Payment ID</label>
+                        <span>{{ booking.payment.payment_id }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Payment Method</label>
+                        <span>{{ booking.payment.payment_method|title }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Payment Date</label>
+                        <span>{{ booking.payment.payment_date|date:"F j, Y g:i A" }}</span>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="booking-actions">
+            <a href="{% url 'my_bookings' %}" class="btn btn-outline">Back to Bookings</a>
+            {% if booking.booking_status == 'confirmed' %}
+            <a href="{% url 'booking_invoice' booking.id %}" class="btn btn-primary">Download Invoice</a>
+            {% endif %}
+            {% if booking.booking_status == 'pending' %}
+            <a href="{% url 'booking_payment' booking.id %}" class="btn btn-primary">Complete Payment</a>
+            <a href="{% url 'cancel_booking' booking.id %}" class="btn btn-danger">Cancel Booking</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% if results %}
+<div class="quick-search-results">
+    {% for result in results %}
+    <a href="{{ result.url }}" class="quick-result-item" data-type="{{ result.type }}">
+        <div class="result-image">
+            {% if result.image %}
+            <img src="{{ result.image }}" alt="{{ result.title }}">
+            {% else %}
+            <div class="result-image-placeholder">
+                {% if result.type == 'event' %}
+                <i class="fas fa-calendar-alt"></i>
+                {% elif result.type == 'category' %}
+                <i class="fas fa-tag"></i>
+                {% else %}
+                <i class="fas fa-user"></i>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+        <div class="result-content">
+            <div class="result-title">{{ result.title }}</div>
+            <div class="result-description">{{ result.description }}</div>
+            {% if result.date %}
+            <div class="result-meta">{{ result.date }}</div>
+            {% endif %}
+            {% if result.price %}
+            <div class="result-price">{{ result.price }}</div>
+            {% endif %}
+        </div>
+    </a>
+    {% endfor %}
+    
+    <div class="view-all-results">
+        <a href="{% url 'advanced_search' %}?q={{ query }}" class="view-all-link">
+            View all results for "{{ query }}"
+        </a>
+    </div>
+</div>
+{% else %}
+<div class="no-quick-results">
+    <i class="fas fa-search"></i>
+    <p>No results found for "{{ query }}"</p>
+</div>
+{% endif %}

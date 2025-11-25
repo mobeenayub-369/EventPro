@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'support/css/support.css' %}">
+{% endblock %}
+
+{% block title %}FAQs - EventPro{% endblock %}
+
+{% block content %}
+<div class="faq-list-container">
+    <div class="support-header">
+        <h1>Frequently Asked Questions</h1>
+        <p>Quick answers to common questions</p>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+        <a href="{% url 'support_dashboard' %}" class="action-btn">
+            <i class="fas fa-arrow-left"></i>
+            Back to Support
+        </a>
+        <a href="{% url 'create_ticket' %}" class="action-btn">
+            <i class="fas fa-question-circle"></i>
+            Still Need Help?
+        </a>
+    </div>
+
+    <!-- FAQ Categories -->
+    {% if faq_categories %}
+        {% for category, faqs in faq_categories.items %}
+        <div class="faq-category">
+            <h3>{{ category|title }} Questions</h3>
+            
+            {% for faq in faqs %}
+            <div class="faq-item">
+                <button class="faq-question" onclick="toggleFAQ(this)">
+                    {{ faq.question }}
+                    <i class="fas fa-chevron-down faq-toggle"></i>
+                </button>
+                <div class="faq-answer">
+                    {{ faq.answer|linebreaks }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-question-circle"></i>
+        <h3>No FAQs Available</h3>
+        <p>There are no frequently asked questions at the moment.</p>
+    </div>
+    {% endif %}
+
+    <!-- Contact Support -->
+    <div class="contact-support">
+        <div class="support-card">
+            <h3>Still Need Help?</h3>
+            <p>Can't find the answer you're looking for? Our support team is here to help!</p>
+            <a href="{% url 'create_ticket' %}" class="btn btn-primary">
+                <i class="fas fa-headset"></i>
+                Contact Support
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleFAQ(button) {
+    const faqItem = button.parentElement;
+    const answer = faqItem.querySelector('.faq-answer');
+    const toggle = faqItem.querySelector('.faq-toggle');
+    
+    // Toggle active class
+    answer.classList.toggle('active');
+    toggle.classList.toggle('active');
+}
+</script>
+{% endblock %}

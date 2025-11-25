@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'pages/css/pages.css' %}">
+{% endblock %}
+
+{% block title %}{{ page.meta_title|default:page.title }} - EventPro{% endblock %}
+
+{% block meta_description %}{{ page.meta_description }}{% endblock %}
+
+{% block content %}
+<div class="page-detail-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-hero">
+            <div class="page-hero-content">
+                <h1>{{ page.title }}</h1>
+                {% if page.meta_description %}
+                <p class="page-subtitle">{{ page.meta_description }}</p>
+                {% endif %}
+                
+                <!-- Page Meta Info -->
+                <div class="page-meta">
+                    <span class="meta-item">
+                        <i class="fas fa-calendar"></i>
+                        Last updated: {{ page.updated_at|date:"F j, Y" }}
+                    </span>
+                    {% if page.created_by %}
+                    <span class="meta-item">
+                        <i class="fas fa-user"></i>
+                        Created by: {{ page.created_by.get_full_name|default:page.created_by.username }}
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page Content -->
+    <div class="page-content">
+        <div class="page-body">
+            <!-- Main Content -->
+            <article class="page-article">
+                <div class="page-text">
+                    {{ page.content|linebreaks }}
+                </div>
+            </article>
+
+            <!-- Page Actions (Staff Only) -->
+            {% if user.is_staff %}
+            <div class="page-actions">
+                <hr>
+                <h4>Page Management</h4>
+                <div class="action-buttons">
+                    <a href="{% url 'edit_page' page.slug %}" class="btn btn-outline btn-sm">
+                        <i class="fas fa-edit"></i>
+                        Edit Page
+                    </a>
+                    <a href="{% url 'delete_page' page.slug %}" class="btn btn-danger btn-sm">
+                        <i class="fas fa-trash"></i>
+                        Delete Page
+                    </a>
+                    <a href="{% url 'page_list' %}" class="btn btn-outline btn-sm">
+                        <i class="fas fa-list"></i>
+                        All Pages
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar (Optional) -->
+        <div class="page-sidebar">
+            <!-- Navigation Pages -->
+            <div class="sidebar-card">
+                <h4>Quick Links</h4>
+                <div class="sidebar-links">
+                    <a href="{% url 'event_list' %}" class="sidebar-link">
+                        <i class="fas fa-calendar-alt"></i>
+                        Browse Events
+                    </a>
+                    <a href="{% url 'support' %}" class="sidebar-link">
+                        <i class="fas fa-headset"></i>
+                        Support Center
+                    </a>
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'dashboard' %}" class="sidebar-link">
+                        <i class="fas fa-tachometer-alt"></i>
+                        My Dashboard
+                    </a>
+                    {% else %}
+                    <a href="{% url 'accounts:register' %}" class="sidebar-link">
+                        <i class="fas fa-user-plus"></i>
+                        Join EventPro
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Contact Info -->
+            <div class="sidebar-card">
+                <h4>Need Help?</h4>
+                <p>Contact our support team for assistance.</p>
+                <a href="{% url 'contact' %}" class="btn btn-outline btn-sm">
+                    <i class="fas fa-envelope"></i>
+                    Contact Us
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

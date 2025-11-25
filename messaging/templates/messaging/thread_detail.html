@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'messaging/css/messaging.css' %}">
+{% endblock %}
+
+{% block title %}Conversation with {{ other_participant.username }} - EventPro{% endblock %}
+
+{% block content %}
+<div class="thread-detail-container">
+    <div class="thread-header">
+        <div class="thread-user">
+            <div class="user-avatar">
+                {% if other_participant.profile_picture %}
+                    <img src="{{ other_participant.profile_picture.url }}" alt="{{ other_participant.username }}">
+                {% else %}
+                    <div class="avatar-placeholder">
+                        {{ other_participant.username|first|upper }}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="user-info">
+                <h2>{{ other_participant.get_full_name|default:other_participant.username }}</h2>
+                <p class="user-type">{{ other_participant.get_user_type_display }}</p>
+            </div>
+        </div>
+        <div class="thread-actions">
+            <a href="{% url 'inbox' %}" class="btn btn-outline">
+                <i class="fas fa-arrow-left"></i>
+                Back to Inbox
+            </a>
+        </div>
+    </div>
+
+    <div class="messages-container">
+        <div class="messages-list" id="messagesList">
+            {% for message in message_list %}
+            <div class="message {% if message.sender == request.user %}message-sent{% else %}message-received{% endif %}">
+                <div class="message-content">
+                    <p>{{ message.content }}</p>
+                    <div class="message-meta">
+                        <span class="message-time">{{ message.created_at|time:"g:i A" }}</span>
+                        {% if message.sender == request.user %}
+                            <span class="message-status {% if message.is_read %}read{% else %}sent{% endif %}">
+                                {% if message.is_read %}Read{% else %}Sent{% endif %}
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="message-input-container">
+            <form method="POST" class="message-form" id="messageForm">
+                {% csrf_token %}
+                <div class="input-group">
+                    {{ form.content }}
+                    <button type="submit" class="btn btn-primary send-btn">
+                        <i class="fas fa-paper-plane"></i>
+                        Send
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const messagesContainer = document.getElementById('messagesList');
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+});
+</script>
+{% endblock %}

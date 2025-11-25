@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}EventPro - Hire Event Organizers & Services{% endblock %}</title>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Header -->
+    <header class="main-header">
+        <nav class="navbar">
+            <div class="nav-container">
+                <!-- Logo -->
+                <div class="nav-logo">
+                    <a href="{% url 'home' %}">
+                        <i class="fas fa-calendar-star"></i>
+                        <span>EventPro</span>
+                    </a>
+                </div>
+
+                <!-- Search Bar -->
+                <div class="nav-search">
+                    <form class="search-form">
+                        <input type="text" placeholder="Find events, services, organizers...">
+                        <button type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Navigation Links -->
+                <div class="nav-links">
+                    <a href="{% url 'events' %}">Explore</a>
+                    <a href="{% url 'become_organizer' %}">Become an Organizer</a>
+
+                    {% if user.is_authenticated %}
+                    <div class="user-dropdown">
+                        <button class="user-menu">
+                            {% if user.profile_picture %}
+                                <img src="{{ user.profile_picture.url }}" alt="{{ user.username }}" class="user-avatar">
+                            {% else %}
+                                <div class="default-avatar">
+                                    {{ user.username|first|upper }}
+                                </div>
+                            {% endif %}
+                            <span>{{ user.username }}</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="dropdown-menu">
+                            <a href="{% url 'profile' %}"><i class="fas fa-user"></i> Profile</a>
+                            <a href="{% url 'dashboard' %}"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                            <a href="{% url 'my_events' %}"><i class="fas fa-calendar"></i> My Events</a>
+                            <a href="{% url 'bookings' %}"><i class="fas fa-receipt"></i> Bookings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="auth-buttons">
+                        <a href="{% url 'login' %}" class="login-btn">Login</a>
+                        <a href="{% url 'register' %}" class="signup-btn">Join Now</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="footer-container">
+            <div class="footer-section">
+                <div class="footer-logo">
+                    <i class="fas fa-calendar-star"></i>
+                    <span>EventPro</span>
+                </div>
+                <p>Your trusted platform for event services and organizers.</p>
+            </div>
+
+            <div class="footer-section">
+                <h4>Explore</h4>
+                <a href="{% url 'events' %}">Events</a>
+                <a href="{% url 'categories' %}">Categories</a>
+                <a href="#">Featured Organizers</a>
+            </div>
+
+            <div class="footer-section">
+                <h4>Support</h4>
+                <a href="{% url 'support' %}">Help & Support</a>
+                <a href="{% url 'contact' %}">Contact Us</a>
+                <a href="{% url 'faq' %}">FAQ</a>
+            </div>
+
+            <div class="footer-section">
+                <h4>Legal</h4>
+                <a href="{% url 'terms' %}">Terms of Service</a>
+                <a href="{% url 'privacy' %}">Privacy Policy</a>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>&copy; 2024 EventPro. All rights reserved.</p>
+        </div>
+    </footer>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

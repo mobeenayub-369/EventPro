@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'bookings/css/bookings.css' %}">
+{% endblock %}
+
+{% block title %}Book Event - EventPro{% endblock %}
+
+{% block content %}
+<div class="booking-container">
+    <div class="booking-card">
+        <div class="booking-header">
+            <h2>Book Your Tickets</h2>
+            <p>Complete your booking for {{ event.title }}</p>
+        </div>
+
+        <div class="event-summary">
+            <div class="event-image">
+                {% if event.image %}
+                    <img src="{{ event.image.url }}" alt="{{ event.title }}">
+                {% else %}
+                    <div class="event-image-placeholder">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="event-details">
+                <h3>{{ event.title }}</h3>
+                <p class="event-date"><i class="fas fa-calendar"></i> {{ event.date|date:"F j, Y" }}</p>
+                <p class="event-location"><i class="fas fa-map-marker-alt"></i> {{ event.location }}</p>
+                <p class="event-price"><i class="fas fa-tag"></i> Rs. {{ event.price }} per ticket</p>
+            </div>
+        </div>
+
+        <form method="POST" class="booking-form">
+            {% csrf_token %}
+            
+            <div class="form-section">
+                <h4>Booking Details</h4>
+                
+                <div class="form-group">
+                    <label>Number of Tickets</label>
+                    {{ form.tickets_count }}
+                    {% if form.tickets_count.errors %}
+                    <div class="error-text">{{ form.tickets_count.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label>Special Requests</label>
+                    {{ form.special_requests }}
+                    <small>Any special requirements or accessibility needs</small>
+                    {% if form.special_requests.errors %}
+                    <div class="error-text">{{ form.special_requests.errors }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="booking-summary">
+                <h4>Booking Summary</h4>
+                <div class="summary-item">
+                    <span>Tickets:</span>
+                    <span id="ticket-count">1</span>
+                </div>
+                <div class="summary-item">
+                    <span>Price per ticket:</span>
+                    <span>Rs. {{ event.price }}</span>
+                </div>
+                <div class="summary-total">
+                    <span>Total Amount:</span>
+                    <span id="total-amount">Rs. {{ event.price }}</span>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-large">Proceed to Payment</button>
+                <a href="{% url 'events' %}" class="btn btn-outline">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Correct way to select the tickets input
+    const ticketsInput = document.querySelector('input[name="tickets_count"]');
+    const ticketCount = document.getElementById('ticket-count');
+    const totalAmount = document.getElementById('total-amount');
+    const pricePerTicket = {{ event.price }};
+
+    function updateSummary() {
+        const tickets = parseInt(ticketsInput.value) || 1;
+        const total = tickets * pricePerTicket;
+
+        ticketCount.textContent = tickets;
+        totalAmount.textContent = 'Rs. ' + total;
+    }
+
+    if (ticketsInput) {
+        ticketsInput.addEventListener('input', updateSummary);
+        updateSummary(); // Initial calculation
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,436 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'events/css/events.css' %}">
+{% endblock %}
+
+{% block title %}Create Event - EventPro{% endblock %}
+
+{% block content %}
+<div class="create-event-container">
+    <div class="create-event-card">
+        <div class="create-event-header">
+            <h1>Create New Event</h1>
+            <p>Share your event with amazing images</p>
+        </div>
+
+        <!-- Display Messages -->
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="POST" enctype="multipart/form-data" class="event-form" id="eventForm">
+            {% csrf_token %}
+
+            <!-- Basic Information Section -->
+            <div class="form-section">
+                <h3>Basic Information</h3>
+
+                <div class="form-group">
+                    <label><strong>Event Title</strong></label>
+                    {{ form.title }}
+                    {% if form.title.errors %}
+                    <div class="error-text">{{ form.title.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Event Description</strong></label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                    <div class="error-text">{{ form.description.errors }}</div>
+                    {% endif %}
+                    <small class="helptext">Describe your event in detail to attract more attendees.</small>
+                </div>
+            </div>
+
+            <!-- IMAGE UPLOAD: Enhanced Image Upload Section -->
+            <div class="form-section">
+                <h3>Event Images</h3>
+                <p class="helptext" style="margin-bottom: 20px;">
+                    Upload high-quality images to make your event stand out.
+                    You can add more images to the gallery after creating the event.
+                </p>
+
+                <!-- Main Image -->
+                <div class="form-group">
+                    <label><strong>Main Event Banner</strong></label>
+                    {{ form.main_image }}
+                    {% if form.main_image.errors %}
+                    <div class="error-text">{{ form.main_image.errors }}</div>
+                    {% endif %}
+                    {% if form.main_image.help_text %}
+                    <small class="helptext">{{ form.main_image.help_text }}</small>
+                    {% endif %}
+                </div>
+
+                <!-- Thumbnail Image -->
+                <div class="form-group">
+                    <label><strong>Event Thumbnail</strong></label>
+                    {{ form.thumbnail }}
+                    {% if form.thumbnail.errors %}
+                    <div class="error-text">{{ form.thumbnail.errors }}</div>
+                    {% endif %}
+                    {% if form.thumbnail.help_text %}
+                    <small class="helptext">{{ form.thumbnail.help_text }}</small>
+                    {% endif %}
+                </div>
+
+                <!-- General Image -->
+                <div class="form-group">
+                    <label><strong>Additional Event Image</strong></label>
+                    {{ form.image }}
+                    {% if form.image.errors %}
+                    <div class="error-text">{{ form.image.errors }}</div>
+                    {% endif %}
+                    {% if form.image.help_text %}
+                    <small class="helptext">{{ form.image.help_text }}</small>
+                    {% endif %}
+                </div>
+
+                <!-- Image Upload Tips -->
+                <div class="image-upload-tips">
+                    <h4>📸 Image Tips:</h4>
+                    <ul>
+                        <li>Use high-quality, clear images</li>
+                        <li>Recommended format: JPG or PNG</li>
+                        <li>Main banner: 1200x600px (landscape)</li>
+                        <li>Thumbnail: 400x300px (landscape)</li>
+                        <li>Max file size: 5MB per image</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Date & Location Section -->
+            <div class="form-section">
+                <h3>Date & Location</h3>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label><strong>Event Date</strong></label>
+                        {{ form.date }}
+                        {% if form.date.errors %}
+                        <div class="error-text">{{ form.date.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label><strong>Event Time</strong></label>
+                        {{ form.time }}
+                        {% if form.time.errors %}
+                        <div class="error-text">{{ form.time.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Event Location</strong></label>
+                    {{ form.location }}
+                    {% if form.location.errors %}
+                    <div class="error-text">{{ form.location.errors }}</div>
+                    {% endif %}
+                    <small class="helptext">Provide full address or online meeting link.</small>
+                </div>
+            </div>
+
+            <!-- Pricing & Capacity Section -->
+            <div class="form-section">
+                <h3>Pricing & Capacity</h3>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label><strong>Ticket Price (Rs.)</strong></label>
+                        {{ form.price }}
+                        {% if form.price.errors %}
+                        <div class="error-text">{{ form.price.errors }}</div>
+                        {% endif %}
+                        <small class="helptext">Enter 0 for free events.</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label><strong>Maximum Capacity</strong></label>
+                        {{ form.capacity }}
+                        {% if form.capacity.errors %}
+                        <div class="error-text">{{ form.capacity.errors }}</div>
+                        {% endif %}
+                        <small class="helptext">Maximum number of attendees.</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Categories & Tags Section -->
+            <div class="form-section">
+                <h3>Categories & Tags</h3>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label><strong>Category</strong></label>
+                        {{ form.category }}
+                        {% if form.category.errors %}
+                        <div class="error-text">{{ form.category.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label><strong>Tags</strong></label>
+                        {{ form.tags }}
+                        {% if form.tags.errors %}
+                        <div class="error-text">{{ form.tags.errors }}</div>
+                        {% endif %}
+                        <small class="helptext">Hold Ctrl/Cmd to select multiple tags.</small>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        {{ form.is_featured }}
+                        <span class="checkmark"></span>
+                        <strong>Feature this event on homepage</strong>
+                    </label>
+                    <small class="helptext">Featured events get more visibility.</small>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-large" id="submitBtn">
+                    <i class="fas fa-plus-circle"></i>
+                    Create Event
+                </button>
+                <a href="{% url 'event_list' %}" class="btn btn-outline">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+/* Additional styles for create event form */
+.image-upload-tips {
+    background: var(--hover);
+    padding: 20px;
+    border-radius: 8px;
+    border-left: 4px solid var(--primary);
+    margin-top: 20px;
+}
+
+.image-upload-tips h4 {
+    margin: 0 0 10px 0;
+    color: var(--dark);
+}
+
+.image-upload-tips ul {
+    margin: 0;
+    padding-left: 20px;
+    color: var(--secondary);
+}
+
+.image-upload-tips li {
+    margin-bottom: 5px;
+    font-size: 14px;
+}
+
+.helptext {
+    display: block;
+    font-size: 12px;
+    color: var(--secondary);
+    margin-top: 5px;
+    font-style: italic;
+}
+
+.error-text {
+    color: #dc3545;
+    font-size: 14px;
+    margin-top: 5px;
+    display: block;
+}
+
+.alert {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+.alert-success {
+    background: #efffee;
+    border: 1px solid #c6f5d5;
+    color: #1c7237;
+}
+
+.alert-error {
+    background: #fee;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-weight: normal;
+}
+
+.checkbox-label input[type="checkbox"] {
+    margin: 0;
+}
+
+.checkmark {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border);
+    border-radius: 4px;
+    display: inline-block;
+    position: relative;
+}
+
+.checkbox-label input[type="checkbox"]:checked + .checkmark {
+    background: var(--primary);
+    border-color: var(--primary);
+}
+
+.checkbox-label input[type="checkbox"]:checked + .checkmark::after {
+    content: '✓';
+    color: white;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    background: var(--white);
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(29, 191, 115, 0.1);
+}
+
+.form-control-file {
+    padding: 12px;
+    border: 2px dashed var(--border);
+    border-radius: 8px;
+    background: var(--light);
+    width: 100%;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.form-control-file:hover {
+    border-color: var(--primary);
+    background: var(--hover);
+}
+
+.btn {
+    display: inline-block;
+    padding: 12px 24px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    cursor: pointer;
+    text-align: center;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: var(--white);
+    border-color: var(--primary);
+}
+
+.btn-primary:hover {
+    background: var(--primary-dark);
+    border-color: var(--primary-dark);
+    transform: translateY(-2px);
+}
+
+.btn-outline {
+    background: transparent;
+    color: var(--primary);
+    border-color: var(--primary);
+}
+
+.btn-outline:hover {
+    background: var(--primary);
+    color: var(--white);
+    transform: translateY(-2px);
+}
+
+.btn-large {
+    padding: 16px 32px;
+    font-size: 16px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 30px;
+}
+
+@media (max-width: 768px) {
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('eventForm');
+    const submitBtn = document.getElementById('submitBtn');
+
+    // Form submission handler
+    form.addEventListener('submit', function() {
+        // Add loading state
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Event...';
+        submitBtn.disabled = true;
+    });
+
+    // File input change handlers
+    const fileInputs = document.querySelectorAll('input[type="file"]');
+    fileInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                // Validate file size
+                const maxSize = parseInt(this.getAttribute('data-max-size')) || 5;
+                const maxSizeBytes = maxSize * 1024 * 1024;
+
+                if (file.size > maxSizeBytes) {
+                    alert(`File too large! Maximum size is ${maxSize}MB.`);
+                    this.value = '';
+                }
+
+                // Show file name
+                const fileName = file.name;
+                const label = this.previousElementSibling;
+                if (label && label.tagName === 'LABEL') {
+                    const originalText = label.querySelector('strong') ? label.querySelector('strong').textContent : label.textContent;
+                    label.innerHTML = `<strong>${originalText}</strong> - ${fileName}`;
+                }
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

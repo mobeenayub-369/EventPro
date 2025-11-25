@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'dashboard/css/dashboard.css' %}">
+{% endblock %}
+
+{% block title %}Customer Dashboard - EventPro{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>Welcome, {{ request.user.username }}!</h1>
+        <p>Manage your bookings and discover new events</p>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-ticket-alt"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ total_bookings }}</h3>
+                <p>Total Bookings</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ upcoming_bookings }}</h3>
+                <p>Upcoming Events</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-content">
+        <div class="content-grid">
+            <!-- Recent Bookings -->
+            <div class="content-card">
+                <div class="card-header">
+                    <h3>Your Recent Bookings</h3>
+                    <a href="{% url 'customer_bookings' %}" class="view-all">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_bookings %}
+                    <div class="bookings-list">
+                        {% for booking in recent_bookings %}
+                        <div class="booking-item">
+                            <div class="booking-info">
+                                <h4>{{ booking.event.title }}</h4>
+                                <p class="booking-date">{{ booking.event.date|date:"M j, Y" }}</p>
+                                <p class="booking-location">{{ booking.event.location }}</p>
+                            </div>
+                            <div class="booking-meta">
+                                <span class="amount">Rs. {{ booking.total_amount }}</span>
+                                <span class="status-badge status-{{ booking.booking_status }}">
+                                    {{ booking.get_booking_status_display }}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <p>No bookings yet</p>
+                        <a href="{% url 'events' %}" class="btn btn-primary btn-sm">Explore Events</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Recommended Events -->
+            <div class="content-card">
+                <div class="card-header">
+                    <h3>Recommended For You</h3>
+                </div>
+                <div class="card-body">
+                    {% if recommended_events %}
+                    <div class="events-grid">
+                        {% for event in recommended_events %}
+                        <div class="event-card">
+                            <div class="event-image">
+                                {% if event.image %}
+                                    <img src="{{ event.image.url }}" alt="{{ event.title }}">
+                                {% else %}
+                                    <div class="event-image-placeholder">
+                                        <i class="fas fa-calendar-alt"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="event-info">
+                                <h4>{{ event.title }}</h4>
+                                <p class="event-date">{{ event.date|date:"M j, Y" }}</p>
+                                <p class="event-price">Rs. {{ event.price }}</p>
+                                <a href="{% url 'event_detail' event.slug %}" class="btn btn-primary btn-sm">View Details</a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <p>No recommendations yet</p>
+                        <a href="{% url 'events' %}" class="btn btn-primary btn-sm">Explore Events</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

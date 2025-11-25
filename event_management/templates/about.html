@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}About Us - EventPro{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <h1>About EventPro</h1>
+        <p>Your trusted partner in creating unforgettable events</p>
+    </div>
+</div>
+
+<section class="about-content">
+    <div class="container">
+        <div class="about-grid">
+            <div class="about-text">
+                <h2>Our Story</h2>
+                <p>EventPro was founded with a simple mission: to make event planning accessible, reliable, and stress-free for everyone. We connect people with the best event organizers and service providers in the industry.</p>
+                
+                <h3>Our Mission</h3>
+                <p>To revolutionize the event industry by providing a platform that empowers both customers and service providers to create amazing experiences together.</p>
+            </div>
+            
+            <div class="about-image">
+                <img src="{% static 'images/about-team.jpg' %}" alt="EventPro Team">
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

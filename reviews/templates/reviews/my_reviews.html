@@ -1,0 +1,255 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'reviews/css/reviews.css' %}">
+{% endblock %}
+
+{% block title %}My Reviews - EventPro{% endblock %}
+
+{% block content %}
+<div class="my-reviews-container">
+    <div class="my-reviews-header">
+        <h1>My Reviews</h1>
+        <p>Manage and view all your reviews</p>
+    </div>
+
+    {% if reviews %}
+    <!-- Reviews Statistics -->
+    <div class="reviews-stats">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-star"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ reviews.paginator.count }}</h3>
+                <p>Total Reviews</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ reviews|length|default:0 }}</h3>
+                <p>Verified Reviews</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-edit"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ reviews|length|default:0 }}</h3>
+                <p>Editable Reviews</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-camera"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ reviews_with_images|default:0 }}</h3>
+                <p>Reviews with Photos</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reviews List -->
+    <div class="reviews-list-container">
+        {% for review in reviews %}
+        <div class="review-item-card">
+            <div class="review-item-header">
+                <div class="event-info">
+                    <div class="event-image">
+                        {% if review.event.image %}
+                            <img src="{{ review.event.image.url }}" alt="{{ review.event.title }}">
+                        {% else %}
+                            <div class="event-image-placeholder small">
+                                <i class="fas fa-calendar-alt"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="event-details">
+                        <h3>
+                            <a href="{% url 'event_detail' review.event.slug %}">
+                                {{ review.event.title }}
+                            </a>
+                        </h3>
+                        <p class="event-meta">
+                            {{ review.event.date|date:"F j, Y" }} • {{ review.event.location }}
+                        </p>
+                        <p class="organizer">
+                            Organized by {{ review.event.organizer.get_full_name|default:review.event.organizer.username }}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="review-meta">
+                    <div class="review-rating">
+                        <div class="star-rating">
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= review.rating %}
+                                    <i class="fas fa-star"></i>
+                                {% else %}
+                                    <i class="far fa-star"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <span class="rating-text">{{ review.get_rating_display }}</span>
+                    </div>
+                    <div class="review-status">
+                        <span class="review-date">{{ review.created_at|date:"M j, Y" }}</span>
+                        {% if review.is_verified %}
+                        <span class="verified-badge">
+                            <i class="fas fa-check-circle"></i>
+                            Verified
+                        </span>
+                        {% endif %}
+                        {% if review.is_edited %}
+                        <span class="edited-badge">Edited</span>
+                        {% endif %}
+                        {% if review.has_images %}
+                        <span class="has-images-badge">
+                            <i class="fas fa-camera"></i>
+                            Photos
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="review-item-content">
+                <h4 class="review-title">{{ review.title }}</h4>
+                <p class="review-comment-preview">{{ review.comment|truncatewords:30 }}</p>
+
+                <!-- Review Images Preview -->
+                {% if review.has_images %}
+                <div class="review-images-preview" style="margin-top: 10px;">
+                    <div class="review-images-grid" style="grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); gap: 5px;">
+                        {% for image in review.get_review_images|slice:":3" %}
+                        <div class="review-image-item">
+                            <img src="{{ image.url }}" alt="Event photo {{ forloop.counter }}" class="review-image"
+                                 style="height: 50px;" onclick="openImageModal('{{ image.url }}')">
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if review.response %}
+                <div class="has-response-indicator">
+                    <i class="fas fa-reply"></i>
+                    <span>Organizer responded to your review</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="review-item-actions">
+                <div class="action-buttons">
+                    <a href="{% url 'review_detail' review.id %}" class="btn btn-outline btn-sm">
+                        <i class="fas fa-eye"></i>
+                        View
+                    </a>
+
+                    {% if review.can_edit %}
+                    <a href="{% url 'edit_review' review.id %}" class="btn btn-outline btn-sm">
+                        <i class="fas fa-edit"></i>
+                        Edit
+                    </a>
+                    {% endif %}
+
+                    <a href="{% url 'delete_review' review.id %}" class="btn btn-danger btn-sm">
+                        <i class="fas fa-trash"></i>
+                        Delete
+                    </a>
+                </div>
+
+                <div class="review-stats">
+                    <span class="helpful-count">
+                        <i class="far fa-thumbs-up"></i>
+                        0 helpful
+                    </span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if reviews.has_other_pages %}
+    <div class="pagination">
+        {% if reviews.has_previous %}
+        <a href="?page={{ reviews.previous_page_number }}" class="page-link">
+            <i class="fas fa-chevron-left"></i>
+            Previous
+        </a>
+        {% endif %}
+
+        <span class="current-page">
+            Page {{ reviews.number }} of {{ reviews.paginator.num_pages }}
+        </span>
+
+        {% if reviews.has_next %}
+        <a href="?page={{ reviews.next_page_number }}" class="page-link">
+            Next
+            <i class="fas fa-chevron-right"></i>
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <!-- No Reviews State -->
+    <div class="empty-state">
+        <div class="empty-state-icon">
+            <i class="far fa-comment-alt"></i>
+        </div>
+        <h3>No Reviews Yet</h3>
+        <p>You haven't written any reviews yet. Share your experiences with events you've attended!</p>
+        <a href="{% url 'event_list' %}" class="btn btn-primary">
+            Browse Events
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Image Modal -->
+<div id="imageModal" class="image-modal">
+    <span class="close-modal">&times;</span>
+    <img class="modal-content" id="modalImage">
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Image modal functionality
+const modal = document.getElementById("imageModal");
+const modalImg = document.getElementById("modalImage");
+const closeModal = document.querySelector(".close-modal");
+
+function openImageModal(src) {
+    modal.style.display = "block";
+    modalImg.src = src;
+}
+
+// Close modal when clicking X
+if (closeModal) {
+    closeModal.onclick = function() {
+        modal.style.display = "none";
+    }
+}
+
+// Close modal when clicking outside the image
+if (modal) {
+    modal.onclick = function(event) {
+        if (event.target === modal) {
+            modal.style.display = "none";
+        }
+    }
+}
+</script>
+{% endblock %}

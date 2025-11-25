@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'bookings/css/bookings.css' %}">
+{% endblock %}
+
+{% block title %}Cancel Booking - EventPro{% endblock %}
+
+{% block content %}
+<div class="cancel-booking-container">
+    <div class="cancel-booking-card">
+        <div class="cancel-header">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h2>Cancel Booking</h2>
+            <p>Are you sure you want to cancel this booking?</p>
+        </div>
+
+        <div class="booking-details">
+            <h4>Booking Details</h4>
+            <div class="detail-item">
+                <span>Event:</span>
+                <span>{{ booking.event.title }}</span>
+            </div>
+            <div class="detail-item">
+                <span>Booking ID:</span>
+                <span>#{{ booking.booking_id }}</span>
+            </div>
+            <div class="detail-item">
+                <span>Tickets:</span>
+                <span>{{ booking.tickets_count }}</span>
+            </div>
+            <div class="detail-item">
+                <span>Amount:</span>
+                <span>Rs. {{ booking.total_amount }}</span>
+            </div>
+        </div>
+
+        <form method="POST" class="cancel-form">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="cancellation_reason">Reason for Cancellation</label>
+                <textarea name="cancellation_reason" id="cancellation_reason" 
+                          rows="4" placeholder="Please tell us why you're cancelling this booking..."></textarea>
+            </div>
+
+            <div class="cancellation-warning">
+                <i class="fas fa-info-circle"></i>
+                <p>This action cannot be undone. Your booking will be cancelled immediately.</p>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-danger">Confirm Cancellation</button>
+                <a href="{% url 'booking_detail' booking.id %}" class="btn btn-outline">Go Back</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

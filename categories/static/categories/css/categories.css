@@ -1,0 +1,134 @@
+/* Add these new styles to your existing categories.css file */
+
+/* Image Error Handling */
+.category-image img,
+.category-header-image,
+.event-image img {
+    transition: all 0.3s ease;
+}
+
+/* Image loading states */
+.image-loading {
+    background: var(--light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.image-loading::after {
+    content: 'Loading...';
+    color: var(--secondary);
+    font-size: 14px;
+}
+
+/* Image error fallback */
+.image-error {
+    background: var(--light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--secondary);
+}
+
+.image-error::after {
+    content: 'Image not available';
+    font-size: 14px;
+}
+
+/* Admin-specific styles for image preview */
+.admin-image-preview {
+    max-width: 200px;
+    max-height: 200px;
+    border-radius: 8px;
+    border: 2px solid var(--border);
+}
+
+/* Form styles for image upload */
+.form-control-file {
+    padding: 10px;
+    border: 2px dashed var(--border);
+    border-radius: 8px;
+    background: var(--light);
+    width: 100%;
+    transition: all 0.3s ease;
+    margin-top: 5px;
+}
+
+.form-control-file:hover {
+    border-color: var(--primary);
+    background: var(--hover);
+}
+
+.form-control-file:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(29, 191, 115, 0.1);
+}
+
+/* Help text styling */
+.helptext {
+    display: block;
+    font-size: 12px;
+    color: var(--secondary);
+    margin-top: 5px;
+    font-style: italic;
+}
+
+/* Error message styling */
+.error-message {
+    color: #dc3545;
+    font-size: 14px;
+    margin-top: 5px;
+    display: block;
+}
+
+/* Success message styling */
+.success-message {
+    color: var(--primary);
+    font-size: 14px;
+    margin-top: 5px;
+    display: block;
+}
+
+/* Enhanced category card with better image handling */
+.category-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.category-image {
+    position: relative;
+}
+
+.category-image::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(transparent 50%, rgba(0,0,0,0.1));
+    z-index: 1;
+}
+
+/* Responsive image improvements */
+@media (max-width: 768px) {
+    .category-header-image {
+        width: 80px;
+        height: 80px;
+    }
+
+    .category-image {
+        height: 150px;
+    }
+}
+
+@media (max-width: 480px) {
+    .category-image {
+        height: 120px;
+    }
+
+    .category-header-image {
+        width: 60px;
+        height: 60px;
+    }
+}

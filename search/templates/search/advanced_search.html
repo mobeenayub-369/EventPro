@@ -1,0 +1,293 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'search/css/search.css' %}">
+{% endblock %}
+
+{% block title %}
+{% if query %}
+Search Results for "{{ query }}" - EventPro
+{% else %}
+Discover Events - EventPro
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="search-container">
+    <div class="search-header">
+        <h1>Discover Events</h1>
+        <p>Find the perfect events that match your interests</p>
+    </div>
+
+    <div class="search-content">
+        <!-- Filters Sidebar -->
+        <div class="search-sidebar">
+            <div class="filters-card">
+                <div class="filters-header">
+                    <h3>Filters</h3>
+                    <button type="button" class="btn btn-outline btn-sm clear-filters">
+                        <i class="fas fa-times"></i>
+                        Clear All
+                    </button>
+                </div>
+
+                <form method="GET" class="filters-form" id="search-form">
+                    <!-- Search Input -->
+                    <div class="filter-group">
+                        <label for="search-input">Search</label>
+                        <input type="text" name="q" id="search-input" value="{{ query|default:'' }}" placeholder="Events, categories, locations..." class="search-input">
+                    </div>
+
+                    <!-- Category Filter -->
+                    <div class="filter-group">
+                        <label for="category-select">Category</label>
+                        <select name="category" id="category-select" class="filter-select">
+                            <option value="">All Categories</option>
+                            {% for cat in categories %}
+                            <option value="{{ cat.slug }}">{{ cat.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Location Filter -->
+                    <div class="filter-group">
+                        <label for="location-input">Location</label>
+                        <input type="text" name="location" id="location-input" value="{{ filters.location|default:'' }}" placeholder="City or venue..." class="filter-input">
+                    </div>
+
+                    <!-- Date Range -->
+                    <div class="filter-group">
+                        <label>Date Range</label>
+                        <div class="date-inputs">
+                            <label for="date-from" class="sr-only">Date From</label>
+                            <input type="date" name="date_from" id="date-from" value="{{ filters.date_from|default:'' }}" class="filter-input">
+
+                            <label for="date-to" class="sr-only">Date To</label>
+                            <input type="date" name="date_to" id="date-to" value="{{ filters.date_to|default:'' }}" class="filter-input">
+                        </div>
+                    </div>
+
+                    <!-- Price Range -->
+                    <div class="filter-group">
+                        <label>Price Range (Rs.)</label>
+                        <div class="price-inputs">
+                            <label for="price-min" class="sr-only">Minimum Price</label>
+                            <input type="number" name="price_min" id="price-min" value="{{ filters.price_min|default:'' }}" placeholder="Min" class="filter-input" min="0" step="0.01">
+
+                            <label for="price-max" class="sr-only">Maximum Price</label>
+                            <input type="number" name="price_max" id="price-max" value="{{ filters.price_max|default:'' }}" placeholder="Max" class="filter-input" min="0" step="0.01">
+                        </div>
+                    </div>
+
+                    <!-- Event Type -->
+                    <div class="filter-group">
+                        <label for="event-type-select">Event Type</label>
+                        <select name="event_type" id="event-type-select" class="filter-select">
+                            <option value="">All Events</option>
+                            <option value="free">Free Events</option>
+                            <option value="paid">Paid Events</option>
+                            <option value="featured">Featured Events</option>
+                        </select>
+                    </div>
+
+                    <!-- Sort By -->
+                    <div class="filter-group">
+                        <label for="sort-select">Sort By</label>
+                        <select name="sort_by" id="sort-select" class="filter-select">
+                            <option value="relevance">Relevance</option>
+                            <option value="date_asc">Date (Oldest First)</option>
+                            <option value="date_desc">Date (Newest First)</option>
+                            <option value="price_asc">Price (Low to High)</option>
+                            <option value="price_desc">Price (High to Low)</option>
+                            <option value="popular">Most Popular</option>
+                        </select>
+                    </div>
+
+                    <!-- Tags Filter -->
+                    <div class="filter-group">
+                        <label>Popular Tags</label>
+                        <div class="tags-filter">
+                            {% for tag in popular_tags %}
+                            <label class="tag-checkbox">
+                                <input type="checkbox" name="tags" value="{{ tag.slug }}" id="tag-{{ tag.slug }}">
+                                <span class="tag-label">#{{ tag.name }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary full-width">
+                        <i class="fas fa-search"></i>
+                        Apply Filters
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Search Results -->
+        <div class="search-results">
+            <div class="results-header">
+                <div class="results-info">
+                    <h2>
+                        {% if query %}
+                        Results for "{{ query }}"
+                        {% else %}
+                        All Events
+                        {% endif %}
+                    </h2>
+                    <p class="results-count">{{ total_results|default:0 }} event{{ total_results|default:0|pluralize }} found</p>
+                </div>
+            </div>
+
+            <!-- Events Grid -->
+            {% if events %}
+            <div class="events-grid">
+                {% for event in events %}
+                <div class="event-card">
+                    <div class="event-image">
+                        {% if event.image %}
+                        <img src="{{ event.image.url }}" alt="{{ event.title }}">
+                        {% else %}
+                        <div class="event-image-placeholder">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        {% endif %}
+
+                        {% if event.is_featured %}
+                        <div class="featured-badge">
+                            <i class="fas fa-star"></i>
+                            Featured
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="event-info">
+                        <h3><a href="{% url 'event_detail' event.slug %}">{{ event.title }}</a></h3>
+                        <p class="event-description">{{ event.description|truncatewords:15 }}</p>
+
+                        <div class="event-meta">
+                            <div class="meta-item">
+                                <i class="fas fa-calendar"></i>
+                                <span>{{ event.date|date:"M j, Y" }}</span>
+                            </div>
+                            <div class="meta-item">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span>{{ event.location }}</span>
+                            </div>
+                        </div>
+
+                        <div class="event-footer">
+                            <div class="event-price">
+                                <strong>
+                                    {% if event.price > 0 %}
+                                    Rs. {{ event.price }}
+                                    {% else %}
+                                    Free
+                                    {% endif %}
+                                </strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if events.has_other_pages %}
+            <div class="pagination">
+                {% if events.has_previous %}
+                <a href="?page={{ events.previous_page_number }}" class="page-link">
+                    <i class="fas fa-chevron-left"></i>
+                    Previous
+                </a>
+                {% endif %}
+
+                <span class="current-page">
+                    Page {{ events.number }} of {{ events.paginator.num_pages }}
+                </span>
+
+                {% if events.has_next %}
+                <a href="?page={{ events.next_page_number }}" class="page-link">
+                    Next
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% else %}
+            <!-- No Results -->
+            <div class="no-results">
+                <div class="no-results-icon">
+                    <i class="fas fa-search"></i>
+                </div>
+                <h3>No Events Found</h3>
+                <p>We couldn't find any events matching your search criteria.</p>
+                <a href="{% url 'advanced_search' %}" class="btn btn-primary">
+                    Clear All Filters
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set selected values for all dropdowns
+    const setSelectedValues = () => {
+        // Event Type
+        const eventTypeSelect = document.getElementById('event-type-select');
+        const currentEventType = '{{ filters.event_type|default:"" }}';
+        if (eventTypeSelect && currentEventType) {
+            eventTypeSelect.value = currentEventType;
+        }
+
+        // Category
+        const categorySelect = document.getElementById('category-select');
+        const currentCategory = '{{ filters.category|default:"" }}';
+        if (categorySelect && currentCategory) {
+            categorySelect.value = currentCategory;
+        }
+
+        // Sort By
+        const sortSelect = document.getElementById('sort-select');
+        const currentSort = '{{ filters.sort_by|default:"relevance" }}';
+        if (sortSelect) {
+            sortSelect.value = currentSort;
+        }
+
+        // Tags checkboxes
+        const currentTags = '{{ filters.tags|default:"" }}'.split(',');
+        currentTags.forEach(tagSlug => {
+            const checkbox = document.getElementById('tag-' + tagSlug.trim());
+            if (checkbox) {
+                checkbox.checked = true;
+            }
+        });
+    };
+
+    // Clear filters
+    const clearFiltersBtn = document.querySelector('.clear-filters');
+    if (clearFiltersBtn) {
+        clearFiltersBtn.addEventListener('click', function() {
+            window.location.href = "{% url 'advanced_search' %}";
+        });
+    }
+
+    // Auto-submit on select changes
+    const autoSubmitSelects = document.querySelectorAll('select[name="category"], select[name="event_type"], select[name="sort_by"]');
+    autoSubmitSelects.forEach(select => {
+        select.addEventListener('change', function() {
+            document.getElementById('search-form').submit();
+        });
+    });
+
+    // Initialize selected values
+    setSelectedValues();
+});
+</script>
+{% endblock %}

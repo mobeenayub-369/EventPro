@@ -1,0 +1,785 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'events/css/events.css' %}">
+<!-- Lightbox CSS for image media -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css">
+{% endblock %}
+
+{% block title %}{{ event.title }} - EventPro{% endblock %}
+
+{% block content %}
+<div class="event-detail-container">
+    <!-- Event Header with Hero Image -->
+    <div class="event-header">
+        <div class="event-hero">
+            <!-- IMAGE UPLOAD: Enhanced image display with priority system -->
+            {% if event.get_display_image %}
+                <img src="{{ event.get_display_image }}"
+                     alt="{{ event.title }}"
+                     class="event-hero-image"
+                     onerror="this.style.display='none'; document.getElementById('hero-placeholder').style.display='flex';">
+            {% endif %}
+
+            <!-- Fallback Hero Placeholder -->
+            <div class="event-hero-placeholder"
+                 id="hero-placeholder"
+                 style="{% if event.get_display_image %}display: none;{% else %}display: flex;{% endif %}">
+                <i class="fas fa-calendar-alt"></i>
+                <p>No Event Image Available</p>
+            </div>
+
+            <div class="event-hero-overlay">
+                {% if event.is_featured %}
+                <div class="featured-badge-large">
+                    <i class="fas fa-star"></i>
+                    Featured Event
+                </div>
+                {% endif %}
+
+                <div class="event-hero-content">
+                    <h1>{{ event.title }}</h1>
+                    <div class="event-hero-meta">
+                        <span class="event-category-badge">
+                            {{ event.category.name|default:"Uncategorized" }}
+                        </span>
+                        <span class="event-date">
+                            <i class="fas fa-calendar"></i>
+                            {{ event.date|date:"F j, Y" }} at {{ event.time|time:"g:i A" }}
+                        </span>
+                        <!-- IMAGE UPLOAD: Image count in header -->
+                        {% if event.has_images %}
+                        <span class="image-count-header">
+                            <i class="fas fa-camera"></i>
+                            {{ event.image_count }} photo{{ event.image_count|pluralize }}
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="event-detail-content">
+        <div class="event-main">
+            <!-- IMAGE UPLOAD: Enhanced Event Gallery Section -->
+            {% if event.has_images %}
+            <section class="event-section">
+                <h2>
+                    <i class="fas fa-images"></i>
+                    Event Gallery
+                    <span class="image-count-badge">{{ event.image_count }} images</span>
+                </h2>
+
+                <div class="event-gallery">
+                    <!-- Main Image Display -->
+                    <div class="gallery-main">
+                        {% with event.get_all_images|first as first_image %}
+                        {% if first_image %}
+                            <a href="{{ first_image.url }}"
+                               data-lightbox="event-gallery"
+                               data-title="{{ event.title }} - {{ first_image.caption }}"
+                               class="gallery-main-link">
+                                <img src="{{ first_image.url }}"
+                                     alt="{{ event.title }}"
+                                     class="gallery-main-image">
+                                <div class="gallery-overlay">
+                                    <i class="fas fa-expand"></i>
+                                    <span>Click to view full size</span>
+                                </div>
+                            </a>
+                        {% endif %}
+                        {% endwith %}
+                    </div>
+
+                    <!-- Thumbnail Gallery -->
+                    <div class="gallery-thumbnails">
+                        {% for image_data in event.get_all_images %}
+                        <div class="gallery-thumb">
+                            <a href="{{ image_data.url }}"
+                               data-lightbox="event-gallery"
+                               data-title="{{ event.title }} - {{ image_data.caption }}"
+                               class="gallery-thumb-link">
+                                <img src="{{ image_data.url }}"
+                                     alt="{{ image_data.caption }}"
+                                     loading="lazy">
+                                <div class="thumb-overlay">
+                                    <i class="fas fa-search-plus"></i>
+                                </div>
+                            </a>
+                            {% if image_data.caption %}
+                            <div class="image-caption">{{ image_data.caption }}</div>
+                            {% endif %}
+                            <div class="image-type-badge">{{ image_data.type|title }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Add Image Button for Organizer -->
+                    {% if request.user == event.organizer %}
+                    <div class="gallery-actions">
+                        <a href="{% url 'add_event_images' event.slug %}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i>
+                            Add More Images to Gallery
+                        </a>
+                        <span class="helptext">You can add up to 10 additional gallery images</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </section>
+            {% else %}
+            <!-- No Images State -->
+            <section class="event-section">
+                <h2>
+                    <i class="fas fa-images"></i>
+                    Event Images
+                </h2>
+                <div class="no-images-state">
+                    <i class="fas fa-camera-slash"></i>
+                    <h3>No Images Available</h3>
+                    <p>This event doesn't have any images yet.</p>
+                    {% if request.user == event.organizer %}
+                    <a href="{% url 'add_event_images' event.slug %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i>
+                        Add Event Images
+                    </a>
+                    {% endif %}
+                </div>
+            </section>
+            {% endif %}
+
+            <!-- Event Description -->
+            <section class="event-section">
+                <h2>
+                    <i class="fas fa-info-circle"></i>
+                    About This Event
+                </h2>
+                <div class="event-description">
+                    {{ event.description|linebreaks }}
+                </div>
+            </section>
+
+            <!-- Event Details -->
+            <section class="event-section">
+                <h2>
+                    <i class="fas fa-calendar-alt"></i>
+                    Event Details
+                </h2>
+                <div class="details-grid">
+                    <div class="detail-item">
+                        <i class="fas fa-calendar"></i>
+                        <div>
+                            <strong>Date & Time</strong>
+                            <p>{{ event.date|date:"l, F j, Y" }} at {{ event.time|time:"g:i A" }}</p>
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <div>
+                            <strong>Location</strong>
+                            <p>{{ event.location }}</p>
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-tag"></i>
+                        <div>
+                            <strong>Price</strong>
+                            <p>
+                                {% if event.price > 0 %}
+                                    Rs. {{ event.price }} per ticket
+                                {% else %}
+                                    <span class="free-badge">Free Event</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-users"></i>
+                        <div>
+                            <strong>Capacity</strong>
+                            <p>{{ event.capacity }} attendees maximum</p>
+                        </div>
+                    </div>
+                    <!-- IMAGE UPLOAD: Image Count in Details -->
+                    {% if event.has_images %}
+                    <div class="detail-item">
+                        <i class="fas fa-images"></i>
+                        <div>
+                            <strong>Gallery</strong>
+                            <p>{{ event.image_count }} photo{{ event.image_count|pluralize }} available</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div class="detail-item">
+                        <i class="fas fa-user-tag"></i>
+                        <div>
+                            <strong>Organizer</strong>
+                            <p>{{ event.organizer.get_full_name|default:event.organizer.username }}</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Event Tags -->
+            {% if event.tags.all %}
+            <section class="event-section">
+                <h2>
+                    <i class="fas fa-tags"></i>
+                    Event Tags
+                </h2>
+                <div class="event-tags">
+                    {% for tag in event.tags.all %}
+                    <a href="{% url 'tag_events' tag.slug %}" class="event-tag">
+                        #{{ tag.name }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endif %}
+
+            <!-- Organizer Info -->
+            <section class="event-section">
+                <h2>
+                    <i class="fas fa-user"></i>
+                    Organizer
+                </h2>
+                <div class="organizer-info">
+                    <div class="organizer-avatar">
+                        <!-- IMAGE UPLOAD: Organizer profile picture -->
+                        {% if event.organizer.profile_picture %}
+                            <img src="{{ event.organizer.profile_picture.url }}"
+                                 alt="{{ event.organizer.username }}"
+                                 class="organizer-avatar-img"
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        {% endif %}
+
+                        <!-- Fallback Avatar -->
+                        <div class="organizer-avatar-placeholder"
+                             style="{% if event.organizer.profile_picture %}display: none;{% endif %}">
+                            {{ event.organizer.username|first|upper }}
+                        </div>
+                    </div>
+                    <div class="organizer-details">
+                        <h3>{{ event.organizer.get_full_name|default:event.organizer.username }}</h3>
+                        <p class="organizer-type">
+                            <i class="fas fa-badge-check"></i>
+                            EventPro {{ event.organizer.get_user_type_display }}
+                            {% if event.organizer.is_verified %}
+                            <span class="verified-badge">Verified</span>
+                            {% endif %}
+                        </p>
+
+                        {% if event.organizer.userprofile.bio %}
+                        <p class="organizer-bio">{{ event.organizer.userprofile.bio }}</p>
+                        {% endif %}
+
+                        <!-- Organizer Social Links -->
+                        {% if event.organizer.userprofile.website or event.organizer.userprofile.facebook or event.organizer.userprofile.instagram %}
+                        <div class="organizer-social-links">
+                            {% if event.organizer.userprofile.website %}
+                            <a href="{{ event.organizer.userprofile.website }}" target="_blank" class="social-link" title="Website">
+                                <i class="fas fa-globe"></i>
+                            </a>
+                            {% endif %}
+                            {% if event.organizer.userprofile.facebook %}
+                            <a href="{{ event.organizer.userprofile.facebook }}" target="_blank" class="social-link" title="Facebook">
+                                <i class="fab fa-facebook-f"></i>
+                            </a>
+                            {% endif %}
+                            {% if event.organizer.userprofile.instagram %}
+                            <a href="{{ event.organizer.userprofile.instagram }}" target="_blank" class="social-link" title="Instagram">
+                                <i class="fab fa-instagram"></i>
+                            </a>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div class="event-sidebar">
+            <!-- Booking Card -->
+            <div class="booking-card">
+                <div class="booking-header">
+                    <h3>Book Your Tickets</h3>
+                    <div class="price">
+                        {% if event.price > 0 %}
+                            Rs. {{ event.price }}
+                        {% else %}
+                            <span class="free-badge">Free</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="booking-info">
+                    <div class="availability-status">
+                        {% if event.is_available %}
+                        <div class="available">
+                            <i class="fas fa-check-circle"></i>
+                            <span>{{ event.available_seats }} seat{{ event.available_seats|pluralize }} available</span>
+                        </div>
+                        {% else %}
+                        <div class="sold-out">
+                            <i class="fas fa-times-circle"></i>
+                            <span>Sold Out</span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="event-stats">
+                        <div class="stat">
+                            <strong>{{ event.capacity }}</strong>
+                            <span>Total Capacity</span>
+                        </div>
+                        <div class="stat">
+                            <strong>{{ event.bookings.count }}</strong>
+                            <span>Bookings</span>
+                        </div>
+                        <!-- IMAGE UPLOAD: Images Count in Stats -->
+                        {% if event.has_images %}
+                        <div class="stat">
+                            <strong>{{ event.image_count }}</strong>
+                            <span>Photos</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if event.is_available %}
+                <div class="booking-actions">
+                    <a href="{% url 'create_booking' event.id %}" class="btn btn-primary btn-large">
+                        <i class="fas fa-ticket-alt"></i>
+                        Book Now
+                    </a>
+                    <button class="btn btn-outline" id="wishlistBtn">
+                        <i class="far fa-heart"></i>
+                        Save to Wishlist
+                    </button>
+                </div>
+                {% else %}
+                <div class="booking-actions">
+                    <button class="btn btn-disabled" disabled>
+                        <i class="fas fa-ticket-alt"></i>
+                        Sold Out
+                    </button>
+                </div>
+                {% endif %}
+
+                <!-- Organizer Actions -->
+                {% if request.user == event.organizer %}
+                <div class="organizer-actions">
+                    <hr>
+                    <h4>
+                        <i class="fas fa-tools"></i>
+                        Organizer Tools
+                    </h4>
+                    <div class="action-buttons">
+                        <a href="{% url 'edit_event' event.slug %}" class="btn btn-outline btn-sm">
+                            <i class="fas fa-edit"></i>
+                            Edit Event
+                        </a>
+                        <!-- IMAGE UPLOAD: Enhanced Image Management -->
+                        <a href="{% url 'add_event_images' event.slug %}" class="btn btn-outline btn-sm">
+                            <i class="fas fa-images"></i>
+                            Manage Images
+                        </a>
+                        <a href="{% url 'delete_event' event.slug %}" class="btn btn-danger btn-sm">
+                            <i class="fas fa-trash"></i>
+                            Delete
+                        </a>
+                    </div>
+
+                    <!-- Quick Image Stats -->
+                    <div class="image-stats">
+                        <h5>Image Statistics</h5>
+                        <div class="stat-item">
+                            <span>Total Images:</span>
+                            <strong>{{ event.image_count }}</strong>
+                        </div>
+                        <div class="stat-item">
+                            <span>Gallery Images:</span>
+                            <strong>{{ event.gallery_images.count }}</strong>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Share Event -->
+            <div class="share-card">
+                <h4>
+                    <i class="fas fa-share-alt"></i>
+                    Share This Event
+                </h4>
+                <div class="share-buttons">
+                    <button class="share-btn facebook" onclick="shareOnFacebook()">
+                        <i class="fab fa-facebook-f"></i>
+                    </button>
+                    <button class="share-btn twitter" onclick="shareOnTwitter()">
+                        <i class="fab fa-twitter"></i>
+                    </button>
+                    <button class="share-btn whatsapp" onclick="shareOnWhatsApp()">
+                        <i class="fab fa-whatsapp"></i>
+                    </button>
+                    <button class="share-btn link" onclick="copyEventLink()">
+                        <i class="fas fa-link"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Event Quick Info -->
+            <div class="quick-info-card">
+                <h4>
+                    <i class="fas fa-info-circle"></i>
+                    Quick Info
+                </h4>
+                <div class="quick-info">
+                    <div class="info-item">
+                        <i class="fas fa-clock"></i>
+                        <span>Duration: 3 hours (approx.)</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-language"></i>
+                        <span>Language: English</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-wheelchair"></i>
+                        <span>Wheelchair Accessible</span>
+                    </div>
+                    {% if event.has_images %}
+                    <div class="info-item">
+                        <i class="fas fa-camera"></i>
+                        <span>Photo Gallery Available</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Related Events -->
+    {% if related_events %}
+    <section class="related-events">
+        <h2>
+            <i class="fas fa-calendar-plus"></i>
+            You Might Also Like
+        </h2>
+        <div class="events-grid compact">
+            {% for related_event in related_events %}
+            <div class="event-card compact">
+                <div class="event-image">
+                    <!-- IMAGE UPLOAD: Related events with images -->
+                    {% if related_event.get_display_image %}
+                        <img src="{{ related_event.get_display_image }}"
+                             alt="{{ related_event.title }}"
+                             loading="lazy"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    {% endif %}
+
+                    <div class="event-image-placeholder"
+                         style="{% if related_event.get_display_image %}display: none;{% endif %}">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                </div>
+                <div class="event-info">
+                    <h4><a href="{% url 'event_detail' related_event.slug %}">{{ related_event.title }}</a></h4>
+                    <p class="event-date">
+                        <i class="fas fa-calendar"></i>
+                        {{ related_event.date|date:"M j, Y" }}
+                    </p>
+                    <p class="event-price">
+                        <i class="fas fa-tag"></i>
+                        {% if related_event.price > 0 %}
+                            Rs. {{ related_event.price }}
+                        {% else %}
+                            Free
+                        {% endif %}
+                    </p>
+                    <!-- IMAGE UPLOAD: Image indicator for related events -->
+                    {% if related_event.has_images %}
+                    <p class="event-images-indicator">
+                        <i class="fas fa-camera"></i>
+                        Has photos
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+</div>
+
+<!-- IMAGE UPLOAD: Additional CSS for enhanced media -->
+<style>
+/* Enhanced Gallery Styles */
+.gallery-main {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    margin-bottom: 20px;
+}
+
+.gallery-main-link {
+    display: block;
+    position: relative;
+    overflow: hidden;
+}
+
+.gallery-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--white);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.gallery-main-link:hover .gallery-overlay {
+    opacity: 1;
+}
+
+.gallery-overlay i {
+    font-size: 32px;
+    margin-bottom: 10px;
+}
+
+.gallery-thumb {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.gallery-thumb:hover {
+    transform: scale(1.05);
+    border-color: var(--primary);
+}
+
+.gallery-thumb-link {
+    display: block;
+    position: relative;
+}
+
+.thumb-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--white);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.gallery-thumb:hover .thumb-overlay {
+    opacity: 1;
+}
+
+.image-type-badge {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: var(--primary);
+    color: var(--white);
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 9px;
+    font-weight: 600;
+}
+
+.image-count-header {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.no-images-state {
+    text-align: center;
+    padding: 40px 20px;
+    background: var(--light);
+    border-radius: 8px;
+    border: 2px dashed var(--border);
+}
+
+.no-images-state i {
+    font-size: 64px;
+    color: var(--secondary);
+    margin-bottom: 20px;
+}
+
+.no-images-state h3 {
+    color: var(--dark);
+    margin-bottom: 10px;
+}
+
+.no-images-state p {
+    color: var(--secondary);
+    margin-bottom: 20px;
+}
+
+.organizer-actions .image-stats {
+    margin-top: 15px;
+    padding: 15px;
+    background: var(--light);
+    border-radius: 6px;
+}
+
+.organizer-actions .image-stats h5 {
+    margin: 0 0 10px 0;
+    color: var(--dark);
+    font-size: 14px;
+}
+
+.organizer-actions .stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+    font-size: 12px;
+}
+
+.organizer-actions .stat-item span {
+    color: var(--secondary);
+}
+
+.organizer-actions .stat-item strong {
+    color: var(--primary);
+}
+
+.event-images-indicator {
+    font-size: 11px;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin: 5px 0 0 0;
+}
+
+.free-badge {
+    background: var(--primary);
+    color: var(--white);
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.verified-badge {
+    background: var(--primary);
+    color: var(--white);
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 600;
+    margin-left: 8px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .event-detail-content {
+        grid-template-columns: 1fr;
+    }
+
+    .gallery-thumbnails {
+        grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    }
+
+    .event-hero-content h1 {
+        font-size: 28px;
+    }
+
+    .organizer-info {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .organizer-avatar {
+        margin-bottom: 15px;
+    }
+}
+</style>
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- Lightbox JS for image media -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox.min.js"></script>
+<script>
+// Lightbox configuration
+lightbox.option({
+    'resizeDuration': 200,
+    'wrapAround': true,
+    'imageFadeDuration': 300,
+    'positionFromTop': 50,
+    'albumLabel': 'Image %1 of %2'
+});
+
+// Share functions
+function shareOnFacebook() {
+    const url = encodeURIComponent(window.location.href);
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
+}
+
+function shareOnTwitter() {
+    const text = encodeURIComponent('Check out this amazing event: {{ event.title }}');
+    const url = encodeURIComponent(window.location.href);
+    window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank');
+}
+
+function shareOnWhatsApp() {
+    const text = encodeURIComponent('Check out this event: {{ event.title }} - ' + window.location.href);
+    window.open(`https://wa.me/?text=${text}`, '_blank');
+}
+
+function copyEventLink() {
+    navigator.clipboard.writeText(window.location.href).then(function() {
+        alert('Event link copied to clipboard!');
+    }, function() {
+        alert('Failed to copy link. Please copy manually.');
+    });
+}
+
+// Wishlist functionality
+document.getElementById('wishlistBtn')?.addEventListener('click', function() {
+    this.innerHTML = '<i class="fas fa-heart"></i> Saved';
+    this.classList.add('btn-primary');
+    this.classList.remove('btn-outline');
+    // Add actual wishlist API call here
+});
+
+// Lazy loading for gallery images
+document.addEventListener('DOMContentLoaded', function() {
+    const galleryImages = document.querySelectorAll('.gallery-thumb img');
+
+    galleryImages.forEach(img => {
+        img.addEventListener('load', function() {
+            this.style.opacity = '1';
+        });
+
+        img.style.opacity = '0';
+        img.style.transition = 'opacity 0.3s ease';
+    });
+});
+</script>
+{% endblock %}

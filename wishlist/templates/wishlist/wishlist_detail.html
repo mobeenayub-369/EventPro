@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'wishlist/css/wishlist.css' %}">
+{% endblock %}
+
+{% block title %}My Wishlist - EventPro{% endblock %}
+
+{% block content %}
+<div class="wishlist-container">
+    <div class="wishlist-header">
+        <h1>My Wishlist</h1>
+        <p>Save events you're interested in for later</p>
+    </div>
+
+    <!-- Wishlist Stats -->
+    <div class="wishlist-stats">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-heart"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ wishlist.items_count }}</h3>
+                <p>Total Events</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #17a2b8;">
+                <i class="fas fa-ticket-alt"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ wishlist.total_price }}</h3>
+                <p>Total Value</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #28a745;">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ wishlist.items.filter.event.is_available=True.count }}</h3>
+                <p>Available Events</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wishlist Actions -->
+    <div class="wishlist-actions">
+        <a href="{% url 'event_list' %}" class="action-btn">
+            <i class="fas fa-plus-circle"></i>
+            Browse More Events
+        </a>
+        {% if wishlist.items_count > 0 %}
+        <a href="{% url 'clear_wishlist' %}" class="action-btn danger">
+            <i class="fas fa-trash"></i>
+            Clear Wishlist
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Wishlist Items -->
+    {% if wishlist_items %}
+    <div class="wishlist-grid">
+        {% for item in wishlist_items %}
+        <div class="wishlist-item-card">
+            <div class="wishlist-item-image">
+                {% if item.event.image %}
+                    <img src="{{ item.event.image.url }}" alt="{{ item.event.title }}">
+                {% else %}
+                    <div class="wishlist-item-image-placeholder">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                {% endif %}
+                
+                <button class="remove-from-wishlist" 
+                        data-item-id="{{ item.id }}"
+                        title="Remove from wishlist">
+                    <i class="fas fa-times"></i>
+                </button>
+
+                {% if item.event.is_featured %}
+                <div class="featured-badge">
+                    <i class="fas fa-star"></i>
+                    Featured
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="wishlist-item-info">
+                <h3><a href="{% url 'event_detail' item.event.slug %}">{{ item.event.title }}</a></h3>
+                <p class="wishlist-item-description">{{ item.event.description|truncatewords:20 }}</p>
+                
+                <div class="wishlist-item-meta">
+                    <div class="meta-item">
+                        <i class="fas fa-calendar"></i>
+                        <span>{{ item.event.date|date:"M j, Y" }}</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-clock"></i>
+                        <span>{{ item.event.time|time:"g:i A" }}</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>{{ item.event.location }}</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-user"></i>
+                        <span>By {{ item.event.organizer.username }}</span>
+                    </div>
+                </div>
+
+                <div class="wishlist-item-footer">
+                    <div class="wishlist-item-price">
+                        <strong>Rs. {{ item.event.price }}</strong>
+                    </div>
+                    
+                    {% if item.event.is_available %}
+                    <div class="availability available">
+                        <i class="fas fa-check-circle"></i>
+                        {{ item.event.available_seats }} seats available
+                    </div>
+                    {% else %}
+                    <div class="availability sold-out">
+                        <i class="fas fa-times-circle"></i>
+                        Sold Out
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="wishlist-item-actions">
+                    <a href="{% url 'event_detail' item.event.slug %}" class="btn btn-outline btn-sm">
+                        <i class="fas fa-eye"></i>
+                        View Details
+                    </a>
+                    
+                    {% if item.event.is_available %}
+                    <a href="{% url 'create_booking' item.event.id %}" class="quick-book-btn">
+                        <i class="fas fa-ticket-alt"></i>
+                        Book Now
+                    </a>
+                    {% else %}
+                    <button class="btn btn-disabled btn-sm" disabled>
+                        Sold Out
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-wishlist">
+        <i class="fas fa-heart"></i>
+        <h3>Your Wishlist is Empty</h3>
+        <p>Start exploring events and add them to your wishlist for easy access later.</p>
+        <a href="{% url 'event_list' %}" class="btn btn-primary">
+            <i class="fas fa-search"></i>
+            Browse Events
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Remove from wishlist functionality
+    const removeButtons = document.querySelectorAll('.remove-from-wishlist');
+    
+    removeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const itemId = this.getAttribute('data-item-id');
+            removeFromWishlist(itemId, this);
+        });
+    });
+    
+    function removeFromWishlist(itemId, button) {
+        const card = button.closest('.wishlist-item-card');
+        
+        // Show loading state
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        button.disabled = true;
+        
+        fetch(`/wishlist/remove/${itemId}/`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Animate removal
+                card.style.transform = 'scale(0.8)';
+                card.style.opacity = '0';
+                
+                setTimeout(() => {
+                    card.remove();
+                    updateWishlistCount(data.wishlist_count);
+                    
+                    // Show message
+                    showMessage(data.message, 'success');
+                    
+                    // Check if wishlist is empty
+                    if (data.wishlist_count === 0) {
+                        location.reload();
+                    }
+                }, 300);
+            } else {
+                showMessage(data.message, 'error');
+                button.innerHTML = '<i class="fas fa-times"></i>';
+                button.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showMessage('An error occurred. Please try again.', 'error');
+            button.innerHTML = '<i class="fas fa-times"></i>';
+            button.disabled = false;
+        });
+    }
+    
+    function updateWishlistCount(count) {
+        // Update any wishlist count indicators on the page
+        const countElements = document.querySelectorAll('.wishlist-count');
+        countElements.forEach(element => {
+            element.textContent = count;
+        });
+    }
+    
+    function showMessage(message, type) {
+        // You can implement a toast notification system here
+        alert(message); // Simple alert for now
+    }
+});
+</script>
+{% endblock %}

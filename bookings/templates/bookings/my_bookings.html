@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'bookings/css/bookings.css' %}">
+{% endblock %}
+
+{% block title %}My Bookings - EventPro{% endblock %}
+
+{% block content %}
+<div class="bookings-container">
+    <div class="page-header">
+        <h1>My Bookings</h1>
+        <p>Manage your event bookings and reservations</p>
+    </div>
+
+    {% if bookings %}
+    <div class="bookings-list">
+        {% for booking in bookings %}
+        <div class="booking-item">
+            <div class="booking-info">
+                <div class="event-image">
+                    {% if booking.event.image %}
+                        <img src="{{ booking.event.image.url }}" alt="{{ booking.event.title }}">
+                    {% else %}
+                        <div class="event-image-placeholder">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="booking-details">
+                    <h3>{{ booking.event.title }}</h3>
+                    <p class="event-date">{{ booking.event.date|date:"F j, Y" }}</p>
+                    <p class="event-location">{{ booking.event.location }}</p>
+                    
+                    <div class="booking-meta">
+                        <span class="booking-id">Booking #{{ booking.booking_id }}</span>
+                        <span class="tickets">{{ booking.tickets_count }} ticket{{ booking.tickets_count|pluralize }}</span>
+                        <span class="amount">Rs. {{ booking.total_amount }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="booking-actions">
+                <div class="status-badge status-{{ booking.booking_status }}">
+                    {{ booking.get_booking_status_display }}
+                </div>
+                <div class="action-buttons">
+                    <a href="{% url 'booking_detail' booking.id %}" class="btn btn-outline btn-sm">View Details</a>
+                    {% if booking.booking_status == 'confirmed' %}
+                    <a href="{% url 'booking_invoice' booking.id %}" class="btn btn-outline btn-sm">Download Invoice</a>
+                    {% endif %}
+                    {% if booking.booking_status == 'pending' %}
+                    <a href="{% url 'cancel_booking' booking.id %}" class="btn btn-danger btn-sm">Cancel</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-ticket-alt"></i>
+        <h3>No Bookings Yet</h3>
+        <p>You haven't made any bookings yet. Explore events and book your tickets!</p>
+        <a href="{% url 'events' %}" class="btn btn-primary">Explore Events</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'bookings/css/bookings.css' %}">
+{% endblock %}
+
+{% block title %}Payment - EventPro{% endblock %}
+
+{% block content %}
+<div class="payment-container">
+    <div class="payment-card">
+        <div class="payment-header">
+            <h2>Complete Your Payment</h2>
+            <p>Secure payment for your booking</p>
+        </div>
+
+        <div class="booking-summary">
+            <h4>Booking Summary</h4>
+            <div class="summary-item">
+                <span>Event:</span>
+                <span>{{ booking.event.title }}</span>
+            </div>
+            <div class="summary-item">
+                <span>Tickets:</span>
+                <span>{{ booking.tickets_count }}</span>
+            </div>
+            <div class="summary-item">
+                <span>Amount to Pay:</span>
+                <span class="total-amount">Rs. {{ booking.total_amount }}</span>
+            </div>
+        </div>
+
+        <form method="POST" class="payment-form">
+            {% csrf_token %}
+            
+            <div class="payment-methods">
+                <h4>Select Payment Method</h4>
+                <div class="payment-options">
+                    <label class="payment-option">
+                        <input type="radio" name="payment_method" value="card" checked>
+                        <div class="option-content">
+                            <i class="fas fa-credit-card"></i>
+                            <span>Credit/Debit Card</span>
+                        </div>
+                    </label>
+                    <label class="payment-option">
+                        <input type="radio" name="payment_method" value="bank">
+                        <div class="option-content">
+                            <i class="fas fa-university"></i>
+                            <span>Bank Transfer</span>
+                        </div>
+                    </label>
+                    <label class="payment-option">
+                        <input type="radio" name="payment_method" value="jazzcash">
+                        <div class="option-content">
+                            <i class="fas fa-mobile-alt"></i>
+                            <span>JazzCash</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="security-notice">
+                <i class="fas fa-lock"></i>
+                <span>Your payment is secure and encrypted</span>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-large">
+                    <i class="fas fa-lock"></i>
+                    Pay Rs. {{ booking.total_amount }}
+                </button>
+                <a href="{% url 'booking_detail' booking.id %}" class="btn btn-outline">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,335 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'reviews/css/reviews.css' %}">
+{% endblock %}
+
+{% block title %}Reviews for {{ event.title }} - EventPro{% endblock %}
+
+{% block content %}
+<div class="reviews-container">
+    <div class="reviews-header">
+        <h1>Reviews for {{ event.title }}</h1>
+        <p>See what attendees are saying about this event</p>
+        
+        <!-- Write Review Button -->
+        {% if user.is_authenticated and user != event.organizer %}
+        <a href="{% url 'create_review' event.slug %}" class="btn btn-primary">
+            <i class="fas fa-pen"></i>
+            Write a Review
+        </a>
+        {% endif %}
+    </div>
+
+    <div class="reviews-content">
+        <!-- Rating Summary Sidebar -->
+        <div class="reviews-sidebar">
+            <!-- Overall Rating -->
+            <div class="rating-summary-card">
+                <div class="overall-rating">
+                    <div class="rating-number">
+                        {{ rating_stats.average_rating|default:0|floatformat:1 }}
+                    </div>
+                    <div class="rating-stars">
+                        <div class="stars">
+                            {% with avg_rating=rating_stats.average_rating|default:0 %}
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= avg_rating %}
+                                        <i class="fas fa-star"></i>
+                                    {% else %}
+                                        <i class="far fa-star"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endwith %}
+                        </div>
+                        <div class="rating-count">
+                            {{ rating_stats.total_reviews|default:0 }} review{{ rating_stats.total_reviews|default:0|pluralize }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rating Distribution -->
+            <div class="rating-distribution-card">
+                <h4>Rating Distribution</h4>
+                <div class="distribution-bars">
+                    {% for rating, count in rating_distribution.items %}
+                    <div class="distribution-row">
+                        <span class="rating-label">{{ rating }} star</span>
+                        <div class="progress-bar">
+                            <div class="progress-fill" 
+                                 style="width: {% widthratio count rating_stats.total_reviews|default:1 100 %}%">
+                            </div>
+                        </div>
+                        <span class="rating-count">{{ count }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Event Info -->
+            <div class="event-info-card">
+                <h4>Event Information</h4>
+                <div class="event-meta">
+                    <p><strong>Organizer:</strong> {{ event.organizer.get_full_name|default:event.organizer.username }}</p>
+                    <p><strong>Date:</strong> {{ event.date|date:"F j, Y" }}</p>
+                    <p><strong>Location:</strong> {{ event.location }}</p>
+                </div>
+                <a href="{% url 'event_detail' event.slug %}" class="btn btn-outline btn-sm">
+                    View Event Details
+                </a>
+            </div>
+        </div>
+
+        <!-- Reviews List -->
+        <div class="reviews-main">
+            {% if reviews %}
+            <!-- Reviews Sorting -->
+            <div class="reviews-sorting">
+                <span>Sort by:</span>
+                <select class="sort-select">
+                    <option value="newest">Newest First</option>
+                    <option value="highest">Highest Rating</option>
+                    <option value="lowest">Lowest Rating</option>
+                    <option value="verified">Verified First</option>
+                </select>
+            </div>
+
+            <!-- Reviews List -->
+            <div class="reviews-list">
+                {% for review in reviews %}
+                <div class="review-card">
+                    <!-- Review Header -->
+                    <div class="review-header">
+                        <div class="reviewer-info">
+                            <div class="reviewer-avatar">
+                                {% if review.user.profile_picture %}
+                                    <img src="{{ review.user.profile_picture.url }}" alt="{{ review.user.username }}">
+                                {% else %}
+                                    <div class="avatar-placeholder">
+                                        {{ review.user.username|first|upper }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="reviewer-details">
+                                <h4>{{ review.user.get_full_name|default:review.user.username }}</h4>
+                                <div class="review-meta">
+                                    <span class="review-date">{{ review.created_at|date:"F j, Y" }}</span>
+                                    {% if review.is_verified %}
+                                    <span class="verified-badge">
+                                        <i class="fas fa-check-circle"></i>
+                                        Verified Attendee
+                                    </span>
+                                    {% endif %}
+                                    {% if review.is_edited %}
+                                    <span class="edited-badge">Edited</span>
+                                    {% endif %}
+                                    {% if review.has_images %}
+                                    <span class="has-images-badge">
+                                        <i class="fas fa-camera"></i>
+                                        Photos
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Rating Stars -->
+                        <div class="review-rating">
+                            <div class="star-rating">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= review.rating %}
+                                        <i class="fas fa-star"></i>
+                                    {% else %}
+                                        <i class="far fa-star"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            <span class="rating-text">{{ review.get_rating_display }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Review Content -->
+                    <div class="review-content">
+                        <h3 class="review-title">{{ review.title }}</h3>
+                        <p class="review-comment">{{ review.comment|linebreaks }}</p>
+                    </div>
+
+                    <!-- Review Images Preview -->
+                    {% if review.has_images %}
+                    <div class="review-images-preview">
+                        <div class="review-images-grid" style="grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 8px;">
+                            {% for image in review.get_review_images|slice:":3" %}
+                            <div class="review-image-item">
+                                <img src="{{ image.url }}" alt="Event photo {{ forloop.counter }}" class="review-image"
+                                     style="height: 60px;" onclick="openImageModal('{{ image.url }}')">
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Review Actions -->
+                    <div class="review-actions">
+                        <div class="action-buttons">
+                            <!-- Like/Helpful Button -->
+                            <button class="btn btn-outline btn-sm helpful-btn" data-review-id="{{ review.id }}">
+                                <i class="far fa-thumbs-up"></i>
+                                Helpful
+                            </button>
+
+                            <!-- Report Button -->
+                            {% if user.is_authenticated and user != review.user %}
+                            <a href="{% url 'report_review' review.id %}" class="btn btn-outline btn-sm">
+                                <i class="fas fa-flag"></i>
+                                Report
+                            </a>
+                            {% endif %}
+
+                            <!-- Edit/Delete for review owner -->
+                            {% if user == review.user and review.can_edit %}
+                            <a href="{% url 'edit_review' review.id %}" class="btn btn-outline btn-sm">
+                                <i class="fas fa-edit"></i>
+                                Edit
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Organizer Response -->
+                    {% if review.response %}
+                    <div class="organizer-response">
+                        <div class="response-header">
+                            <div class="response-avatar">
+                                {% if review.response.organizer.profile_picture %}
+                                    <img src="{{ review.response.organizer.profile_picture.url }}" alt="{{ review.response.organizer.username }}">
+                                {% else %}
+                                    <div class="avatar-placeholder organizer">
+                                        {{ review.response.organizer.username|first|upper }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="response-details">
+                                <h5>Response from {{ review.response.organizer.get_full_name|default:review.response.organizer.username }}</h5>
+                                <span class="response-date">{{ review.response.created_at|date:"F j, Y" }}</span>
+                            </div>
+                        </div>
+                        <div class="response-content">
+                            <p>{{ review.response.response_text|linebreaks }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if reviews.has_other_pages %}
+            <div class="pagination">
+                {% if reviews.has_previous %}
+                <a href="?page={{ reviews.previous_page_number }}" class="page-link">
+                    <i class="fas fa-chevron-left"></i>
+                    Previous
+                </a>
+                {% endif %}
+
+                <span class="current-page">
+                    Page {{ reviews.number }} of {{ reviews.paginator.num_pages }}
+                </span>
+
+                {% if reviews.has_next %}
+                <a href="?page={{ reviews.next_page_number }}" class="page-link">
+                    Next
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% else %}
+            <!-- No Reviews State -->
+            <div class="no-reviews">
+                <div class="no-reviews-icon">
+                    <i class="far fa-comment-alt"></i>
+                </div>
+                <h3>No Reviews Yet</h3>
+                <p>Be the first to share your experience with this event!</p>
+                {% if user.is_authenticated and user != event.organizer %}
+                <a href="{% url 'create_review' event.slug %}" class="btn btn-primary">
+                    Write First Review
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Image Modal -->
+<div id="imageModal" class="image-modal">
+    <span class="close-modal">&times;</span>
+    <img class="modal-content" id="modalImage">
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Image modal functionality
+const modal = document.getElementById("imageModal");
+const modalImg = document.getElementById("modalImage");
+const closeModal = document.querySelector(".close-modal");
+
+function openImageModal(src) {
+    modal.style.display = "block";
+    modalImg.src = src;
+}
+
+// Close modal when clicking X
+if (closeModal) {
+    closeModal.onclick = function() {
+        modal.style.display = "none";
+    }
+}
+
+// Close modal when clicking outside the image
+if (modal) {
+    modal.onclick = function(event) {
+        if (event.target === modal) {
+            modal.style.display = "none";
+        }
+    }
+}
+
+// Helpful button functionality
+const helpfulButtons = document.querySelectorAll('.helpful-btn');
+helpfulButtons.forEach(button => {
+    button.addEventListener('click', function() {
+        const reviewId = this.getAttribute('data-review-id');
+
+        // Toggle active state
+        this.classList.toggle('active');
+
+        if (this.classList.contains('active')) {
+            this.innerHTML = '<i class="fas fa-thumbs-up"></i> Helpful';
+            this.classList.add('btn-primary');
+            this.classList.remove('btn-outline');
+        } else {
+            this.innerHTML = '<i class="far fa-thumbs-up"></i> Helpful';
+            this.classList.remove('btn-primary');
+            this.classList.add('btn-outline');
+        }
+    });
+});
+
+// Sort functionality
+const sortSelect = document.querySelector('.sort-select');
+if (sortSelect) {
+    sortSelect.addEventListener('change', function() {
+        // In a real implementation, this would reload the page with sort parameter
+        // or make an AJAX request to re-sort the reviews
+        console.log('Sort by:', this.value);
+    });
+}
+</script>
+{% endblock %}

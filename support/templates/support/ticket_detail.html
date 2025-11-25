@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'support/css/support.css' %}">
+{% endblock %}
+
+{% block title %}Ticket #{{ ticket.ticket_id }} - EventPro{% endblock %}
+
+{% block content %}
+<div class="ticket-detail-container">
+    <!-- Ticket Header -->
+    <div class="ticket-header-card">
+        <div class="ticket-header">
+            <div class="ticket-info">
+                <h1>{{ ticket.subject }}</h1>
+                <div class="ticket-meta">
+                    <span class="ticket-id">#{{ ticket.ticket_id }}</span>
+                    <span class="ticket-type">{{ ticket.get_ticket_type_display }}</span>
+                    <span class="priority-badge priority-{{ ticket.priority }}">
+                        {{ ticket.get_priority_display }}
+                    </span>
+                    <span class="status-badge status-{{ ticket.status }}">
+                        {{ ticket.get_status_display }}
+                    </span>
+                </div>
+            </div>
+            <div class="ticket-actions">
+                {% if request.user == ticket.user or request.user.is_staff %}
+                <a href="{% url 'my_tickets' %}" class="btn btn-outline">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to Tickets
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="ticket-details">
+            <div class="detail-item">
+                <strong>Created:</strong>
+                <span>{{ ticket.created_at|date:"F j, Y g:i A" }}</span>
+            </div>
+            <div class="detail-item">
+                <strong>By:</strong>
+                <span>{{ ticket.user.get_full_name|default:ticket.user.username }}</span>
+            </div>
+            {% if ticket.assigned_to %}
+            <div class="detail-item">
+                <strong>Assigned To:</strong>
+                <span>{{ ticket.assigned_to.get_full_name|default:ticket.assigned_to.username }}</span>
+            </div>
+            {% endif %}
+            {% if ticket.resolved_at %}
+            <div class="detail-item">
+                <strong>Resolved:</strong>
+                <span>{{ ticket.resolved_at|date:"F j, Y g:i A" }}</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Ticket Description -->
+    <div class="ticket-description-card">
+        <h3>Issue Description</h3>
+        <div class="description-content">
+            {{ ticket.description|linebreaks }}
+        </div>
+    </div>
+
+    <!-- Response Thread -->
+    <div class="response-thread">
+        <h3>Conversation</h3>
+        
+        {% if responses %}
+            {% for response in responses %}
+            <div class="response-item {% if response.is_internal_note %}internal-note{% endif %}">
+                <div class="response-header">
+                    <div class="response-user">
+                        <div class="user-avatar">
+                            {{ response.user.username|first|upper }}
+                        </div>
+                        <div class="user-info">
+                            <h4>{{ response.user.get_full_name|default:response.user.username }}</h4>
+                            <span class="user-role">
+                                {% if response.user.is_staff %}
+                                Support Staff
+                                {% else %}
+                                Customer
+                                {% endif %}
+                                {% if response.is_internal_note %}
+                                • Internal Note
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="response-time">
+                        {{ response.created_at|date:"M j, Y g:i A" }}
+                    </div>
+                </div>
+                <div class="response-content">
+                    {{ response.message|linebreaks }}
+                    {% if response.attachment %}
+                    <div class="attachment">
+                        <i class="fas fa-paperclip"></i>
+                        <a href="{{ response.attachment.url }}" target="_blank">Download Attachment</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-comments"></i>
+                <h4>No responses yet</h4>
+                <p>Our support team will respond to your ticket soon.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Response Form -->
+    {% if ticket.status != 'closed' and ticket.status != 'resolved' %}
+    <div class="response-form-card">
+        <h3>Add Response</h3>
+        <form method="POST" enctype="multipart/form-data" class="support-form">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label>Your Message *</label>
+                {{ response_form.message }}
+                {% if response_form.message.errors %}
+                <div class="error-text">{{ response_form.message.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Attachment</label>
+                    {{ response_form.attachment }}
+                    {% if response_form.attachment.errors %}
+                    <div class="error-text">{{ response_form.attachment.errors }}</div>
+                    {% endif %}
+                    <small class="form-text">Max file size: 10MB</small>
+                </div>
+
+                {% if request.user.is_staff %}
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        {{ response_form.is_internal_note }}
+                        <span class="checkmark"></span>
+                        Internal Note (not visible to customer)
+                    </label>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-reply"></i>
+                    Send Response
+                </button>
+            </div>
+        </form>
+    </div>
+    {% else %}
+    <div class="ticket-closed-notice">
+        <i class="fas fa-lock"></i>
+        <h4>This ticket is closed</h4>
+        <p>This support ticket has been resolved and closed. If you need further assistance, please create a new ticket.</p>
+        <a href="{% url 'create_ticket' %}" class="btn btn-primary">Create New Ticket</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

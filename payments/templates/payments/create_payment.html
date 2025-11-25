@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'payments/css/payments.css' %}">
+{% endblock %}
+
+{% block title %}Create Payment - EventPro{% endblock %}
+
+{% block content %}
+<div class="create-payment-container">
+    <div class="create-payment-card">
+        <div class="create-payment-header">
+            <h1>Complete Payment</h1>
+            <p>Secure payment for your booking</p>
+        </div>
+
+        <div class="payment-summary">
+            <h3>Booking Summary</h3>
+            <div class="summary-details">
+                <div class="summary-item">
+                    <span>Event:</span>
+                    <strong>{{ booking.event.title }}</strong>
+                </div>
+                <div class="summary-item">
+                    <span>Date:</span>
+                    <span>{{ booking.event.date|date:"F j, Y" }}</span>
+                </div>
+                <div class="summary-item">
+                    <span>Tickets:</span>
+                    <span>{{ booking.tickets_count }}</span>
+                </div>
+                <div class="summary-item">
+                    <span>Total Amount:</span>
+                    <strong class="total-amount">{{ booking.total_amount }} PKR</strong>
+                </div>
+            </div>
+        </div>
+
+        <form method="POST" class="payment-form">
+            {% csrf_token %}
+            
+            <div class="form-section">
+                <h3>Payment Method</h3>
+                
+                <div class="form-group">
+                    <label>Select Payment Method *</label>
+                    {{ form.payment_method }}
+                    {% if form.payment_method.errors %}
+                    <div class="error-text">{{ form.payment_method.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="payment-methods-info">
+                    <div class="method-info" id="credit_card_info">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Secure credit card processing powered by Stripe</span>
+                    </div>
+                    <div class="method-info" id="easypaisa_info">
+                        <i class="fas fa-mobile-alt"></i>
+                        <span>Pay via Easypaisa mobile account or retail store</span>
+                    </div>
+                    <div class="method-info" id="jazzcash_info">
+                        <i class="fas fa-wallet"></i>
+                        <span>Pay via JazzCash mobile account or retail store</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Additional Information</h3>
+                
+                <div class="form-group">
+                    <label>Payment Notes (Optional)</label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                    <div class="error-text">{{ form.description.errors }}</div>
+                    {% endif %}
+                    <small class="help-text">Any special instructions or notes regarding this payment</small>
+                </div>
+            </div>
+
+            <!-- Terms and Conditions -->
+            <div class="terms-section">
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="terms" required>
+                        <span class="checkmark"></span>
+                        I agree to the <a href="{% url 'page_detail' 'terms' %}" target="_blank">Terms of Service</a> 
+                        and <a href="{% url 'page_detail' 'privacy' %}" target="_blank">Privacy Policy</a>
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-large">
+                    <i class="fas fa-lock"></i>
+                    Proceed to Payment
+                </button>
+                <a href="{% url 'booking_detail' booking.id %}" class="btn btn-outline">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const paymentMethodSelect = document.querySelector('#id_payment_method');
+    const methodInfos = document.querySelectorAll('.method-info');
+    
+    function showMethodInfo() {
+        // Hide all method info first
+        methodInfos.forEach(info => info.style.display = 'none');
+        
+        // Show selected method info
+        const selectedMethod = paymentMethodSelect.value;
+        const selectedInfo = document.getElementById(selectedMethod + '_info');
+        if (selectedInfo) {
+            selectedInfo.style.display = 'flex';
+        }
+    }
+    
+    // Initial call
+    showMethodInfo();
+    
+    // Add event listener
+    paymentMethodSelect.addEventListener('change', showMethodInfo);
+});
+</script>
+{% endblock %}

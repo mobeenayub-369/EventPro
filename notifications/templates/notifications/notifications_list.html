@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'notifications/css/notifications.css' %}">
+{% endblock %}
+
+{% block title %}Notifications - EventPro{% endblock %}
+
+{% block content %}
+<div class="notifications-container">
+    <div class="notifications-header">
+        <h1>Notifications</h1>
+        <p>Stay updated with your activities</p>
+        
+        <div class="notifications-actions">
+            {% if unread_count > 0 %}
+            <button class="btn btn-primary" onclick="markAllAsRead()">
+                <i class="fas fa-check-double"></i>
+                Mark All as Read
+            </button>
+            {% endif %}
+            
+            {% if notifications %}
+            <button class="btn btn-outline" onclick="clearAllNotifications()">
+                <i class="fas fa-trash"></i>
+                Clear All
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="notifications-content">
+        {% if notifications %}
+        <div class="notifications-list">
+            {% for notification in notifications %}
+            <div class="notification-item {% if not notification.is_read %}unread{% endif %}" 
+                 data-notification-id="{{ notification.id }}">
+                <div class="notification-icon" style="color: {{ notification.get_color }};">
+                    <i class="{{ notification.get_icon }}"></i>
+                </div>
+                
+                <div class="notification-content">
+                    <div class="notification-header">
+                        <h3 class="notification-title">{{ notification.title }}</h3>
+                        <span class="notification-time">{{ notification.created_at|timesince }} ago</span>
+                    </div>
+                    
+                    <p class="notification-message">{{ notification.message }}</p>
+                    
+                    <div class="notification-actions">
+                        {% if not notification.is_read %}
+                        <a href="{% url 'mark_as_read' notification.id %}" class="btn-mark-read">
+                            <i class="fas fa-check"></i>
+                            Mark as Read
+                        </a>
+                        {% endif %}
+                        
+                        <a href="{% url 'delete_notification' notification.id %}" class="btn-delete" 
+                           onclick="return confirm('Are you sure you want to delete this notification?')">
+                            <i class="fas fa-trash"></i>
+                            Delete
+                        </a>
+                        
+                        {% if notification.get_absolute_url != '#' %}
+                        <a href="{{ notification.get_absolute_url }}" class="btn-view">
+                            <i class="fas fa-external-link-alt"></i>
+                            View
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                {% if not notification.is_read %}
+                <div class="unread-indicator"></div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-notifications">
+            <div class="empty-icon">
+                <i class="fas fa-bell-slash"></i>
+            </div>
+            <h3>No Notifications</h3>
+            <p>You're all caught up! New notifications will appear here.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function markAllAsRead() {
+    fetch("{% url 'mark_all_as_read' %}", {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    });
+}
+
+function clearAllNotifications() {
+    if (confirm('Are you sure you want to clear all notifications? This action cannot be undone.')) {
+        fetch("{% url 'clear_all_notifications' %}", {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        });
+    }
+}
+
+// Auto-update unread count every 30 seconds
+setInterval(() => {
+    fetch("{% url 'get_unread_count_api' %}")
+    .then(response => response.json())
+    .then(data => {
+        // Update unread count in navbar if exists
+        const unreadBadge = document.querySelector('.unread-count-badge');
+        if (unreadBadge) {
+            unreadBadge.textContent = data.unread_count;
+            if (data.unread_count > 0) {
+                unreadBadge.style.display = 'flex';
+            } else {
+                unreadBadge.style.display = 'none';
+            }
+        }
+    });
+}, 30000);
+</script>
+{% endblock %}

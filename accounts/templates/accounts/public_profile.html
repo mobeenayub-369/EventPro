@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'accounts/css/accounts.css' %}">
+{% endblock %}
+
+{% block title %}{{ user_profile.username }} - EventPro{% endblock %}
+
+{% block content %}
+<div class="public-profile-container">
+    <div class="profile-header">
+        <div class="profile-avatar">
+            <!-- IMAGE DISPLAY: Public profile picture with fallback -->
+            {% if user_profile.profile_picture %}
+                <img src="{{ user_profile.profile_picture.url }}" alt="{{ user_profile.username }}"
+                     onerror="this.style.display='none'; document.getElementById('public-default-avatar').style.display='flex';">
+            {% endif %}
+
+            <!-- Default Avatar for Public Profile -->
+            <div class="avatar-placeholder" id="public-default-avatar"
+                 style="{% if user_profile.profile_picture %}display: none;{% endif %}">
+                {{ user_profile.username|first|upper }}
+            </div>
+        </div>
+
+        <div class="profile-info">
+            <h1>{{ user_profile.get_full_name|default:user_profile.username }}</h1>
+            <p class="user-type">EventPro {{ user_profile.get_user_type_display }}</p>
+
+            <!-- Public Profile Statistics -->
+            <div class="profile-stats">
+                <span class="stat-item">
+                    <strong>{{ user_profile.events_organized.count }}</strong> Events
+                </span>
+                <span class="stat-item">
+                    <strong>{{ user_profile.reviews_received.count }}</strong> Reviews
+                </span>
+                {% if user_profile.userprofile.website %}
+                <span class="stat-item">
+                    <a href="{{ user_profile.userprofile.website }}" target="_blank" class="website-link">
+                        <i class="fas fa-external-link-alt"></i> Website
+                    </a>
+                </span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Action buttons for public profile -->
+        <div class="profile-actions">
+            {% if user_profile != request.user %}
+            <button class="btn btn-outline" onclick="sendMessage('{{ user_profile.username }}')">
+                <i class="fas fa-envelope"></i> Send Message
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="profile-content">
+        <!-- Bio Section for Public Profile -->
+        {% if user_profile.bio %}
+        <div class="profile-section">
+            <h3>About</h3>
+            <p>{{ user_profile.bio }}</p>
+        </div>
+        {% endif %}
+
+        <!-- Location Information (Limited for Public Profile) -->
+        {% if user_profile.city or user_profile.country %}
+        <div class="profile-section">
+            <h3>Location</h3>
+            <div class="info-grid">
+                {% if user_profile.city %}
+                <div class="info-item">
+                    <label>City</label>
+                    <p>{{ user_profile.city }}</p>
+                </div>
+                {% endif %}
+                {% if user_profile.country %}
+                <div class="info-item">
+                    <label>Country</label>
+                    <p>{{ user_profile.country }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Social Links for Public Profile -->
+        {% if user_profile.userprofile.facebook or user_profile.userprofile.instagram %}
+        <div class="profile-section">
+            <h3>Follow</h3>
+            <div class="social-links">
+                {% if user_profile.userprofile.facebook %}
+                <a href="{{ user_profile.userprofile.facebook }}" target="_blank" class="social-btn">
+                    <i class="fab fa-facebook"></i>
+                </a>
+                {% endif %}
+
+                {% if user_profile.userprofile.instagram %}
+                <a href="{{ user_profile.userprofile.instagram }}" target="_blank" class="social-btn">
+                    <i class="fab fa-instagram"></i>
+                </a>
+                {% endif %}
+
+                {% if user_profile.userprofile.website %}
+                <a href="{{ user_profile.userprofile.website }}" target="_blank" class="social-btn">
+                    <i class="fas fa-globe"></i>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Member Since Information -->
+        <div class="profile-section">
+            <h3>Member Information</h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <label>Member Since</label>
+                    <p>{{ user_profile.date_joined|date:"F Y" }}</p>
+                </div>
+                <div class="info-item">
+                    <label>Account Type</label>
+                    <p class="user-type-badge">{{ user_profile.get_user_type_display }}</p>
+                </div>
+                {% if user_profile.is_verified %}
+                <div class="info-item">
+                    <label>Verification</label>
+                    <p class="verified-badge">✓ Verified Organizer</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Additional Styles for Public Profile */
+.website-link {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.website-link:hover {
+    text-decoration: underline;
+}
+
+.social-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    background: var(--light);
+    border-radius: 50%;
+    color: var(--dark);
+    text-decoration: none;
+    font-size: 20px;
+    transition: all 0.3s ease;
+    margin: 5px;
+}
+
+.social-btn:hover {
+    background: var(--primary);
+    color: var(--white);
+    transform: translateY(-2px);
+}
+</style>
+
+<script>
+function sendMessage(username) {
+    // Function to handle sending messages to this user
+    alert('Message feature for ' + username + ' will be implemented soon!');
+    // You can implement actual messaging functionality here
+}
+</script>
+{% endblock %}

@@ -1,0 +1,539 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'events/css/events.css' %}">
+{% endblock %}
+
+{% block title %}Edit {{ event.title }} - EventPro{% endblock %}
+
+{% block content %}
+<div class="edit-event-container">
+    <div class="edit-event-card">
+        <div class="edit-event-header">
+            <h1>Edit Event</h1>
+            <p>Update your event details and images</p>
+        </div>
+
+        <!-- Display Messages -->
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="POST" enctype="multipart/form-data" class="event-form" id="eventForm">
+            {% csrf_token %}
+
+            <!-- Basic Information Section -->
+            <div class="form-section">
+                <h3>Basic Information</h3>
+
+                <div class="form-group">
+                    <label><strong>Event Title</strong></label>
+                    {{ form.title }}
+                    {% if form.title.errors %}
+                    <div class="error-text">{{ form.title.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Event Description</strong></label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                    <div class="error-text">{{ form.description.errors }}</div>
+                    {% endif %}
+                    <small class="helptext">Describe your event in detail to attract more attendees.</small>
+                </div>
+            </div>
+
+            <!-- IMAGE UPLOAD: Enhanced Image Management Section -->
+            <div class="form-section">
+                <h3>Event Images</h3>
+                <p class="helptext" style="margin-bottom: 20px;">
+                    Update your event images. Current images are shown below.
+                </p>
+
+                <!-- Current Images Preview -->
+                <div class="current-images-preview">
+                    <h4>Current Images:</h4>
+                    <div class="image-preview-grid">
+                        {% if event.main_image %}
+                        <div class="image-preview-item">
+                            <img src="{{ event.main_image.url }}" alt="Main Image">
+                            <div class="image-preview-label">Main Banner</div>
+                        </div>
+                        {% endif %}
+
+                        {% if event.thumbnail %}
+                        <div class="image-preview-item">
+                            <img src="{{ event.thumbnail.url }}" alt="Thumbnail">
+                            <div class="image-preview-label">Thumbnail</div>
+                        </div>
+                        {% endif %}
+
+                        {% if event.image and event.image != event.main_image and event.image != event.thumbnail %}
+                        <div class="image-preview-item">
+                            <img src="{{ event.image.url }}" alt="Event Image">
+                            <div class="image-preview-label">Additional Image</div>
+                        </div>
+                        {% endif %}
+
+                        {% for gallery_image in event.gallery_images.all %}
+                        <div class="image-preview-item">
+                            <img src="{{ gallery_image.image.url }}" alt="{{ gallery_image.caption }}">
+                            <div class="image-preview-label">
+                                {{ gallery_image.caption|default:"Gallery" }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Main Image Update -->
+                <div class="form-group">
+                    <label><strong>Update Main Event Banner</strong></label>
+                    {{ form.main_image }}
+                    {% if form.main_image.errors %}
+                    <div class="error-text">{{ form.main_image.errors }}</div>
+                    {% endif %}
+                    {% if form.main_image.help_text %}
+                    <small class="helptext">{{ form.main_image.help_text }}</small>
+                    {% endif %}
+                </div>
+
+                <!-- Thumbnail Image Update -->
+                <div class="form-group">
+                    <label><strong>Update Event Thumbnail</strong></label>
+                    {{ form.thumbnail }}
+                    {% if form.thumbnail.errors %}
+                    <div class="error-text">{{ form.thumbnail.errors }}</div>
+                    {% endif %}
+                    {% if form.thumbnail.help_text %}
+                    <small class="helptext">{{ form.thumbnail.help_text }}</small>
+                    {% endif %}
+                </div>
+
+                <!-- General Image Update -->
+                <div class="form-group">
+                    <label><strong>Update Additional Event Image</strong></label>
+                    {{ form.image }}
+                    {% if form.image.errors %}
+                    <div class="error-text">{{ form.image.errors }}</div>
+                    {% endif %}
+                    {% if form.image.help_text %}
+                    <small class="helptext">{{ form.image.help_text }}</small>
+                    {% endif %}
+                </div>
+
+                <!-- Gallery Management -->
+                {% if event.gallery_images.exists %}
+                <div class="gallery-management">
+                    <h4>Gallery Images ({{ event.gallery_images.count }})</h4>
+                    <p class="helptext">
+                        You have {{ event.gallery_images.count }} gallery images.
+                        <a href="{% url 'add_event_images' event.slug %}" class="btn btn-outline btn-sm">
+                            <i class="fas fa-plus"></i> Add More Images
+                        </a>
+                    </p>
+                </div>
+                {% else %}
+                <div class="gallery-management">
+                    <h4>No Gallery Images Yet</h4>
+                    <p class="helptext">
+                        Add multiple images to create an event gallery.
+                        <a href="{% url 'add_event_images' event.slug %}" class="btn btn-outline btn-sm">
+                            <i class="fas fa-plus"></i> Add Gallery Images
+                        </a>
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Date & Location Section -->
+            <div class="form-section">
+                <h3>Date & Location</h3>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label><strong>Event Date</strong></label>
+                        {{ form.date }}
+                        {% if form.date.errors %}
+                        <div class="error-text">{{ form.date.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label><strong>Event Time</strong></label>
+                        {{ form.time }}
+                        {% if form.time.errors %}
+                        <div class="error-text">{{ form.time.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Event Location</strong></label>
+                    {{ form.location }}
+                    {% if form.location.errors %}
+                    <div class="error-text">{{ form.location.errors }}</div>
+                    {% endif %}
+                    <small class="helptext">Provide full address or online meeting link.</small>
+                </div>
+            </div>
+
+            <!-- Pricing & Capacity Section -->
+            <div class="form-section">
+                <h3>Pricing & Capacity</h3>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label><strong>Ticket Price (Rs.)</strong></label>
+                        {{ form.price }}
+                        {% if form.price.errors %}
+                        <div class="error-text">{{ form.price.errors }}</div>
+                        {% endif %}
+                        <small class="helptext">Enter 0 for free events.</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label><strong>Maximum Capacity</strong></label>
+                        {{ form.capacity }}
+                        {% if form.capacity.errors %}
+                        <div class="error-text">{{ form.capacity.errors }}</div>
+                        {% endif %}
+                        <small class="helptext">Maximum number of attendees.</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Categories & Tags Section -->
+            <div class="form-section">
+                <h3>Categories & Tags</h3>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label><strong>Category</strong></label>
+                        {{ form.category }}
+                        {% if form.category.errors %}
+                        <div class="error-text">{{ form.category.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label><strong>Tags</strong></label>
+                        {{ form.tags }}
+                        {% if form.tags.errors %}
+                        <div class="error-text">{{ form.tags.errors }}</div>
+                        {% endif %}
+                        <small class="helptext">Hold Ctrl/Cmd to select multiple tags.</small>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        {{ form.is_featured }}
+                        <span class="checkmark"></span>
+                        <strong>Feature this event on homepage</strong>
+                    </label>
+                    <small class="helptext">Featured events get more visibility.</small>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-large" id="submitBtn">
+                    <i class="fas fa-save"></i>
+                    Update Event
+                </button>
+                <a href="{% url 'event_detail' event.slug %}" class="btn btn-outline">Cancel</a>
+                <a href="{% url 'add_event_images' event.slug %}" class="btn btn-outline">
+                    <i class="fas fa-images"></i>
+                    Manage Gallery
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.current-images-preview {
+    margin-bottom: 30px;
+    padding: 20px;
+    background: var(--light);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+
+.current-images-preview h4 {
+    margin: 0 0 15px 0;
+    color: var(--dark);
+}
+
+.gallery-management {
+    margin-top: 20px;
+    padding: 15px;
+    background: var(--hover);
+    border-radius: 8px;
+    border-left: 4px solid var(--primary);
+}
+
+.gallery-management h4 {
+    margin: 0 0 10px 0;
+    color: var(--dark);
+}
+
+.image-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+}
+
+.image-preview-item {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid var(--border);
+    transition: transform 0.3s ease;
+}
+
+.image-preview-item:hover {
+    transform: scale(1.05);
+    border-color: var(--primary);
+}
+
+.image-preview-item img {
+    width: 100%;
+    height: 80px;
+    object-fit: cover;
+}
+
+.image-preview-label {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.7);
+    color: var(--white);
+    padding: 3px 6px;
+    font-size: 10px;
+    text-align: center;
+}
+
+.helptext {
+    display: block;
+    font-size: 12px;
+    color: var(--secondary);
+    margin-top: 5px;
+    font-style: italic;
+}
+
+.error-text {
+    color: #dc3545;
+    font-size: 14px;
+    margin-top: 5px;
+    display: block;
+}
+
+.alert {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+.alert-success {
+    background: #efffee;
+    border: 1px solid #c6f5d5;
+    color: #1c7237;
+}
+
+.alert-error {
+    background: #fee;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-weight: normal;
+}
+
+.checkbox-label input[type="checkbox"] {
+    margin: 0;
+}
+
+.checkmark {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border);
+    border-radius: 4px;
+    display: inline-block;
+    position: relative;
+}
+
+.checkbox-label input[type="checkbox"]:checked + .checkmark {
+    background: var(--primary);
+    border-color: var(--primary);
+}
+
+.checkbox-label input[type="checkbox"]:checked + .checkmark::after {
+    content: '✓';
+    color: white;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    background: var(--white);
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(29, 191, 115, 0.1);
+}
+
+.form-control-file {
+    padding: 12px;
+    border: 2px dashed var(--border);
+    border-radius: 8px;
+    background: var(--light);
+    width: 100%;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.form-control-file:hover {
+    border-color: var(--primary);
+    background: var(--hover);
+}
+
+.btn {
+    display: inline-block;
+    padding: 12px 24px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    cursor: pointer;
+    text-align: center;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: var(--white);
+    border-color: var(--primary);
+}
+
+.btn-primary:hover {
+    background: var(--primary-dark);
+    border-color: var(--primary-dark);
+    transform: translateY(-2px);
+}
+
+.btn-outline {
+    background: transparent;
+    color: var(--primary);
+    border-color: var(--primary);
+}
+
+.btn-outline:hover {
+    background: var(--primary);
+    color: var(--white);
+    transform: translateY(-2px);
+}
+
+.btn-sm {
+    padding: 8px 16px;
+    font-size: 14px;
+}
+
+.btn-large {
+    padding: 16px 32px;
+    font-size: 16px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 30px;
+}
+
+@media (max-width: 768px) {
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .image-preview-grid {
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('eventForm');
+    const submitBtn = document.getElementById('submitBtn');
+
+    // Form submission handler
+    form.addEventListener('submit', function() {
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating Event...';
+        submitBtn.disabled = true;
+    });
+
+    // File input change handlers
+    const fileInputs = document.querySelectorAll('input[type="file"]');
+    fileInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                // Validate file size
+                const maxSize = parseInt(this.getAttribute('data-max-size')) || 5;
+                const maxSizeBytes = maxSize * 1024 * 1024;
+
+                if (file.size > maxSizeBytes) {
+                    alert(`File too large! Maximum size is ${maxSize}MB.`);
+                    this.value = '';
+                    return;
+                }
+
+                // Show preview for new uploads
+                const previewContainer = this.closest('.form-group');
+                const existingPreview = previewContainer.querySelector('.file-preview');
+
+                if (existingPreview) {
+                    existingPreview.remove();
+                }
+
+                const preview = document.createElement('div');
+                preview.className = 'file-preview';
+                preview.innerHTML = `
+                    <div style="margin-top: 10px; padding: 10px; background: var(--hover); border-radius: 5px;">
+                        <strong>New Image:</strong> ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)
+                    </div>
+                `;
+
+                this.after(preview);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

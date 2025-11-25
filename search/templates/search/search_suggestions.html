@@ -1,0 +1,23 @@
+{% if suggestions %}
+<div class="search-suggestions">
+    {% for suggestion in suggestions %}
+    <div class="suggestion-item" data-type="{{ suggestion.type }}" data-text="{{ suggestion.text }}">
+        <div class="suggestion-icon">
+            {% if suggestion.type == 'event' %}
+            <i class="fas fa-calendar-alt"></i>
+            {% elif suggestion.type == 'category' %}
+            <i class="fas fa-tag"></i>
+            {% elif suggestion.type == 'location' %}
+            <i class="fas fa-map-marker-alt"></i>
+            {% else %}
+            <i class="fas fa-hashtag"></i>
+            {% endif %}
+        </div>
+        <div class="suggestion-content">
+            <div class="suggestion-text">{{ suggestion.text }}</div>
+            <div class="suggestion-category">{{ suggestion.category }}</div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
