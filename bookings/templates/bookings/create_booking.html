@@ -1,107 +1,238 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'bookings/css/bookings.css' %}">
-{% endblock %}
-
-{% block title %}Book Event - EventPro{% endblock %}
+{% block title %}Book {{ event.title }} - EventPro{% endblock %}
 
 {% block content %}
-<div class="booking-container">
-    <div class="booking-card">
-        <div class="booking-header">
-            <h2>Book Your Tickets</h2>
-            <p>Complete your booking for {{ event.title }}</p>
-        </div>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Booking Header -->
+            <div class="booking-create-header mb-4">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'events:event_list' %}">Events</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'events:event_detail' event.pk %}">{{ event.title }}</a></li>
+                        <li class="breadcrumb-item active">Book Service</li>
+                    </ol>
+                </nav>
 
-        <div class="event-summary">
-            <div class="event-image">
-                {% if event.image %}
-                    <img src="{{ event.image.url }}" alt="{{ event.title }}">
-                {% else %}
-                    <div class="event-image-placeholder">
-                        <i class="fas fa-calendar-alt"></i>
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h2>Book This Service</h2>
+                        <p class="text-muted">Complete the form below to request booking for "{{ event.title }}"</p>
                     </div>
-                {% endif %}
+                    <div class="service-price-tag">
+                        <span class="price">${{ event.price }}</span>
+                        <span class="price-label">Starting Price</span>
+                    </div>
+                </div>
             </div>
-            <div class="event-details">
-                <h3>{{ event.title }}</h3>
-                <p class="event-date"><i class="fas fa-calendar"></i> {{ event.date|date:"F j, Y" }}</p>
-                <p class="event-location"><i class="fas fa-map-marker-alt"></i> {{ event.location }}</p>
-                <p class="event-price"><i class="fas fa-tag"></i> Rs. {{ event.price }} per ticket</p>
+
+            <div class="booking-create-card">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0"><i class="fas fa-calendar-plus me-2"></i>Booking Details</h4>
+                    </div>
+                    <div class="card-body p-4">
+                        <form method="post" id="bookingForm">
+                            {% csrf_token %}
+
+                            <!-- Event Details Section -->
+                            <div class="form-section mb-4">
+                                <h5 class="section-title">Event Information</h5>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label fw-bold">{{ form.event_date.label }} *</label>
+                                            {{ form.event_date }}
+                                            {% if form.event_date.errors %}
+                                                <div class="text-danger small">{{ form.event_date.errors }}</div>
+                                            {% endif %}
+                                            <div class="form-text">{{ form.event_date.help_text }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label fw-bold">{{ form.event_time.label }} *</label>
+                                            {{ form.event_time }}
+                                            {% if form.event_time.errors %}
+                                                <div class="text-danger small">{{ form.event_time.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label fw-bold">{{ form.event_duration.label }} *</label>
+                                            {{ form.event_duration }}
+                                            {% if form.event_duration.errors %}
+                                                <div class="text-danger small">{{ form.event_duration.errors }}</div>
+                                            {% endif %}
+                                            <div class="form-text">{{ form.event_duration.help_text }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label fw-bold">{{ form.number_of_guests.label }} *</label>
+                                            {{ form.number_of_guests }}
+                                            {% if form.number_of_guests.errors %}
+                                                <div class="text-danger small">{{ form.number_of_guests.errors }}</div>
+                                            {% endif %}
+                                            <div class="form-text">{{ form.number_of_guests.help_text }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">{{ form.event_location.label }} *</label>
+                                    {{ form.event_location }}
+                                    {% if form.event_location.errors %}
+                                        <div class="text-danger small">{{ form.event_location.errors }}</div>
+                                    {% endif %}
+                                    <div class="form-text">{{ form.event_location.help_text }}</div>
+                                </div>
+                            </div>
+
+                            <!-- Special Requirements -->
+                            <div class="form-section mb-4">
+                                <h5 class="section-title">Special Requirements</h5>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">{{ form.special_requirements.label }}</label>
+                                    {{ form.special_requirements }}
+                                    {% if form.special_requirements.errors %}
+                                        <div class="text-danger small">{{ form.special_requirements.errors }}</div>
+                                    {% endif %}
+                                    <div class="form-text">{{ form.special_requirements.help_text }}</div>
+                                </div>
+                            </div>
+
+                            <!-- Pricing Section -->
+                            <div class="form-section mb-4">
+                                <h5 class="section-title">Pricing Details</h5>
+
+                                <div class="pricing-summary mb-3">
+                                    <div class="pricing-item d-flex justify-content-between">
+                                        <span>Base Service Price:</span>
+                                        <span id="basePrice">${{ event.price }}</span>
+                                    </div>
+                                    <div class="pricing-item d-flex justify-content-between">
+                                        <span>Additional Charges:</span>
+                                        <span id="additionalCharges">$0.00</span>
+                                    </div>
+                                    <div class="pricing-item d-flex justify-content-between">
+                                        <span>Discount:</span>
+                                        <span id="discountAmount" class="text-success">-$0.00</span>
+                                    </div>
+                                    <hr>
+                                    <div class="pricing-total d-flex justify-content-between fw-bold fs-5">
+                                        <span>Total Amount:</span>
+                                        <span id="totalAmount">${{ event.price }}</span>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label fw-bold">{{ form.additional_charges.label }}</label>
+                                            {{ form.additional_charges }}
+                                            {% if form.additional_charges.errors %}
+                                                <div class="text-danger small">{{ form.additional_charges.errors }}</div>
+                                            {% endif %}
+                                            <div class="form-text">{{ form.additional_charges.help_text }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label fw-bold">{{ form.discount_amount.label }}</label>
+                                            {{ form.discount_amount }}
+                                            {% if form.discount_amount.errors %}
+                                                <div class="text-danger small">{{ form.discount_amount.errors }}</div>
+                                            {% endif %}
+                                            <div class="form-text">{{ form.discount_amount.help_text }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Service Provider Info -->
+                            <div class="provider-info-section mb-4">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="card-title"><i class="fas fa-user-tie me-2"></i>Service Provider</h6>
+                                        <div class="d-flex align-items-center">
+                                            <div class="provider-avatar me-3">
+                                                <i class="fas fa-user-circle fa-2x text-primary"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-1">{{ event.organizer.username }}</h6>
+                                                <p class="text-muted small mb-0">Event Service Provider</p>
+                                                <div class="rating small">
+                                                    <i class="fas fa-star text-warning"></i>
+                                                    <span>4.8 (128 reviews)</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Submit Buttons -->
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="{% url 'events:event_detail' event.pk %}" class="btn btn-outline-secondary me-md-2">
+                                    <i class="fas fa-arrow-left me-1"></i>Back to Event
+                                </a>
+                                <button type="submit" class="btn btn-primary btn-lg px-4">
+                                    <i class="fas fa-paper-plane me-1"></i>Send Booking Request
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
-
-        <form method="POST" class="booking-form">
-            {% csrf_token %}
-            
-            <div class="form-section">
-                <h4>Booking Details</h4>
-                
-                <div class="form-group">
-                    <label>Number of Tickets</label>
-                    {{ form.tickets_count }}
-                    {% if form.tickets_count.errors %}
-                    <div class="error-text">{{ form.tickets_count.errors }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="form-group">
-                    <label>Special Requests</label>
-                    {{ form.special_requests }}
-                    <small>Any special requirements or accessibility needs</small>
-                    {% if form.special_requests.errors %}
-                    <div class="error-text">{{ form.special_requests.errors }}</div>
-                    {% endif %}
-                </div>
-            </div>
-
-            <div class="booking-summary">
-                <h4>Booking Summary</h4>
-                <div class="summary-item">
-                    <span>Tickets:</span>
-                    <span id="ticket-count">1</span>
-                </div>
-                <div class="summary-item">
-                    <span>Price per ticket:</span>
-                    <span>Rs. {{ event.price }}</span>
-                </div>
-                <div class="summary-total">
-                    <span>Total Amount:</span>
-                    <span id="total-amount">Rs. {{ event.price }}</span>
-                </div>
-            </div>
-
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary btn-large">Proceed to Payment</button>
-                <a href="{% url 'events' %}" class="btn btn-outline">Cancel</a>
-            </div>
-        </form>
     </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
 <script>
+// Real-time pricing calculation
 document.addEventListener('DOMContentLoaded', function() {
-    // Correct way to select the tickets input
-    const ticketsInput = document.querySelector('input[name="tickets_count"]');
-    const ticketCount = document.getElementById('ticket-count');
-    const totalAmount = document.getElementById('total-amount');
-    const pricePerTicket = {{ event.price }};
+    const basePrice = {{ event.price }};
+    const additionalChargesInput = document.querySelector('input[name="additional_charges"]');
+    const discountAmountInput = document.querySelector('input[name="discount_amount"]');
 
-    function updateSummary() {
-        const tickets = parseInt(ticketsInput.value) || 1;
-        const total = tickets * pricePerTicket;
+    function calculateTotal() {
+        const additionalCharges = parseFloat(additionalChargesInput.value) || 0;
+        const discountAmount = parseFloat(discountAmountInput.value) || 0;
 
-        ticketCount.textContent = tickets;
-        totalAmount.textContent = 'Rs. ' + total;
+        const totalAmount = basePrice + additionalCharges - discountAmount;
+
+        // Update display
+        document.getElementById('additionalCharges').textContent = '$' + additionalCharges.toFixed(2);
+        document.getElementById('discountAmount').textContent = '-$' + discountAmount.toFixed(2);
+        document.getElementById('totalAmount').textContent = '$' + totalAmount.toFixed(2);
     }
 
-    if (ticketsInput) {
-        ticketsInput.addEventListener('input', updateSummary);
-        updateSummary(); // Initial calculation
+    additionalChargesInput.addEventListener('input', calculateTotal);
+    discountAmountInput.addEventListener('input', calculateTotal);
+
+    // Initial calculation
+    calculateTotal();
+});
+
+// Form validation
+document.getElementById('bookingForm').addEventListener('submit', function(e) {
+    const eventDate = new Date(document.querySelector('input[name="event_date"]').value);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (eventDate < today) {
+        e.preventDefault();
+        alert('Event date cannot be in the past. Please select a future date.');
+        return false;
     }
 });
 </script>

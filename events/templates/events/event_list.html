@@ -1,404 +1,179 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'events/css/events.css' %}">
-{% endblock %}
-
-{% block title %}Events - EventPro{% endblock %}
+{% block title %}Event Services - EventPro{% endblock %}
 
 {% block content %}
-<div class="events-container">
-    <div class="events-header">
-        <h1>Discover Amazing Events</h1>
-        <p>Find and book events that match your interests</p>
-    </div>
+<div class="container-fluid">
+    <div class="row">
+        <!-- Filters Sidebar -->
+        <div class="col-lg-3 col-md-4">
+            <div class="filter-sidebar">
+                <h5 class="mb-4">Filter Events</h5>
 
-    <!-- Search and Filters -->
-    <div class="events-filters">
-        <div class="search-box">
-            <form method="GET" class="search-form" id="searchForm">
-                <input type="text" name="q" placeholder="Search events by title, description, or location..." value="{{ query }}">
-                <button type="submit">
-                    <i class="fas fa-search"></i>
-                </button>
-            </form>
-        </div>
-
-        <div class="filter-options">
-            <div class="filter-group">
-                <label>Category:</label>
-                <select name="category" onchange="document.getElementById('searchForm').submit()">
-                    <option value="">All Categories</option>
-                    {% for category in categories %}
-                    <option value="{{ category.slug }}" {% if selected_category == category.slug %}selected{% endif %}>
-                        {{ category.name }} ({{ category.events_count }})
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="filter-group">
-                <label>
-                    <input type="checkbox" name="featured" value="1" {% if featured_only %}checked{% endif %} onchange="document.getElementById('searchForm').submit()">
-                    Featured Only
-                </label>
-            </div>
-        </div>
-    </div>
-
-    <!-- Events Statistics -->
-    {% if events %}
-    <div class="events-stats-bar">
-        <div class="stat-item">
-            <strong>{{ events.count }}</strong> event{{ events.count|pluralize }} found
-            {% if query %}for "{{ query }}"{% endif %}
-        </div>
-        {% if featured_only %}
-        <div class="stat-item">
-            <i class="fas fa-star"></i> Showing featured events only
-        </div>
-        {% endif %}
-        {% if selected_category %}
-        <div class="stat-item">
-            <i class="fas fa-filter"></i> Category: {{ selected_category }}
-        </div>
-        {% endif %}
-    </div>
-    {% endif %}
-
-    <!-- Events Grid -->
-    {% if events %}
-    <div class="events-grid">
-        {% for event in events %}
-        <div class="event-card">
-            <div class="event-image">
-                <!-- IMAGE UPLOAD: Enhanced image display with fallback -->
-                {% if event.get_display_image %}
-                    <img src="{{ event.get_display_image }}"
-                         alt="{{ event.title }}"
-                         loading="lazy"
-                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                {% endif %}
-
-                <!-- Fallback placeholder -->
-                <div class="event-image-placeholder"
-                     style="{% if event.get_display_image %}display: none;{% endif %}">
-                    <i class="fas fa-calendar-alt"></i>
-                    <p>No Image</p>
-                </div>
-
-                {% if event.is_featured %}
-                <div class="featured-badge">
-                    <i class="fas fa-star"></i>
-                    Featured
-                </div>
-                {% endif %}
-
-                <!-- IMAGE UPLOAD: Image count badge -->
-                {% if event.has_images %}
-                <div class="image-count-badge">
-                    <i class="fas fa-camera"></i>
-                    {{ event.image_count }}
-                </div>
-                {% endif %}
-
-                <div class="event-overlay">
-                    <div class="event-category">
-                        {{ event.category.name|default:"Uncategorized" }}
+                <!-- Event Type Filter -->
+                <div class="filter-section">
+                    <h6>Event Type</h6>
+                    <div class="filter-option">
+                        <input type="checkbox" id="type-wedding">
+                        <label for="type-wedding">💍 Wedding Events</label>
                     </div>
-                    <div class="event-actions">
-                        <a href="{% url 'event_detail' event.slug %}" class="btn btn-primary btn-sm">View Details</a>
+                    <div class="filter-option">
+                        <input type="checkbox" id="type-birthday">
+                        <label for="type-birthday">🎂 Birthday Parties</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="checkbox" id="type-corporate">
+                        <label for="type-corporate">💼 Corporate Events</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="checkbox" id="type-charity">
+                        <label for="type-charity">🤝 Charity Events</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="checkbox" id="type-exhibition">
+                        <label for="type-exhibition">🎪 Exhibitions</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="checkbox" id="type-private">
+                        <label for="type-private">🎉 Private Parties</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="checkbox" id="type-religious">
+                        <label for="type-religious">🕌 Religious Events</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="checkbox" id="type-seminar">
+                        <label for="type-seminar">🎓 Seminars</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="checkbox" id="type-music">
+                        <label for="type-music">🎵 Music Events</label>
+                    </div>
+                </div>
+
+                <!-- Budget Filter -->
+                <div class="filter-section">
+                    <h6>Budget Range</h6>
+                    <div class="filter-option">
+                        <input type="radio" id="price-all" name="price" checked>
+                        <label for="price-all">Any Budget</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="radio" id="price-under500" name="price">
+                        <label for="price-under500">Under $500</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="radio" id="price-500-2000" name="price">
+                        <label for="price-500-2000">$500 - $2,000</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="radio" id="price-2000plus" name="price">
+                        <label for="price-2000plus">$2,000+</label>
+                    </div>
+                </div>
+
+                <!-- Event Size -->
+                <div class="filter-section">
+                    <h6>Event Size</h6>
+                    <div class="filter-option">
+                        <input type="checkbox" id="size-small">
+                        <label for="size-small">Small (1-50 people)</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="checkbox" id="size-medium">
+                        <label for="size-medium">Medium (50-200 people)</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="checkbox" id="size-large">
+                        <label for="size-large">Large (200+ people)</label>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <div class="event-info">
-                <h3>
-                    <a href="{% url 'event_detail' event.slug %}">{{ event.title }}</a>
-                    {% if event.is_featured %}
-                    <span class="featured-badge-small">Featured</span>
-                    {% endif %}
-                </h3>
+        <!-- Events Grid -->
+        <div class="col-lg-9 col-md-8">
+            <!-- Page Header -->
+            <div class="page-header mb-4">
+                <h2>Find Perfect Event Services</h2>
+                <p class="text-muted">Browse professional event organizers for your special occasions</p>
+            </div>
 
-                <p class="event-description">
-                    {{ event.description|truncatewords:25|default:"No description available." }}
-                </p>
-
-                <div class="event-meta">
-                    <div class="meta-item">
-                        <i class="fas fa-calendar"></i>
-                        <span>{{ event.date|date:"M j, Y" }}</span>
-                    </div>
-                    <div class="meta-item">
-                        <i class="fas fa-clock"></i>
-                        <span>{{ event.time|time:"g:i A" }}</span>
-                    </div>
-                    <div class="meta-item">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <span>{{ event.location|truncatewords:3 }}</span>
+            <!-- Search Bar -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="input-group input-group-lg">
+                        <input type="text" class="form-control" placeholder="Search for wedding planners, birthday organizers, corporate event managers...">
+                        <button class="btn btn-primary px-4">Search</button>
                     </div>
                 </div>
+            </div>
 
-                <div class="event-footer">
-                    <div class="event-price">
-                        <strong>
-                            {% if event.price > 0 %}
-                                Rs. {{ event.price }}
-                            {% else %}
-                                Free
-                            {% endif %}
-                        </strong>
+            <!-- Events Grid -->
+            <div class="row">
+                {% for event in events %}
+                <div class="col-xl-4 col-lg-6 mb-4">
+                    <div class="event-card">
+                        <!-- Event Image -->
+                        <img src="{% static 'events/images/event-' %}{{ event.event_type }}.jpg"
+                             class="event-image" alt="{{ event.title }}"
+                             onerror="this.src='{% static 'events/images/event-default.jpg' %}'">
+
+                        <!-- Event Type Badge -->
+                        <div class="event-type-badge">
+                            {{ event.get_event_type_display }}
+                        </div>
+
+                        <div class="event-body">
+                            <!-- Provider Info -->
+                            <div class="provider-info">
+                                <img src="{% static 'accounts/images/avatar-default.png' %}"
+                                     class="provider-avatar" alt="Provider">
+                                <span class="provider-name">{{ event.organizer.name }}</span>
+                            </div>
+
+                            <!-- Event Title -->
+                            <h6 class="event-title">{{ event.title }}</h6>
+
+                            <!-- Event Description -->
+                            <p class="event-description">{{ event.description|truncatewords:15 }}</p>
+
+                            <!-- Event Details -->
+                            <div class="event-details">
+                                <small class="text-muted">
+                                    <i class="fas fa-users me-1"></i>Up to {{ event.capacity }} people
+                                </small>
+                                <small class="text-muted ms-2">
+                                    <i class="fas fa-clock me-1"></i>{{ event.duration }} hours
+                                </small>
+                            </div>
+
+                            <!-- Rating & Price -->
+                            <div class="event-meta">
+                                <div>
+                                    <div class="rating">
+                                        ⭐⭐⭐⭐⭐ <span class="rating-count">({{ event.review_count }})</span>
+                                    </div>
+                                    <span class="starting-price">From ${{ event.price }}</span>
+                                </div>
+                                <button class="btn-heart">♡</button>
+                            </div>
+                        </div>
                     </div>
-                    <div class="event-organizer">
-                        <i class="fas fa-user"></i>
-                        {{ event.organizer.username }}
+                </div>
+                {% empty %}
+                <div class="col-12 text-center py-5">
+                    <div class="empty-state">
+                        <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                        <h5>No events found</h5>
+                        <p class="text-muted">Try adjusting your filters or search terms</p>
+                        <a href="#" class="btn btn-outline-primary">Clear All Filters</a>
                     </div>
                 </div>
-
-                <!-- Availability Status -->
-                {% if event.is_available %}
-                <div class="availability available">
-                    <i class="fas fa-check-circle"></i>
-                    {{ event.available_seats }} seat{{ event.available_seats|pluralize }} available
-                </div>
-                {% else %}
-                <div class="availability sold-out">
-                    <i class="fas fa-times-circle"></i>
-                    Sold Out
-                </div>
-                {% endif %}
-
-                <!-- Event Tags -->
-                {% if event.tags.all %}
-                <div class="event-tags-mini">
-                    {% for tag in event.tags.all|slice:":3" %}
-                    <span class="event-tag-mini">#{{ tag.name }}</span>
-                    {% endfor %}
-                    {% if event.tags.count > 3 %}
-                    <span class="event-tag-mini">+{{ event.tags.count|add:"-3" }} more</span>
-                    {% endif %}
-                </div>
-                {% endif %}
+                {% endfor %}
             </div>
         </div>
-        {% endfor %}
     </div>
-    {% else %}
-    <!-- Empty State with Helpful Message -->
-    <div class="empty-state">
-        <i class="fas fa-calendar-times"></i>
-        <h3>No Events Found</h3>
-        <p>
-            {% if query %}
-            No events match your search for "{{ query }}". Try different keywords or browse all categories.
-            {% elif featured_only %}
-            No featured events available at the moment. Check back later for featured events.
-            {% elif selected_category %}
-            No events found in this category. Try browsing other categories.
-            {% else %}
-            There are no events available at the moment. Check back later or create your own event!
-            {% endif %}
-        </p>
-
-        <div class="empty-state-actions">
-            {% if request.user.is_authenticated and request.user.user_type == 'organizer' %}
-            <a href="{% url 'create_event' %}" class="btn btn-primary">
-                <i class="fas fa-plus"></i>
-                Create Your First Event
-            </a>
-            {% endif %}
-            <a href="{% url 'event_list' %}" class="btn btn-outline">Browse All Events</a>
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- Create Event Button for Organizers -->
-    {% if request.user.is_authenticated and request.user.user_type == 'organizer' %}
-    <div class="create-event-fab">
-        <a href="{% url 'create_event' %}" class="fab-btn" title="Create New Event">
-            <i class="fas fa-plus"></i>
-        </a>
-    </div>
-    {% endif %}
 </div>
-
-<style>
-/* Additional styles for event list */
-.events-stats-bar {
-    display: flex;
-    gap: 20px;
-    margin-bottom: 20px;
-    padding: 15px;
-    background: var(--light);
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    flex-wrap: wrap;
-}
-
-.events-stats-bar .stat-item {
-    background: var(--white);
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-size: 14px;
-    color: var(--secondary);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.events-stats-bar .stat-item strong {
-    color: var(--primary);
-    font-size: 16px;
-}
-
-.event-tags-mini {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-    margin-top: 10px;
-}
-
-.event-tag-mini {
-    background: var(--light);
-    color: var(--primary);
-    padding: 2px 6px;
-    border-radius: 10px;
-    font-size: 10px;
-    font-weight: 500;
-}
-
-.availability {
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 600;
-    margin-top: 10px;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.availability.available {
-    background: #efffee;
-    color: #1c7237;
-    border: 1px solid #c6f5d5;
-}
-
-.availability.sold-out {
-    background: #fee;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-}
-
-.create-event-fab {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    z-index: 1000;
-}
-
-.fab-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 60px;
-    height: 60px;
-    background: var(--primary);
-    color: var(--white);
-    border-radius: 50%;
-    text-decoration: none;
-    box-shadow: 0 4px 20px rgba(29, 191, 115, 0.3);
-    transition: all 0.3s ease;
-    font-size: 24px;
-}
-
-.fab-btn:hover {
-    background: var(--primary-dark);
-    transform: scale(1.1);
-    color: var(--white);
-}
-
-.empty-state-actions {
-    display: flex;
-    gap: 15px;
-    justify-content: center;
-    margin-top: 20px;
-    flex-wrap: wrap;
-}
-
-@media (max-width: 768px) {
-    .events-stats-bar {
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .empty-state-actions {
-        flex-direction: column;
-        align-items: center;
-    }
-
-    .empty-state-actions .btn {
-        width: 200px;
-    }
-
-    .create-event-fab {
-        bottom: 20px;
-        right: 20px;
-    }
-
-    .fab-btn {
-        width: 50px;
-        height: 50px;
-        font-size: 20px;
-    }
-}
-</style>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Add smooth scrolling to search form
-    const searchForm = document.getElementById('searchForm');
-    if (searchForm) {
-        searchForm.addEventListener('submit', function() {
-            // Add loading state to search button
-            const submitBtn = this.querySelector('button[type="submit"]');
-            if (submitBtn) {
-                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-                submitBtn.disabled = true;
-            }
-        });
-    }
-
-    // Add hover effects to event cards
-    const eventCards = document.querySelectorAll('.event-card');
-    eventCards.forEach(card => {
-        card.addEventListener('mouseenter', function() {
-            this.style.transform = 'translateY(-5px)';
-        });
-
-        card.addEventListener('mouseleave', function() {
-            this.style.transform = 'translateY(0)';
-        });
-    });
-
-    // Lazy loading for images
-    if ('IntersectionObserver' in window) {
-        const imageObserver = new IntersectionObserver((entries, observer) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const img = entry.target;
-                    img.src = img.dataset.src;
-                    img.classList.remove('lazy');
-                    imageObserver.unobserve(img);
-                }
-            });
-        });
-
-        document.querySelectorAll('img[loading="lazy"]').forEach(img => {
-            imageObserver.observe(img);
-        });
-    }
-});
-</script>
 {% endblock %}

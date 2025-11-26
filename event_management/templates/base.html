@@ -3,123 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}EventPro - Hire Event Organizers & Services{% endblock %}</title>
+    <title>EventPro - {% block title %}Event Management{% endblock %}</title>
 
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-    <!-- Main CSS -->
-    <link rel="stylesheet" href="{% static 'css/main.css' %}">
-
-    {% block extra_css %}{% endblock %}
+    <!-- Custom CSS -->
+    <link href="/static/css/main.css" rel="stylesheet">
 </head>
 <body>
-    <!-- Header -->
-    <header class="main-header">
-        <nav class="navbar">
-            <div class="nav-container">
-                <!-- Logo -->
-                <div class="nav-logo">
-                    <a href="{% url 'home' %}">
-                        <i class="fas fa-calendar-star"></i>
-                        <span>EventPro</span>
-                    </a>
-                </div>
+    <!-- Navigation Bar (Fiverr Style - Blue Theme) -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-primary" href="{% url 'home' %}">
+                <i class="fas fa-calendar-alt me-2"></i>EventPro
+            </a>
 
-                <!-- Search Bar -->
-                <div class="nav-search">
-                    <form class="search-form">
-                        <input type="text" placeholder="Find events, services, organizers...">
-                        <button type="submit">
-                            <i class="fas fa-search"></i>
-                        </button>
-                    </form>
-                </div>
-
-                <!-- Navigation Links -->
-                <div class="nav-links">
-                    <a href="{% url 'events' %}">Explore</a>
-                    <a href="{% url 'become_organizer' %}">Become an Organizer</a>
-
-                    {% if user.is_authenticated %}
-                    <div class="user-dropdown">
-                        <button class="user-menu">
-                            {% if user.profile_picture %}
-                                <img src="{{ user.profile_picture.url }}" alt="{{ user.username }}" class="user-avatar">
-                            {% else %}
-                                <div class="default-avatar">
-                                    {{ user.username|first|upper }}
-                                </div>
-                            {% endif %}
-                            <span>{{ user.username }}</span>
-                            <i class="fas fa-chevron-down"></i>
-                        </button>
-                        <div class="dropdown-menu">
-                            <a href="{% url 'profile' %}"><i class="fas fa-user"></i> Profile</a>
-                            <a href="{% url 'dashboard' %}"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-                            <a href="{% url 'my_events' %}"><i class="fas fa-calendar"></i> My Events</a>
-                            <a href="{% url 'bookings' %}"><i class="fas fa-receipt"></i> Bookings</a>
-                            <div class="dropdown-divider"></div>
-                            <a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
-                        </div>
-                    </div>
-                    {% else %}
-                    <div class="auth-buttons">
-                        <a href="{% url 'login' %}" class="login-btn">Login</a>
-                        <a href="{% url 'register' %}" class="signup-btn">Join Now</a>
-                    </div>
-                    {% endif %}
+            <!-- Search Bar in Navigation (Fiverr Style) -->
+            <div class="d-none d-lg-flex mx-4" style="flex: 0 1 500px;">
+                <div class="input-group">
+                    <input type="text" class="form-control border-end-0" placeholder="Find photographers, caterers, decorators...">
+                    <button class="btn btn-primary" type="button">
+                        <i class="fas fa-search"></i>
+                    </button>
                 </div>
             </div>
-        </nav>
-    </header>
+
+            <div class="navbar-nav ms-auto align-items-center">
+                <a class="nav-link mx-2" href="{% url 'services' %}">
+                    <i class="fas fa-th-large me-1"></i>Browse
+                </a>
+                {% if user.is_authenticated %}
+                    <a class="nav-link mx-2" href="{% url 'wishlist' %}">
+                        <i class="far fa-heart"></i>
+                    </a>
+                    <a class="nav-link mx-2" href="{% url 'messaging' %}">
+                        <i class="far fa-envelope"></i>
+                    </a>
+                    <a class="nav-link mx-2" href="{% url 'dashboard' %}">
+                        <i class="far fa-user"></i>
+                    </a>
+                {% else %}
+                    <a class="nav-link mx-2" href="{% url 'login' %}">Sign In</a>
+                    <a class="btn btn-primary mx-2" href="{% url 'register' %}">Join</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
 
     <!-- Main Content -->
-    <main class="main-content">
+    <main>
         {% block content %}
         {% endblock %}
     </main>
 
-    <!-- Footer -->
-    <footer class="main-footer">
-        <div class="footer-container">
-            <div class="footer-section">
-                <div class="footer-logo">
-                    <i class="fas fa-calendar-star"></i>
-                    <span>EventPro</span>
+    <!-- Footer (Fiverr Style) -->
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <h5 class="fw-bold">EventPro</h5>
+                    <p>Your trusted event management platform</p>
                 </div>
-                <p>Your trusted platform for event services and organizers.</p>
+                <div class="col-md-2">
+                    <h6>Categories</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-light text-decoration-none">Photography</a></li>
+                        <li><a href="#" class="text-light text-decoration-none">Catering</a></li>
+                        <li><a href="#" class="text-light text-decoration-none">Decoration</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-2">
+                    <h6>Support</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-light text-decoration-none">Help & Support</a></li>
+                        <li><a href="#" class="text-light text-decoration-none">Contact Us</a></li>
+                    </ul>
+                </div>
             </div>
-
-            <div class="footer-section">
-                <h4>Explore</h4>
-                <a href="{% url 'events' %}">Events</a>
-                <a href="{% url 'categories' %}">Categories</a>
-                <a href="#">Featured Organizers</a>
-            </div>
-
-            <div class="footer-section">
-                <h4>Support</h4>
-                <a href="{% url 'support' %}">Help & Support</a>
-                <a href="{% url 'contact' %}">Contact Us</a>
-                <a href="{% url 'faq' %}">FAQ</a>
-            </div>
-
-            <div class="footer-section">
-                <h4>Legal</h4>
-                <a href="{% url 'terms' %}">Terms of Service</a>
-                <a href="{% url 'privacy' %}">Privacy Policy</a>
-            </div>
-        </div>
-
-        <div class="footer-bottom">
-            <p>&copy; 2024 EventPro. All rights reserved.</p>
         </div>
     </footer>
 
-    {% block extra_js %}{% endblock %}
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

@@ -1,320 +1,136 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'events/css/events.css' %}">
-{% endblock %}
-
-{% block title %}Delete {{ event.title }} - EventPro{% endblock %}
+{% block title %}Delete Event - EventPro{% endblock %}
 
 {% block content %}
-<div class="delete-event-container">
-    <div class="delete-event-card">
-        <div class="delete-event-header">
-            <i class="fas fa-exclamation-triangle"></i>
-            <h1>Delete Event</h1>
-            <p class="subtitle">This action cannot be undone</p>
-        </div>
-
-        <div class="delete-event-content">
-            <div class="warning-message">
-                <h3>Are you absolutely sure you want to delete this event?</h3>
-                <p>This action will permanently delete all event data including:</p>
-                <ul class="deletion-list">
-                    <li><i class="fas fa-check-circle"></i> Event information and details</li>
-                    <li><i class="fas fa-check-circle"></i> All event images ({{ event.image_count }} images)</li>
-                    <li><i class="fas fa-check-circle"></i> Booking records ({{ event.bookings.count }} booking{{ event.bookings.count|pluralize }})</li>
-                    <li><i class="fas fa-check-circle"></i> Reviews and ratings</li>
-                    <li><i class="fas fa-check-circle"></i> Event gallery images</li>
-                </ul>
-                <div class="permanent-warning">
-                    <i class="fas fa-exclamation-circle"></i>
-                    <strong>This action cannot be undone.</strong> All data will be permanently lost.
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="delete-confirmation-card">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Confirm Deletion
+                    </h4>
                 </div>
-            </div>
 
-            <div class="event-preview">
-                <div class="event-image">
-                    {% if event.get_display_image %}
-                        <img src="{{ event.get_display_image }}" alt="{{ event.title }}">
-                    {% else %}
-                        <div class="event-image-placeholder">
-                            <i class="fas fa-calendar-alt"></i>
-                        </div>
-                    {% endif %}
-                </div>
-                <div class="event-details">
-                    <h3>{{ event.title }}</h3>
-                    <div class="event-meta-preview">
-                        <p class="event-date">
-                            <i class="fas fa-calendar"></i>
-                            {{ event.date|date:"F j, Y" }} at {{ event.time|time:"g:i A" }}
-                        </p>
-                        <p class="event-location">
-                            <i class="fas fa-map-marker-alt"></i>
-                            {{ event.location }}
-                        </p>
-                        <p class="event-price">
-                            <i class="fas fa-tag"></i>
-                            {% if event.price > 0 %}
-                                Rs. {{ event.price }} per ticket
-                            {% else %}
-                                Free Event
-                            {% endif %}
-                        </p>
-                        <p class="event-bookings">
-                            <i class="fas fa-ticket-alt"></i>
-                            {{ event.bookings.count }} booking{{ event.bookings.count|pluralize }} will be deleted
-                        </p>
-                        <p class="event-images">
-                            <i class="fas fa-images"></i>
-                            {{ event.image_count }} image{{ event.image_count|pluralize }} will be deleted
-                        </p>
+                <div class="card-body p-4 text-center">
+                    <!-- Warning Icon -->
+                    <div class="warning-icon mb-4">
+                        <i class="fas fa-trash-alt fa-4x text-danger"></i>
                     </div>
+
+                    <!-- Event Info -->
+                    <div class="event-info mb-4">
+                        <h5 class="text-danger mb-3">Are you sure you want to delete this event?</h5>
+                        <div class="event-preview">
+                            <img src="{% static 'events/images/event-' %}{{ event.event_type }}.jpg"
+                                 class="event-preview-image"
+                                 alt="{{ event.title }}"
+                                 onerror="this.src='{% static 'events/images/event-default.jpg' %}'">
+                            <div class="event-preview-details mt-3">
+                                <h6 class="fw-bold">{{ event.title }}</h6>
+                                <p class="text-muted mb-2">{{ event.get_event_type_display }}</p>
+                                <p class="text-primary fw-bold">${{ event.price }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Deletion Consequences -->
+                    <div class="consequences-alert alert alert-warning">
+                        <h6 class="alert-heading">
+                            <i class="fas fa-info-circle me-2"></i>Please Note:
+                        </h6>
+                        <ul class="list-unstyled mb-0 small">
+                            <li>✓ This action cannot be undone</li>
+                            <li>✓ All event images will be permanently deleted</li>
+                            <li>✓ Any associated bookings will be cancelled</li>
+                            <li>✓ Reviews for this event will be removed</li>
+                        </ul>
+                    </div>
+
+                    <!-- Confirmation Form -->
+                    <form method="post" class="mt-4">
+                        {% csrf_token %}
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                            <button type="submit" class="btn btn-danger btn-lg px-4 me-md-2">
+                                <i class="fas fa-trash me-2"></i>
+                                Yes, Delete Event
+                            </button>
+                            <a href="{% url 'events:my_events' %}" class="btn btn-outline-secondary btn-lg px-4">
+                                <i class="fas fa-times me-2"></i>
+                                Cancel
+                            </a>
+                        </div>
+
+                        <!-- Additional Safety Check -->
+                        <div class="form-check mt-3">
+                            <input class="form-check-input" type="checkbox" id="confirmDelete" required>
+                            <label class="form-check-label small text-muted" for="confirmDelete">
+                                I understand that this action is permanent and cannot be undone
+                            </label>
+                        </div>
+                    </form>
                 </div>
             </div>
-
-            <!-- Confirmation Checkbox -->
-            <div class="confirmation-check">
-                <label class="confirmation-label">
-                    <input type="checkbox" id="confirmDelete" required>
-                    <span class="checkmark"></span>
-                    I understand that this action cannot be undone and all event data will be permanently deleted.
-                </label>
-            </div>
-
-            <form method="POST" class="delete-form" id="deleteForm">
-                {% csrf_token %}
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-danger btn-large" id="deleteBtn" disabled>
-                        <i class="fas fa-trash"></i>
-                        Yes, Permanently Delete Event
-                    </button>
-                    <a href="{% url 'event_detail' event.slug %}" class="btn btn-outline">Cancel</a>
-                </div>
-            </form>
         </div>
     </div>
 </div>
 
 <style>
-.delete-event-card {
-    background: var(--white);
-    padding: 40px;
+.delete-confirmation-card {
+    background: white;
     border-radius: 12px;
-    box-shadow: var(--shadow);
-    border: 1px solid var(--border);
-    max-width: 600px;
-    margin: 0 auto;
-}
-
-.delete-event-header {
-    text-align: center;
-    margin-bottom: 30px;
-}
-
-.delete-event-header i {
-    font-size: 64px;
-    color: var(--warning);
-    margin-bottom: 20px;
-}
-
-.delete-event-header h1 {
-    color: var(--dark);
-    margin-bottom: 8px;
-    font-weight: 700;
-}
-
-.delete-event-header .subtitle {
-    color: var(--secondary);
-    font-size: 16px;
-}
-
-.warning-message {
-    background: #fff3cd;
-    border: 1px solid #ffeaa7;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 30px;
-}
-
-.warning-message h3 {
-    color: #856404;
-    margin: 0 0 15px 0;
-    font-size: 18px;
-}
-
-.warning-message p {
-    color: #856404;
-    margin: 0 0 15px 0;
-}
-
-.deletion-list {
-    list-style: none;
-    padding: 0;
-    margin: 0 0 15px 0;
-}
-
-.deletion-list li {
-    color: #856404;
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.deletion-list i {
-    color: var(--danger);
-    font-size: 14px;
-}
-
-.permanent-warning {
-    background: #f8d7da;
-    border: 1px solid #f5c6cb;
-    border-radius: 6px;
-    padding: 12px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: #721c24;
-}
-
-.permanent-warning i {
-    color: var(--danger);
-}
-
-.event-preview {
-    display: flex;
-    gap: 20px;
-    background: var(--light);
-    padding: 20px;
-    border-radius: 8px;
-    margin-bottom: 30px;
-    border: 1px solid var(--border);
-}
-
-.event-preview .event-image {
-    width: 120px;
-    height: 120px;
-    flex-shrink: 0;
-    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
     overflow: hidden;
 }
 
-.event-preview .event-image img {
+.warning-icon {
+    opacity: 0.8;
+}
+
+.event-preview {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #e4e5e7;
+}
+
+.event-preview-image {
     width: 100%;
-    height: 100%;
+    height: 150px;
     object-fit: cover;
+    border-radius: 8px;
 }
 
-.event-preview .event-image-placeholder {
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--white);
-    font-size: 24px;
+.consequences-alert {
+    text-align: left;
+    border-left: 4px solid #ffc107;
 }
 
-.event-details h3 {
-    margin: 0 0 15px 0;
-    color: var(--dark);
+.consequences-alert li {
+    padding: 2px 0;
 }
 
-.event-meta-preview {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.event-meta-preview p {
-    margin: 0;
-    color: var(--secondary);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 14px;
-}
-
-.event-meta-preview i {
-    width: 16px;
-    color: var(--primary);
-}
-
-.confirmation-check {
-    margin-bottom: 30px;
-}
-
-.confirmation-label {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    cursor: pointer;
-    color: var(--dark);
-    font-weight: 500;
-}
-
-.confirmation-label input[type="checkbox"] {
-    margin: 2px 0 0 0;
-}
-
-.delete-form .form-actions {
-    display: flex;
-    gap: 15px;
-    justify-content: center;
-}
-
-@media (max-width: 768px) {
-    .delete-event-card {
-        padding: 20px;
-        margin: 20px;
-    }
-
-    .event-preview {
-        flex-direction: column;
-        text-align: center;
-    }
-
-    .event-preview .event-image {
-        width: 100%;
-        height: 150px;
-    }
-
-    .delete-form .form-actions {
-        flex-direction: column;
-    }
-
-    .delete-form .form-actions .btn {
-        width: 100%;
-    }
+.consequences-alert li:before {
+    content: "• ";
+    color: #ffc107;
+    font-weight: bold;
 }
 </style>
 
 <script>
+// Enable delete button only when checkbox is checked
+document.getElementById('confirmDelete').addEventListener('change', function() {
+    const deleteButton = document.querySelector('button[type="submit"]');
+    deleteButton.disabled = !this.checked;
+});
+
+// Initially disable the delete button
 document.addEventListener('DOMContentLoaded', function() {
-    const confirmCheckbox = document.getElementById('confirmDelete');
-    const deleteBtn = document.getElementById('deleteBtn');
-    const deleteForm = document.getElementById('deleteForm');
-
-    // Enable/disable delete button based on confirmation
-    confirmCheckbox.addEventListener('change', function() {
-        deleteBtn.disabled = !this.checked;
-    });
-
-    // Form submission handler
-    deleteForm.addEventListener('submit', function(e) {
-        if (!confirmCheckbox.checked) {
-            e.preventDefault();
-            alert('Please confirm that you understand this action cannot be undone.');
-            return;
-        }
-
-        // Add loading state
-        deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting Event...';
-        deleteBtn.disabled = true;
-    });
+    document.querySelector('button[type="submit"]').disabled = true;
 });
 </script>
 {% endblock %}

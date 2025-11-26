@@ -1,150 +1,114 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Event, EventImage
+from .models import Event, EventImage, EventReview
 
 
-# Event Admin with Image Previews and Enhanced Features
+class EventImageInline(admin.TabularInline):
+    model = EventImage
+    extra = 1
+    fields = ['image', 'caption', 'is_primary', 'display_order', 'image_preview']
+    readonly_fields = ['image_preview']
+
+    def image_preview(self, obj):
+        if obj.image:
+            return format_html('<img src="{}" width="100" height="75" style="object-fit: cover;" />', obj.image.url)
+        return "No Image"
+
+    image_preview.short_description = 'Preview'
+
+
+class EventReviewInline(admin.TabularInline):
+    model = EventReview
+    extra = 0
+    fields = ['user', 'rating', 'comment', 'created_at', 'is_approved']
+    readonly_fields = ['created_at']
+
+
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
-    """
-    Admin interface for Event model with image previews and comprehensive management
-    """
     list_display = [
-        'title', 'organizer', 'category', 'date', 'location', 'price',
-        'image_preview', 'is_active', 'is_featured', 'created_at'
-    ]
-    list_filter = ['is_active', 'is_featured', 'category', 'date', 'created_at']
-    search_fields = ['title', 'description', 'location', 'organizer__username']
-    prepopulated_fields = {'slug': ('title',)}
-    list_editable = ['is_active', 'is_featured']
-    date_hierarchy = 'date'
-    readonly_fields = [
-        'created_at', 'updated_at', 'main_image_preview',
-        'thumbnail_preview', 'image_preview', 'available_seats'
+        'title', 'organizer', 'event_type', 'price',
+        'capacity', 'status', 'view_count', 'booking_count',
+        'average_rating', 'created_at', 'is_featured'
     ]
 
-    # IMAGE UPLOAD: Fieldsets for better organization
+    list_filter = [
+        'event_type', 'status', 'is_featured', 'created_at', 'updated_at'
+    ]
+
+    search_fields = [
+        'title', 'description', 'organizer__username', 'organizer__email'
+    ]
+
+    list_editable = ['status', 'is_featured']
+
+    readonly_fields = [
+        'view_count', 'booking_count', 'average_rating',
+        'review_count', 'created_at', 'updated_at'
+    ]
+
     fieldsets = (
         ('Basic Information', {
             'fields': (
-                'title', 'slug', 'description', 'organizer', 'category', 'tags'
+                'title', 'description', 'organizer', 'event_type'
             )
         }),
-        ('Event Details', {
+        ('Pricing & Details', {
             'fields': (
-                'date', 'time', 'location', 'price', 'capacity'
+                'price', 'currency', 'capacity', 'duration', 'location'
             )
-        }),
-        ('Event Images', {
-            'fields': (
-                'main_image', 'main_image_preview',
-                'thumbnail', 'thumbnail_preview',
-                'image', 'image_preview',
-                'gallery_images'
-            ),
-            'classes': ('collapse',)
         }),
         ('Status & Metadata', {
             'fields': (
-                'is_active', 'is_featured',
-                'available_seats', 'created_at', 'updated_at'
+                'status', 'is_featured',
+                'view_count', 'booking_count',
+                'average_rating', 'review_count',
+                'created_at', 'updated_at'
             )
         }),
     )
 
-    # IMAGE UPLOAD: Image preview methods
-    def main_image_preview(self, obj):
-        """Display main image thumbnail in admin"""
-        if obj.main_image:
-            return format_html(
-                '<img src="{}" width="100" height="75" style="object-fit: cover; border-radius: 5px;" />',
-                obj.main_image.url
-            )
-        return "No Main Image"
+    inlines = [EventImageInline, EventReviewInline]
 
-    main_image_preview.short_description = 'Main Image Preview'
-
-    def thumbnail_preview(self, obj):
-        """Display thumbnail preview in admin"""
-        if obj.thumbnail:
-            return format_html(
-                '<img src="{}" width="80" height="60" style="object-fit: cover; border-radius: 5px;" />',
-                obj.thumbnail.url
-            )
-        return "No Thumbnail"
-
-    thumbnail_preview.short_description = 'Thumbnail Preview'
-
-    def image_preview(self, obj):
-        """Display general image preview in admin list"""
-        display_image = obj.get_display_image()
-        if display_image:
-            return format_html(
-                '<img src="{}" width="60" height="45" style="object-fit: cover; border-radius: 3px;" />',
-                display_image
-            )
-        return "No Image"
-
-    image_preview.short_description = 'Image'
-
-    # Available seats method
-    def available_seats(self, obj):
-        return obj.available_seats()
-
-    available_seats.short_description = 'Available Seats'
-
-    # IMAGE UPLOAD: Method to show image count
-    def image_count(self, obj):
-        return obj.image_count
-
-    image_count.short_description = 'Images'
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('organizer')
 
 
-# IMAGE UPLOAD: Admin for EventImage model
 @admin.register(EventImage)
 class EventImageAdmin(admin.ModelAdmin):
-    """
-    Admin interface for EventImage model
-    """
-    list_display = ['image_preview', 'caption', 'uploaded_at', 'event_count']
-    list_filter = ['uploaded_at']
-    search_fields = ['caption', 'events__title']
-    readonly_fields = ['uploaded_at', 'image_preview_large']
-
-    fieldsets = (
-        ('Image Details', {
-            'fields': ('image', 'image_preview_large', 'caption')
-        }),
-        ('Metadata', {
-            'fields': ('uploaded_at',),
-            'classes': ('collapse',)
-        }),
-    )
+    list_display = ['event', 'image_preview', 'is_primary', 'display_order', 'uploaded_at']
+    list_filter = ['is_primary', 'uploaded_at']
+    search_fields = ['event__title', 'caption']
+    list_editable = ['is_primary', 'display_order']
 
     def image_preview(self, obj):
-        """Display image thumbnail in admin list"""
         if obj.image:
-            return format_html(
-                '<img src="{}" width="50" height="50" style="object-fit: cover; border-radius: 3px;" />',
-                obj.image.url
-            )
+            return format_html('<img src="{}" width="100" height="75" style="object-fit: cover;" />', obj.image.url)
         return "No Image"
 
-    image_preview.short_description = 'Image'
+    image_preview.short_description = 'Image Preview'
 
-    def image_preview_large(self, obj):
-        """Display larger image preview in admin detail"""
-        if obj.image:
-            return format_html(
-                '<img src="{}" width="300" style="max-height: 300px; object-fit: contain; border-radius: 8px;" />',
-                obj.image.url
-            )
-        return "No Image"
 
-    image_preview_large.short_description = 'Image Preview'
+@admin.register(EventReview)
+class EventReviewAdmin(admin.ModelAdmin):
+    list_display = ['event', 'user', 'rating', 'comment_preview', 'is_approved', 'created_at']
+    list_filter = ['rating', 'is_approved', 'created_at']
+    search_fields = ['event__title', 'user__username', 'comment']
+    list_editable = ['is_approved']
+    readonly_fields = ['created_at']
 
-    def event_count(self, obj):
-        """Count of events using this image"""
-        return obj.events.count()
+    def comment_preview(self, obj):
+        if obj.comment:
+            return obj.comment[:50] + '...' if len(obj.comment) > 50 else obj.comment
+        return "No comment"
 
-    event_count.short_description = 'Used in Events'
+    comment_preview.short_description = 'Comment Preview'
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('event', 'user')
+
+
+# Admin site customization
+admin.site.site_header = 'EventPro Administration'
+admin.site.site_title = 'EventPro Admin'
+admin.site.index_title = 'Event Management System'

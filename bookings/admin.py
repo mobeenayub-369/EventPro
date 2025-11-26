@@ -1,70 +1,185 @@
 from django.contrib import admin
-from .models import Booking, BookingTicket
+from django.utils.html import format_html
+from .models import Booking, BookingMessage, BookingRevision
 
 
-# STEP 5: IMPLEMENTATION - PaymentAdmin has been REMOVED from bookings app
-# PaymentAdmin is now located in payments app
+class BookingMessageInline(admin.TabularInline):
+    model = BookingMessage
+    extra = 0
+    fields = ['sender', 'message_preview', 'attachment', 'is_read', 'created_at']
+    readonly_fields = ['message_preview', 'created_at']
 
-# Booking Admin Configuration
+    def message_preview(self, obj):
+        if obj.message:
+            preview = obj.message[:50] + '...' if len(obj.message) > 50 else obj.message
+            return format_html('<span title="{}">{}</span>', obj.message, preview)
+        return "No message"
+
+    message_preview.short_description = 'Message'
+
+
+class BookingRevisionInline(admin.TabularInline):
+    model = BookingRevision
+    extra = 0
+    fields = ['requested_by', 'revision_details_preview', 'additional_cost', 'status', 'created_at']
+    readonly_fields = ['revision_details_preview', 'created_at']
+
+    def revision_details_preview(self, obj):
+        if obj.revision_details:
+            preview = obj.revision_details[:50] + '...' if len(obj.revision_details) > 50 else obj.revision_details
+            return format_html('<span title="{}">{}</span>', obj.revision_details, preview)
+        return "No details"
+
+    revision_details_preview.short_description = 'Revision Details'
+
+
 @admin.register(Booking)
 class BookingAdmin(admin.ModelAdmin):
-    # Fields to display in admin list view
-    list_display = ['booking_id', 'user', 'event', 'tickets_count', 'total_amount',
-                    'booking_status', 'payment_status', 'created_at']
+    list_display = [
+        'id', 'client', 'service_provider', 'event',
+        'booking_status_badge', 'payment_status_badge',
+        'event_date', 'total_amount', 'created_at'
+    ]
 
-    # STEP 6: FIX - Changed 'event_category' to 'event__category' for proper filtering
-    # This allows filtering by event's category through the relationship
-    list_filter = ['booking_status', 'payment_status', 'created_at', 'event__category']
+    list_filter = [
+        'booking_status', 'payment_status', 'event_date',
+        'created_at', 'event__event_type'
+    ]
 
-    # STEP 7: FIX - Corrected field names with proper relationship syntax
-    # Using double underscore for related field lookups
-    search_fields = ['booking_id', 'user__username', 'event__title']
+    search_fields = [
+        'id', 'client__username', 'service_provider__username',
+        'event__title', 'event_location'
+    ]
 
-    # Fields that can be edited directly from list view
     list_editable = ['booking_status', 'payment_status']
 
-    # Date-based navigation
-    date_hierarchy = 'created_at'
+    readonly_fields = [
+        'created_at', 'updated_at', 'confirmed_at',
+        'completed_at', 'cancelled_at', 'get_remaining_amount'
+    ]
 
-    # Fields that cannot be edited
-    readonly_fields = ['booking_id', 'created_at', 'updated_at']
-
-    # Organized field groups in admin form
     fieldsets = (
-        ('Basic Information', {
-            'fields': ('booking_id', 'user', 'event', 'booking_date')
+        ('Booking Information', {
+            'fields': (
+                'client', 'service_provider', 'event'
+            )
         }),
-        ('Booking Details', {
-            'fields': ('ticket_count', 'total_amount', 'special_requests')
+        ('Event Details', {
+            'fields': (
+                'event_date', 'event_time', 'event_duration',
+                'event_location', 'number_of_guests', 'special_requirements'
+            )
         }),
-        ('Status Information', {
-            'fields': ('booking_status', 'payment_status', 'cancellation_reason')
+        ('Pricing & Payment', {
+            'fields': (
+                'base_price', 'additional_charges', 'discount_amount',
+                'total_amount', 'amount_paid', 'get_remaining_amount'
+            )
         }),
-        ('Timestamps', {
-            'fields': ('created_at', 'updated_at'),
-            'classes': ('collapse',)  # Collapsible section
+        ('Status Tracking', {
+            'fields': (
+                'booking_status', 'payment_status',
+                'confirmed_at', 'completed_at', 'cancelled_at'
+            )
+        }),
+        ('Notes & Communication', {
+            'fields': (
+                'client_notes', 'provider_notes'
+            )
+        }),
+        ('Metadata', {
+            'fields': (
+                'created_at', 'updated_at'
+            )
         }),
     )
 
+    inlines = [BookingMessageInline, BookingRevisionInline]
 
-# Booking Ticket Admin Configuration
-@admin.register(BookingTicket)
-class BookingTicketAdmin(admin.ModelAdmin):
-    # Fields to display in admin list view
-    list_display = ['booking', 'ticket_type', 'quantity', 'price', 'total_price']
+    def booking_status_badge(self, obj):
+        status_colors = {
+            'pending': 'warning',
+            'confirmed': 'success',
+            'in_progress': 'info',
+            'completed': 'primary',
+            'cancelled': 'secondary',
+            'rejected': 'danger',
+        }
+        color = status_colors.get(obj.booking_status, 'secondary')
+        return format_html(
+            '<span class="badge bg-{}">{}</span>',
+            color, obj.get_booking_status_display()
+        )
 
-    # Filter options
-    list_filter = ['ticket_type']
+    booking_status_badge.short_description = 'Status'
 
-    # Searchable fields
-    search_fields = ['booking__booking_id', 'ticket_type']
+    def payment_status_badge(self, obj):
+        status_colors = {
+            'pending': 'warning',
+            'paid': 'success',
+            'failed': 'danger',
+            'refunded': 'info',
+            'partially_refunded': 'primary',
+        }
+        color = status_colors.get(obj.payment_status, 'secondary')
+        return format_html(
+            '<span class="badge bg-{}">{}</span>',
+            color, obj.get_payment_status_display()
+        )
 
-    # Custom method to calculate total price
-    def total_price(self, obj):
-        """Calculate total price for ticket type (quantity * price)"""
-        return obj.quantity * obj.price
+    payment_status_badge.short_description = 'Payment'
 
-    total_price.short_description = 'Total Price'
+    def get_remaining_amount(self, obj):
+        return obj.get_remaining_amount()
 
-# STEP 8: IMPLEMENTATION - Payment model admin removed to avoid conflict
-# Payment admin is now handled in payments app
+    get_remaining_amount.short_description = 'Remaining Amount'
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related(
+            'client', 'service_provider', 'event'
+        )
+
+
+@admin.register(BookingMessage)
+class BookingMessageAdmin(admin.ModelAdmin):
+    list_display = ['id', 'booking', 'sender', 'message_preview', 'is_read', 'created_at']
+    list_filter = ['is_read', 'created_at']
+    search_fields = ['booking__id', 'sender__username', 'message']
+    list_editable = ['is_read']
+    readonly_fields = ['created_at']
+
+    def message_preview(self, obj):
+        if obj.message:
+            return obj.message[:50] + '...' if len(obj.message) > 50 else obj.message
+        return "No message"
+
+    message_preview.short_description = 'Message'
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('booking', 'sender')
+
+
+@admin.register(BookingRevision)
+class BookingRevisionAdmin(admin.ModelAdmin):
+    list_display = ['id', 'booking', 'requested_by', 'status_badge', 'additional_cost', 'created_at']
+    list_filter = ['status', 'created_at']
+    search_fields = ['booking__id', 'requested_by__username', 'revision_details']
+    list_editable = ['additional_cost']
+    readonly_fields = ['created_at', 'responded_at']
+
+    def status_badge(self, obj):
+        status_colors = {
+            'requested': 'warning',
+            'approved': 'success',
+            'rejected': 'danger',
+        }
+        color = status_colors.get(obj.status, 'secondary')
+        return format_html(
+            '<span class="badge bg-{}">{}</span>',
+            color, obj.get_status_display()
+        )
+
+    status_badge.short_description = 'Status'
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('booking', 'requested_by')

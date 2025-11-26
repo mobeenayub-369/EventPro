@@ -1,224 +1,230 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Q
-from django.http import JsonResponse
-from .models import Event, EventImage
+from django.db.models import Q, Avg, Count
+from django.core.paginator import Paginator
+from .models import Event, EventImage, EventReview
 from .forms import EventForm, EventImageForm
-from categories.models import Category
 
 
-# Event List View with Enhanced Search and Image Support
 def event_list(request):
     """
-    Display all active events with search, filtering, and image support
-    Optimized queries for better performance
+    Display all active events with filtering and search functionality
     """
-    # Base queryset with image optimization
-    events = Event.objects.filter(is_active=True).select_related(
-        'organizer', 'category'
-    ).prefetch_related('tags').order_by('-created_at')
+    # Get all active events
+    events = Event.objects.filter(status='active').select_related('organizer').prefetch_related('images')
 
-    # Search Functionality with improved query
-    query = request.GET.get('q')
-    if query:
+    # Search functionality
+    search_query = request.GET.get('search', '')
+    if search_query:
         events = events.filter(
-            Q(title__icontains=query) |  # FIXED: Corrected typo 'title_icontains'
-            Q(description__icontains=query) |  # FIXED: Corrected typo 'description_icontains'
-            Q(location__icontains=query)  # FIXED: Corrected typo 'location_icontains'
+            Q(title__icontains=search_query) |
+            Q(description__icontains=search_query) |
+            Q(event_type__icontains=search_query) |
+            Q(location__icontains=search_query)
         )
 
-    # Category Filter with proper field name
-    category_slug = request.GET.get('category')
-    if category_slug:
-        events = events.filter(category__slug=category_slug)  # FIXED: Corrected 'category_slug' to 'category__slug'
+    # Filter by event type
+    event_type = request.GET.get('event_type', '')
+    if event_type:
+        events = events.filter(event_type=event_type)
 
-    # Featured Filter
-    featured = request.GET.get('featured')
-    if featured:
-        events = events.filter(is_featured=True)
+    # Filter by price range
+    min_price = request.GET.get('min_price')
+    max_price = request.GET.get('max_price')
+    if min_price:
+        events = events.filter(price__gte=min_price)
+    if max_price:
+        events = events.filter(price__lte=max_price)
 
-    # Categories Fetch for filter dropdown
-    categories = Category.objects.filter(is_active=True)
+    # Filter by capacity
+    min_capacity = request.GET.get('min_capacity')
+    if min_capacity:
+        events = events.filter(capacity__gte=min_capacity)
+
+    # Sorting
+    sort_by = request.GET.get('sort', '-created_at')
+    if sort_by in ['price', '-price', 'created_at', '-created_at', 'average_rating', '-average_rating']:
+        events = events.order_by(sort_by)
+
+    # Pagination
+    paginator = Paginator(events, 12)  # Show 12 events per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
 
     context = {
-        'events': events,
-        'categories': categories,
-        'query': query,
-        'selected_category': category_slug,
-        'featured_only': bool(featured)
+        'events': page_obj,
+        'search_query': search_query,
+        'event_type': event_type,
+        'min_price': min_price,
+        'max_price': max_price,
+        'min_capacity': min_capacity,
+        'sort_by': sort_by,
+        'event_types': Event.EVENT_TYPE_CHOICES,
     }
 
     return render(request, 'events/event_list.html', context)
 
 
-# Event Detail View with Enhanced Image Gallery
-def event_detail(request, slug):
+def event_detail(request, pk):
     """
-    Display event details with comprehensive image media and related events
+    Display detailed view of a single event
     """
     event = get_object_or_404(
-        Event.objects.select_related('organizer', 'category')
-        .prefetch_related('tags', 'gallery_images'),
-        slug=slug,
-        is_active=True
+        Event.objects.select_related('organizer')
+        .prefetch_related('images', 'reviews__user'),
+        pk=pk,
+        status='active'
     )
 
-    # Related Events with image optimization
+    # Increment view count
+    event.increment_views()
+
+    # Get related events (same category)
     related_events = Event.objects.filter(
-        category=event.category,
-        is_active=True
-    ).exclude(id=event.id).select_related('category')[:4]
+        event_type=event.event_type,
+        status='active'
+    ).exclude(pk=pk)[:4]
+
+    # Get approved reviews
+    reviews = event.reviews.filter(is_approved=True)
 
     context = {
         'event': event,
-        'related_events': related_events
+        'related_events': related_events,
+        'reviews': reviews,
+        'average_rating': event.average_rating,
+        'review_count': event.review_count,
     }
 
     return render(request, 'events/event_detail.html', context)
 
 
-# Create Event View with Comprehensive Image Handling
 @login_required
 def create_event(request):
     """
-    Handle event creation with multiple image upload support
-    Includes proper file handling and error management
+    Create a new event service
     """
     if request.method == 'POST':
-        # IMAGE UPLOAD: request.FILES is essential for image uploads
-        form = EventForm(request.POST, request.FILES)
-        if form.is_valid():
-            try:
-                event = form.save(commit=False)
-                event.organizer = request.user
-                event.save()
+        event_form = EventForm(request.POST)
 
-                # Save Many-to-Many relationships
-                form.save_m2m()
+        if event_form.is_valid():
+            event = event_form.save(commit=False)
+            event.organizer = request.user
+            event.save()
 
-                # IMAGE UPLOAD: Success message with image info
-                if any([event.main_image, event.thumbnail, event.image]):
-                    messages.success(request, 'Event created successfully with images!')
-                else:
-                    messages.success(request, 'Event created successfully!')
+            # Handle multiple image uploads
+            primary_image = request.FILES.get('primary_image')
+            if primary_image:
+                EventImage.objects.create(
+                    event=event,
+                    image=primary_image,
+                    is_primary=True,
+                    display_order=0
+                )
 
-                return redirect('event_detail', slug=event.slug)
+            # Handle additional images
+            for i in range(2, 5):  # For image_2, image_3, image_4
+                image_field = f'image_{i}'
+                image_file = request.FILES.get(image_field)
+                if image_file:
+                    EventImage.objects.create(
+                        event=event,
+                        image=image_file,
+                        is_primary=False,
+                        display_order=i - 1
+                    )
 
-            except Exception as e:
-                messages.error(request, f'Error creating event: {str(e)}')
-        else:
-            # Form validation failed
-            messages.error(request, 'Please correct the errors below.')
-    else:
-        form = EventForm()
-
-    return render(request, 'events/create_event.html', {'form': form})
-
-
-# Edit Event View with Image Management
-@login_required
-def edit_event(request, slug):
-    """
-    Handle event editing with image update support
-    Only allows event organizer to edit their events
-    """
-    event = get_object_or_404(Event, slug=slug, organizer=request.user)
-
-    if request.method == 'POST':
-        # IMAGE UPLOAD: Include request.FILES for image updates
-        form = EventForm(request.POST, request.FILES, instance=event)
-        if form.is_valid():
-            try:
-                form.save()
-
-                # IMAGE UPLOAD: Check if any images were updated
-                image_updated = any([
-                    'main_image' in request.FILES,
-                    'thumbnail' in request.FILES,
-                    'image' in request.FILES
-                ])
-
-                if image_updated:
-                    messages.success(request, 'Event updated successfully with new images!')
-                else:
-                    messages.success(request, 'Event updated successfully!')
-
-                return redirect('event_detail', slug=event.slug)
-
-            except Exception as e:
-                messages.error(request, f'Error updating event: {str(e)}')
+            messages.success(request, 'Event service created successfully!')
+            return redirect('event_detail', pk=event.pk)
         else:
             messages.error(request, 'Please correct the errors below.')
     else:
-        form = EventForm(instance=event)
+        event_form = EventForm()
 
-    return render(request, 'events/edit_event.html', {'form': form, 'event': event})
+    context = {
+        'event_form': event_form,
+        'event_types': Event.EVENT_TYPE_CHOICES,
+    }
+
+    return render(request, 'events/create_event.html', context)
 
 
-# Delete Event View with Image Cleanup
 @login_required
-def delete_event(request, slug):
+def edit_event(request, pk):
     """
-    Handle event deletion with proper confirmation
-    Only allows event organizer to delete their events
+    Edit an existing event service
     """
-    event = get_object_or_404(Event, slug=slug, organizer=request.user)
+    event = get_object_or_404(Event, pk=pk, organizer=request.user)
 
-    # Delete confirmation
     if request.method == 'POST':
-        try:
-            event_title = event.title
-            event.delete()
-            messages.success(request, f'Event "{event_title}" deleted successfully!')
-            return redirect('event_list')
-        except Exception as e:
-            messages.error(request, f'Error deleting event: {str(e)}')
-            return redirect('event_detail', slug=slug)
+        event_form = EventForm(request.POST, instance=event)
 
-    # Show confirmation page
-    return render(request, 'events/delete_event.html', {'event': event})
+        if event_form.is_valid():
+            event_form.save()
+
+            # Handle image updates
+            primary_image = request.FILES.get('primary_image')
+            if primary_image:
+                # Remove existing primary image
+                EventImage.objects.filter(event=event, is_primary=True).delete()
+                EventImage.objects.create(
+                    event=event,
+                    image=primary_image,
+                    is_primary=True,
+                    display_order=0
+                )
+
+            messages.success(request, 'Event service updated successfully!')
+            return redirect('event_detail', pk=event.pk)
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        event_form = EventForm(instance=event)
+
+    context = {
+        'event_form': event_form,
+        'event': event,
+        'event_types': Event.EVENT_TYPE_CHOICES,
+    }
+
+    return render(request, 'events/edit_event.html', context)
 
 
-# My Events View with Enhanced Display
 @login_required
 def my_events(request):
     """
-    Display events created by the current user with statistics
+    Display events created by the current user
     """
-    # FIXED: Corrected context variable name from 'events: events' to 'events': events
-    events = Event.objects.filter(organizer=request.user).select_related(
-        'category'
-    ).prefetch_related('bookings').order_by('-created_at')
+    events = Event.objects.filter(organizer=request.user).order_by('-created_at')
 
-    return render(request, 'events/my_events.html', {'events': events})
+    # Calculate stats
+    total_events = events.count()
+    active_events = events.filter(status='active').count()
+    total_views = sum(event.view_count for event in events)
+    total_bookings = sum(event.booking_count for event in events)
+
+    context = {
+        'events': events,
+        'total_events': total_events,
+        'active_events': active_events,
+        'total_views': total_views,
+        'total_bookings': total_bookings,
+    }
+
+    return render(request, 'events/my_events.html', context)
 
 
-# IMAGE UPLOAD: View for adding media images
 @login_required
-def add_event_images(request, slug):
+def delete_event(request, pk):
     """
-    Handle addition of media images to existing events
-    Only allows event organizer to add images
+    Delete an event service
     """
-    event = get_object_or_404(Event, slug=slug, organizer=request.user)
+    event = get_object_or_404(Event, pk=pk, organizer=request.user)
 
     if request.method == 'POST':
-        form = EventImageForm(request.POST, request.FILES)
-        if form.is_valid():
-            try:
-                event_image = form.save()
-                event.gallery_images.add(event_image)
-                messages.success(request, 'Image added to event media successfully!')
-                return redirect('event_detail', slug=event.slug)
-            except Exception as e:
-                messages.error(request, f'Error adding image: {str(e)}')
-        else:
-            messages.error(request, 'Please correct the image upload errors.')
-    else:
-        form = EventImageForm()
+        event.delete()
+        messages.success(request, 'Event service deleted successfully!')
+        return redirect('my_events')
 
-    return render(request, 'events/add_event_images.html', {
-        'form': form,
-        'event': event
-    })
+    return render(request, 'events/delete_event.html', {'event': event})

@@ -1,218 +1,246 @@
 from django import forms
-from .models import Event, EventImage
-from categories.models import Category, Tag
+from django.core.exceptions import ValidationError
+from .models import Event, EventImage, EventReview
 
 
-# Create/edit event form with comprehensive image validation
 class EventForm(forms.ModelForm):
-    """
-    Form for creating and editing events with advanced image upload features
-    Includes validation for multiple image types and file handling
-    """
-
-    # IMAGE UPLOAD: Custom widgets for better image upload UX
-    main_image = forms.ImageField(
-        required=False,
+    # Additional form fields for multiple images
+    primary_image = forms.ImageField(
+        required=True,
+        label='Primary Event Image *',
+        help_text='This will be the main display image for your event service',
         widget=forms.FileInput(attrs={
-            'accept': 'image/*',
-            'class': 'form-control-file image-upload',
-            'data-max-size': '5MB'
-        }),
-        help_text="Upload main event banner (Max: 5MB, Recommended: 1200x600px)"
+            'class': 'form-control',
+            'accept': 'image/*'
+        })
     )
 
-    thumbnail = forms.ImageField(
+    image_2 = forms.ImageField(
         required=False,
+        label='Additional Image 2',
+        help_text='Show another aspect of your event organization',
         widget=forms.FileInput(attrs={
-            'accept': 'image/*',
-            'class': 'form-control-file image-upload',
-            'data-max-size': '2MB'
-        }),
-        help_text="Upload event thumbnail (Max: 2MB, Recommended: 400x300px)"
+            'class': 'form-control',
+            'accept': 'image/*'
+        })
     )
 
-    image = forms.ImageField(
+    image_3 = forms.ImageField(
         required=False,
+        label='Additional Image 3',
+        help_text='More images help attract more clients',
         widget=forms.FileInput(attrs={
-            'accept': 'image/*',
-            'class': 'form-control-file image-upload',
-            'data-max-size': '5MB'
-        }),
-        help_text="Upload event image (Max: 5MB)"
+            'class': 'form-control',
+            'accept': 'image/*'
+        })
+    )
+
+    image_4 = forms.ImageField(
+        required=False,
+        label='Additional Image 4',
+        help_text='Show your best work',
+        widget=forms.FileInput(attrs={
+            'class': 'form-control',
+            'accept': 'image/*'
+        })
     )
 
     class Meta:
         model = Event
         fields = [
-            'title', 'description', 'main_image', 'thumbnail', 'image', 'date', 'time',
-            'location', 'price', 'capacity', 'category', 'tags', 'is_featured'
+            'title', 'description', 'event_type', 'price',
+            'capacity', 'duration', 'location', 'status'
         ]
-
-        # Widgets Customization
         widgets = {
-            'date': forms.DateInput(attrs={
-                'type': 'date',
-                'class': 'form-control'
-            }),
-            'time': forms.TimeInput(attrs={
-                'type': 'time',
-                'class': 'form-control'
+            'title': forms.TextInput(attrs={
+                'class': 'form-control form-control-lg',
+                'placeholder': 'e.g., Professional Wedding Event Planning',
+                'maxlength': '200'
             }),
             'description': forms.Textarea(attrs={
-                'rows': 4,
-                'placeholder': 'Describe your event in detail...',
-                'class': 'form-control'
+                'class': 'form-control',
+                'placeholder': 'Describe your event organization services in detail. Include your experience, what makes you unique, and what clients can expect...',
+                'rows': 6,
+                'maxlength': '2000'
             }),
-            'title': forms.TextInput(attrs={
-                'placeholder': 'Enter event title...',
-                'class': 'form-control'
-            }),
-            'location': forms.TextInput(attrs={
-                'placeholder': 'Enter event location or online link...',
-                'class': 'form-control'
+            'event_type': forms.Select(attrs={
+                'class': 'form-select',
+                'required': True
             }),
             'price': forms.NumberInput(attrs={
-                'step': '0.01',
+                'class': 'form-control',
+                'placeholder': '0.00',
                 'min': '0',
-                'class': 'form-control'
+                'step': '0.01'
             }),
             'capacity': forms.NumberInput(attrs={
-                'min': '1',
-                'class': 'form-control'
+                'class': 'form-control',
+                'placeholder': 'e.g., 100',
+                'min': '1'
             }),
-            'category': forms.Select(attrs={
-                'class': 'form-control'
+            'duration': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'e.g., 4',
+                'min': '1'
             }),
-            'tags': forms.SelectMultiple(attrs={
-                'class': 'form-control'
+            'location': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'e.g., Karachi, Pakistan or Multiple Locations'
             }),
-            'is_featured': forms.CheckboxInput(attrs={
-                'class': 'form-check-input'
+            'status': forms.Select(attrs={
+                'class': 'form-select'
             })
         }
-
-        # IMAGE UPLOAD: Help texts for better user guidance
+        labels = {
+            'title': 'Event Service Title *',
+            'description': 'Service Description *',
+            'event_type': 'Event Type *',
+            'price': 'Starting Price ($) *',
+            'capacity': 'Event Capacity',
+            'duration': 'Duration (hours)',
+            'location': 'Service Location',
+            'status': 'Status'
+        }
         help_texts = {
-            'main_image': 'This will be the primary image displayed on your event page.',
-            'thumbnail': 'This image will be used in event lists and cards.',
-            'image': 'General event image (fallback if others are not set).',
+            'title': 'Make it clear and attractive to potential clients',
+            'description': 'Be detailed about what you offer and your experience',
+            'price': 'Base starting price for your event service',
+            'capacity': 'Maximum number of attendees you can handle',
+            'duration': 'Typical event duration in hours',
+            'location': 'Where you primarily provide services'
         }
 
-    # Category and tags field customization
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['category'].queryset = Category.objects.filter(is_active=True)
-        self.fields['tags'].queryset = Tag.objects.all()  # FIXED: Corrected typo 'querset' to 'queryset'
+    def clean_title(self):
+        title = self.cleaned_data.get('title')
+        if len(title) < 10:
+            raise ValidationError('Title must be at least 10 characters long.')
+        return title
 
-        # IMAGE UPLOAD: Add CSS classes to all fields
-        for field_name, field in self.fields.items():
-            if field_name not in ['is_featured']:
-                if 'class' not in field.widget.attrs:
-                    field.widget.attrs['class'] = 'form-control'
+    def clean_price(self):
+        price = self.cleaned_data.get('price')
+        if price <= 0:
+            raise ValidationError('Price must be greater than 0.')
+        return price
 
-    # IMAGE UPLOAD: Validation for main image
-    def clean_main_image(self):
-        main_image = self.cleaned_data.get('main_image')
-        return self._validate_image(main_image, 'main_image', 5)  # 5MB limit
+    def clean_capacity(self):
+        capacity = self.cleaned_data.get('capacity')
+        if capacity and capacity <= 0:
+            raise ValidationError('Capacity must be greater than 0.')
+        return capacity
 
-    # IMAGE UPLOAD: Validation for thumbnail
-    def clean_thumbnail(self):
-        thumbnail = self.cleaned_data.get('thumbnail')
-        return self._validate_image(thumbnail, 'thumbnail', 2)  # 2MB limit
-
-    # IMAGE UPLOAD: Validation for general image
-    def clean_image(self):
-        image = self.cleaned_data.get('image')
-        return self._validate_image(image, 'image', 5)  # 5MB limit
-
-    # IMAGE UPLOAD: Common image validation method
-    def _validate_image(self, image, field_name, max_size_mb):
-        """
-        Common validation method for all image fields
-        - Checks file size
-        - Validates file type
-        - Provides helpful error messages
-        """
-        if not image:
-            # If no new image uploaded, keep existing one
-            if self.instance and self.instance.pk:
-                existing_image = getattr(self.instance, field_name)
-                if existing_image:
-                    return existing_image
-            return None
-
-        # Validate image size
-        max_size_bytes = max_size_mb * 1024 * 1024
-        if image.size > max_size_bytes:
-            raise forms.ValidationError(
-                f'Image file too large (>{max_size_mb}MB). Please upload a smaller image.'
-            )
-
-        # Validate file type
-        valid_content_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-        if image.content_type not in valid_content_types:
-            raise forms.ValidationError(
-                'Unsupported file format. Please upload JPG, PNG, GIF, or WebP image.'
-            )
-
-        return image
-
-    # IMAGE UPLOAD: Ensure at least one image is provided
-    def clean(self):
-        cleaned_data = super().clean()
-        main_image = cleaned_data.get('main_image')
-        thumbnail = cleaned_data.get('thumbnail')
-        image = cleaned_data.get('image')
-
-        # Check if at least one image is provided (for new events)
-        if not self.instance.pk and not any([main_image, thumbnail, image]):
-            raise forms.ValidationError(
-                "Please upload at least one event image to make your event attractive."
-            )
-
-        return cleaned_data
+    def clean_duration(self):
+        duration = self.cleaned_data.get('duration')
+        if duration and duration <= 0:
+            raise ValidationError('Duration must be greater than 0.')
+        return duration
 
 
-# IMAGE UPLOAD: Form for adding media images
 class EventImageForm(forms.ModelForm):
-    """
-    Form for adding additional media images to events
-    """
-    image = forms.ImageField(
-        required=True,
-        widget=forms.FileInput(attrs={
-            'accept': 'image/*',
-            'class': 'form-control-file',
-            'data-max-size': '5MB'
-        }),
-        help_text="Upload additional event photo (Max: 5MB)"
-    )
-
     class Meta:
         model = EventImage
-        fields = ['image', 'caption']
-
+        fields = ['image', 'caption', 'is_primary', 'display_order']
         widgets = {
+            'image': forms.FileInput(attrs={
+                'class': 'form-control',
+                'accept': 'image/*'
+            }),
             'caption': forms.TextInput(attrs={
-                'placeholder': 'Optional caption for this image...',
-                'class': 'form-control'
+                'class': 'form-control',
+                'placeholder': 'Optional image caption...',
+                'maxlength': '200'
+            }),
+            'is_primary': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
+            'display_order': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': '0'
             })
         }
 
-    def clean_image(self):
-        image = self.cleaned_data.get('image')
-        return self._validate_image(image, 5)  # 5MB limit
 
-    def _validate_image(self, image, max_size_mb):
-        if not image:
-            return None
+class EventReviewForm(forms.ModelForm):
+    class Meta:
+        model = EventReview
+        fields = ['rating', 'comment']
+        widgets = {
+            'rating': forms.RadioSelect(choices=EventReview.RATING_CHOICES),
+            'comment': forms.Textarea(attrs={
+                'class': 'form-control',
+                'placeholder': 'Share your experience with this event service...',
+                'rows': 4,
+                'maxlength': '1000'
+            })
+        }
+        labels = {
+            'rating': 'Your Rating *',
+            'comment': 'Your Review (Optional)'
+        }
 
-        max_size_bytes = max_size_mb * 1024 * 1024
-        if image.size > max_size_bytes:
-            raise forms.ValidationError(f'Image file too large (>{max_size_mb}MB).')
 
-        valid_content_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-        if image.content_type not in valid_content_types:
-            raise forms.ValidationError('Unsupported file format.')
+class EventSearchForm(forms.Form):
+    search = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Search for event services...',
+            'aria-label': 'Search events'
+        })
+    )
 
-        return image
+    event_type = forms.ChoiceField(
+        required=False,
+        choices=[('', 'All Event Types')] + Event.EVENT_TYPE_CHOICES,
+        widget=forms.Select(attrs={
+            'class': 'form-select'
+        })
+    )
+
+    min_price = forms.DecimalField(
+        required=False,
+        min_value=0,
+        decimal_places=2,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Min price',
+            'step': '0.01'
+        })
+    )
+
+    max_price = forms.DecimalField(
+        required=False,
+        min_value=0,
+        decimal_places=2,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Max price',
+            'step': '0.01'
+        })
+    )
+
+    min_capacity = forms.IntegerField(
+        required=False,
+        min_value=1,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Min capacity'
+        })
+    )
+
+    SORT_CHOICES = [
+        ('-created_at', 'Newest First'),
+        ('created_at', 'Oldest First'),
+        ('price', 'Price: Low to High'),
+        ('-price', 'Price: High to Low'),
+        ('-average_rating', 'Highest Rated'),
+        ('-view_count', 'Most Popular'),
+    ]
+
+    sort = forms.ChoiceField(
+        required=False,
+        choices=SORT_CHOICES,
+        initial='-created_at',
+        widget=forms.Select(attrs={
+            'class': 'form-select'
+        })
+    )
