@@ -1,0 +1,343 @@
+{% extends 'base.html' %}
+
+{% block title %}EventPro - Find Perfect Event Services{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="hero-content">
+            <h1>Find the perfect <span class="highlight">event services</span> for your special occasion</h1>
+            <p>Book reliable event planners, decorators, caterers, and more for weddings, parties, corporate events, and other celebrations.</p>
+
+            <!-- Search Bar -->
+            <div class="search-container">
+                <form action="/search/" method="get" class="search-form">
+                    <div class="search-input-group">
+                        <input type="text" name="q" placeholder="What service are you looking for?" class="search-input">
+                        <button type="submit" class="search-btn">Search</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="hero-stats">
+                <div class="stat">
+                    <span class="stat-number">500+</span>
+                    <span class="stat-label">Service Providers</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number">1,000+</span>
+                    <span class="stat-label">Events Completed</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number">4.9/5</span>
+                    <span class="stat-label">Customer Rating</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Popular Services Section -->
+<section class="services-section">
+    <div class="container">
+        <h2>Popular Event Services</h2>
+        <div class="services-grid">
+            <div class="service-card">
+                <div class="service-icon">💒</div>
+                <h3>Wedding Planning</h3>
+                <p>Complete wedding coordination and management</p>
+                <a href="/events/?category=wedding" class="service-link">Browse Services →</a>
+            </div>
+
+            <div class="service-card">
+                <div class="service-icon">🎂</div>
+                <h3>Birthday Parties</h3>
+                <p>Memorable birthday celebrations</p>
+                <a href="/events/?category=birthday" class="service-link">Browse Services →</a>
+            </div>
+
+            <div class="service-card">
+                <div class="service-icon">🏢</div>
+                <h3>Corporate Events</h3>
+                <p>Professional corporate gatherings</p>
+                <a href="/events/?category=corporate" class="service-link">Browse Services →</a>
+            </div>
+
+            <div class="service-card">
+                <div class="service-icon">🎵</div>
+                <h3>Music Concerts</h3>
+                <p>Live music event organization</p>
+                <a href="/events/?category=music" class="service-link">Browse Services →</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section class="how-it-works">
+    <div class="container">
+        <h2>How EventPro Works</h2>
+        <div class="steps-grid">
+            <div class="step">
+                <div class="step-number">1</div>
+                <h3>Search Services</h3>
+                <p>Find the perfect event service for your occasion</p>
+            </div>
+            <div class="step">
+                <div class="step-number">2</div>
+                <h3>Compare & Book</h3>
+                <p>Compare providers and book the best one</p>
+            </div>
+            <div class="step">
+                <div class="step-number">3</div>
+                <h3>Enjoy Your Event</h3>
+                <p>Relax while professionals handle everything</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Trust Indicators -->
+<section class="trust-section">
+    <div class="container">
+        <h2>Why Choose EventPro?</h2>
+        <div class="trust-grid">
+            <div class="trust-item">
+                <div class="trust-icon">🔒</div>
+                <h3>Secure Payments</h3>
+                <p>Your payments are protected and secure</p>
+            </div>
+            <div class="trust-item">
+                <div class="trust-icon">⭐</div>
+                <h3>Verified Providers</h3>
+                <p>All service providers are verified</p>
+            </div>
+            <div class="trust-item">
+                <div class="trust-icon">📞</div>
+                <h3>24/7 Support</h3>
+                <p>Get help whenever you need it</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+.hero-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 100px 0;
+    text-align: center;
+}
+
+.hero-content h1 {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    font-weight: 700;
+}
+
+.highlight {
+    color: #ffd700;
+}
+
+.hero-content p {
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+    opacity: 0.9;
+}
+
+.search-container {
+    max-width: 600px;
+    margin: 0 auto 3rem;
+}
+
+.search-input-group {
+    display: flex;
+    background: white;
+    border-radius: 50px;
+    padding: 5px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.search-input {
+    flex: 1;
+    border: none;
+    padding: 15px 25px;
+    border-radius: 50px;
+    font-size: 1rem;
+    outline: none;
+}
+
+.search-btn {
+    background: #ff6b6b;
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 50px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.3s;
+}
+
+.search-btn:hover {
+    background: #ff5252;
+}
+
+.hero-stats {
+    display: flex;
+    justify-content: center;
+    gap: 4rem;
+}
+
+.stat {
+    text-align: center;
+}
+
+.stat-number {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.services-section {
+    padding: 80px 0;
+    background: #f8f9fa;
+}
+
+.services-section h2 {
+    text-align: center;
+    margin-bottom: 3rem;
+    font-size: 2.5rem;
+}
+
+.services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+}
+
+.service-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    transition: transform 0.3s;
+}
+
+.service-card:hover {
+    transform: translateY(-5px);
+}
+
+.service-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.service-card h3 {
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.service-card p {
+    color: #666;
+    margin-bottom: 1.5rem;
+}
+
+.service-link {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.how-it-works {
+    padding: 80px 0;
+}
+
+.how-it-works h2 {
+    text-align: center;
+    margin-bottom: 3rem;
+    font-size: 2.5rem;
+}
+
+.steps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+}
+
+.step {
+    text-align: center;
+    padding: 2rem;
+}
+
+.step-number {
+    width: 60px;
+    height: 60px;
+    background: #667eea;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 auto 1rem;
+}
+
+.trust-section {
+    padding: 80px 0;
+    background: #f8f9fa;
+}
+
+.trust-section h2 {
+    text-align: center;
+    margin-bottom: 3rem;
+    font-size: 2.5rem;
+}
+
+.trust-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+}
+
+.trust-item {
+    text-align: center;
+    padding: 2rem;
+}
+
+.trust-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+    .hero-content h1 {
+        font-size: 2rem;
+    }
+
+    .hero-stats {
+        gap: 2rem;
+    }
+
+    .search-input-group {
+        flex-direction: column;
+        border-radius: 15px;
+    }
+
+    .search-input {
+        border-radius: 15px 15px 0 0;
+    }
+
+    .search-btn {
+        border-radius: 0 0 15px 15px;
+    }
+}
+</style>
+{% endblock %}
