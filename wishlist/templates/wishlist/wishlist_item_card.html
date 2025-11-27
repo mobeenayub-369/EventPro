@@ -1,0 +1,86 @@
+<div class="wishlist-item-card h-100">
+    <!-- Event Image -->
+    <div class="position-relative">
+        {% if item.event.image %}
+        <img src="{{ item.event.image.url }}" alt="{{ item.event.title }}"
+             class="wishlist-item-image img-fluid w-100" style="height: 200px; object-fit: cover;">
+        {% else %}
+        <div class="wishlist-item-image bg-light d-flex align-items-center justify-content-center"
+             style="height: 200px;">
+            <i class="fas fa-calendar-alt fa-2x text-muted"></i>
+        </div>
+        {% endif %}
+
+        <!-- Status Badge -->
+        <div class="position-absolute top-0 end-0 m-2">
+            {% if item.event.date < today %}
+            <span class="badge bg-secondary">Past</span>
+            {% elif item.event.is_almost_full %}
+            <span class="badge bg-warning">Almost Full</span>
+            {% else %}
+            <span class="badge bg-success">Available</span>
+            {% endif %}
+        </div>
+
+        <!-- Wishlist Toggle -->
+        <div class="position-absolute top-0 start-0 m-2">
+            <button class="btn btn-sm btn-light remove-wishlist"
+                    data-event-id="{{ item.event.id }}"
+                    title="Remove from wishlist">
+                <i class="fas fa-heart text-danger"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Event Details -->
+    <div class="p-3">
+        <h6 class="card-title mb-2">{{ item.event.title }}</h6>
+
+        <div class="event-meta mb-3">
+            <div class="d-flex justify-content-between text-sm mb-1">
+                <span class="text-muted">
+                    <i class="fas fa-tag"></i> {{ item.event.category.name }}
+                </span>
+                <span class="fw-bold text-primary">Rs. {{ item.event.price }}</span>
+            </div>
+            <div class="d-flex justify-content-between text-sm mb-1">
+                <span class="text-muted">
+                    <i class="fas fa-map-marker-alt"></i> {{ item.event.location }}
+                </span>
+            </div>
+            <div class="d-flex justify-content-between text-sm">
+                <span class="text-muted">
+                    <i class="fas fa-calendar"></i> {{ item.event.date|date:"M d, Y" }}
+                </span>
+                <span class="text-muted">
+                    <i class="fas fa-clock"></i> {{ item.event.time|time:"g:i A" }}
+                </span>
+            </div>
+        </div>
+
+        <!-- Personal Notes -->
+        {% if item.notes %}
+        <div class="alert alert-light p-2 mb-3">
+            <small>
+                <strong>Your Notes:</strong>
+                <span class="d-block text-muted mt-1">{{ item.notes|truncatewords:10 }}</span>
+            </small>
+        </div>
+        {% endif %}
+
+        <!-- Action Buttons -->
+        <div class="wishlist-item-actions">
+            <a href="{% url 'events:event_detail' item.event.slug %}"
+               class="btn btn-primary btn-sm flex-fill">
+                <i class="fas fa-eye"></i> View
+            </a>
+
+            {% if item.event.date >= today %}
+            <a href="{% url 'bookings:create_booking' item.event.id %}"
+               class="btn btn-success btn-sm flex-fill">
+                <i class="fas fa-ticket-alt"></i> Book
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>

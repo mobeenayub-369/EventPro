@@ -1,146 +1,128 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'pages/css/pages.css' %}">
-{% endblock %}
-
 {% block title %}Manage Pages - EventPro{% endblock %}
 
 {% block content %}
-<div class="page-list-container">
-    <!-- Page Header -->
-    <div class="page-list-header">
-        <h1>Manage Pages</h1>
-        <p>Create and manage static content pages</p>
-        <a href="{% url 'create_page' %}" class="btn btn-primary">
-            <i class="fas fa-plus"></i>
-            Create New Page
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Manage Pages</h2>
+        <a href="{% url 'pages:create_page' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Create New Page
         </a>
     </div>
 
-    <!-- Statistics Cards -->
-    <div class="pages-stats">
-        <div class="stat-card">
-            <div class="stat-icon">
-                <i class="fas fa-file-alt"></i>
-            </div>
-            <div class="stat-info">
-                <h3>{{ pages.count }}</h3>
-                <p>Total Pages</p>
-            </div>
-        </div>
-        
-        <div class="stat-card">
-            <div class="stat-icon">
-                <i class="fas fa-check-circle"></i>
-            </div>
-            <div class="stat-info">
-                <h3>{{ pages.filter.status='published'|length }}</h3>
-                <p>Published</p>
-            </div>
-        </div>
-        
-        <div class="stat-card">
-            <div class="stat-icon">
-                <i class="fas fa-edit"></i>
-            </div>
-            <div class="stat-info">
-                <h3>{{ pages.filter.status='draft'|length }}</h3>
-                <p>Drafts</p>
-            </div>
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <label for="type" class="form-label">Filter by Type</label>
+                    <select name="type" id="type" class="form-select">
+                        <option value="">All Types</option>
+                        <option value="about" {% if page_type_filter =='about' %}selected{% endif %}>About Us</option>
+                        <option value="how_it_works" {% if page_type_filter =='how_it_works' %}selected{% endif %}>How It Works</option>
+                        <option value="contact" {% if page_type_filter =='contact' %}selected{% endif %}>Contact</option>
+                        <option value="faq" {% if page_type_filter =='faq' %}selected{% endif %}>FAQ</option>
+                        <option value="terms" {% if page_type_filter =='terms' %}selected{% endif %}>Terms</option>
+                        <option value="privacy" {% if page_type_filter =='privacy' %}selected{% endif %}>Privacy</option>
+                        <option value="custom" {% if page_type_filter =='custom' %}selected{% endif %}>Custom</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">&nbsp;</label>
+                    <div>
+                        <button type="submit" class="btn btn-outline-primary">Filter</button>
+                        <a href="{% url 'pages:page_list' %}" class="btn btn-outline-secondary">Clear</a>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
 
-    {% if pages %}
     <!-- Pages Table -->
-    <div class="pages-table-container">
-        <table class="pages-table">
-            <thead>
-                <tr>
-                    <th>Title</th>
-                    <th>URL Slug</th>
-                    <th>Status</th>
-                    <th>Navigation</th>
-                    <th>Order</th>
-                    <th>Created</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for page in pages %}
-                <tr>
-                    <td>
-                        <div class="page-info-cell">
-                            <strong>{{ page.title }}</strong>
-                            {% if page.meta_description %}
-                            <p class="page-description">{{ page.meta_description|truncatewords:10 }}</p>
-                            {% endif %}
-                        </div>
-                    </td>
-                    <td>
-                        <code>/pages/{{ page.slug }}/</code>
-                    </td>
-                    <td>
-                        <span class="status-badge status-{{ page.status }}">
-                            {{ page.get_status_display }}
-                        </span>
-                    </td>
-                    <td>
-                        <div class="nav-indicators">
-                            {% if page.show_in_header %}
-                            <span class="nav-badge header-nav" title="Shows in header">
-                                <i class="fas fa-header"></i>
-                                Header
-                            </span>
-                            {% endif %}
-                            {% if page.show_in_footer %}
-                            <span class="nav-badge footer-nav" title="Shows in footer">
-                                <i class="fas fa-footer"></i>
-                                Footer
-                            </span>
-                            {% endif %}
-                        </div>
-                    </td>
-                    <td>{{ page.order }}</td>
-                    <td>{{ page.created_at|date:"M j, Y" }}</td>
-                    <td>
-                        <div class="action-buttons">
-                            <!-- View Page -->
-                            {% if page.is_published %}
-                            <a href="{% url 'page_detail' page.slug %}" class="btn btn-outline btn-sm" title="View">
-                                <i class="fas fa-eye"></i>
-                            </a>
-                            {% else %}
-                            <span class="btn btn-disabled btn-sm" title="Not published">
-                                <i class="fas fa-eye-slash"></i>
-                            </span>
-                            {% endif %}
-                            
-                            <!-- Edit Page -->
-                            <a href="{% url 'edit_page' page.slug %}" class="btn btn-outline btn-sm" title="Edit">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            
-                            <!-- Delete Page -->
-                            <a href="{% url 'delete_page' page.slug %}" class="btn btn-danger btn-sm" title="Delete">
-                                <i class="fas fa-trash"></i>
-                            </a>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <div class="card">
+        <div class="card-body">
+            {% if pages %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Slug</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Order</th>
+                            <th>Navigation</th>
+                            <th>Footer</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for page in pages %}
+                        <tr>
+                            <td>
+                                <strong>{{ page.title }}</strong>
+                                {% if page.meta_title %}
+                                <br><small class="text-muted">{{ page.meta_title }}</small>
+                                {% endif %}
+                            </td>
+                            <td><code>{{ page.slug }}</code></td>
+                            <td>
+                                <span class="badge bg-secondary">{{ page.get_page_type_display }}</span>
+                            </td>
+                            <td>
+                                <span class="badge {% if page.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ page.is_active|yesno:"Active,Inactive" }}
+                                </span>
+                            </td>
+                            <td>{{ page.order }}</td>
+                            <td>
+                                {% if page.show_in_navigation %}
+                                <i class="fas fa-check text-success"></i>
+                                {% else %}
+                                <i class="fas fa-times text-muted"></i>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if page.show_in_footer %}
+                                <i class="fas fa-check text-success"></i>
+                                {% else %}
+                                <i class="fas fa-times text-muted"></i>
+                                {% endif %}
+                            </td>
+                            <td>{{ page.created_at|date:"M d, Y" }}</td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'pages:page_detail' page.slug %}"
+                                       class="btn btn-outline-primary" target="_blank">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'pages:edit_page' page.slug %}"
+                                       class="btn btn-outline-secondary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'pages:delete_page' page.slug %}"
+                                       class="btn btn-outline-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No Pages Found</h4>
+                <p class="text-muted">Get started by creating your first page.</p>
+                <a href="{% url 'pages:create_page' %}" class="btn btn-primary">Create First Page</a>
+            </div>
+            {% endif %}
+        </div>
     </div>
-    {% else %}
-    <!-- Empty State -->
-    <div class="empty-state">
-        <i class="fas fa-file-alt"></i>
-        <h3>No Pages Created</h3>
-        <p>You haven't created any pages yet. Start by creating your first page!</p>
-        <a href="{% url 'create_page' %}" class="btn btn-primary">Create Your First Page</a>
-    </div>
-    {% endif %}
 </div>
 {% endblock %}

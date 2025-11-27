@@ -1,9 +1,13 @@
 from django.urls import path
 from . import views
 
+# App name for namespacing URLs (e.g., categories:category_list)
+app_name = 'categories'
+
 urlpatterns = [
-    path('', views.category_list, name='categories'),
-    path('tags/', views.tag_list, name='tags'),
-    path('<slug:category_slug>/', views.category_events, name='category_events'),
-    path('tag/<slug:tag_slug>/', views.tag_events, name='tag_events'),
+    # URL pattern for category list page
+    path('', views.CategoryListView.as_view(), name='category_list'),
+
+    # URL pattern for individual category detail page using slug
+    path('<slug:slug>/', views.CategoryDetailView.as_view(), name='category_detail'),
 ]

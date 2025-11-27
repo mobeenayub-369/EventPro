@@ -1,165 +1,154 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block title %}Wishlist Details - EventPro{% endblock %}
+
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'wishlist/css/wishlist.css' %}">
 {% endblock %}
 
-{% block title %}My Wishlist - EventPro{% endblock %}
-
 {% block content %}
-<div class="wishlist-container">
-    <div class="wishlist-header">
-        <h1>My Wishlist</h1>
-        <p>Save events you're interested in for later</p>
+<div class="wishlist-hero">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="display-4 mb-3">My Wishlist</h1>
+                <p class="lead mb-0">Your saved events and experiences</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <div class="btn-group">
+                    <a href="{% url 'wishlist:share_wishlist' %}" class="btn btn-outline-light">
+                        <i class="fas fa-share-alt"></i> Share
+                    </a>
+                    {% if wishlist_items %}
+                    <a href="{% url 'wishlist:clear_wishlist' %}" class="btn btn-outline-light">
+                        <i class="fas fa-trash"></i> Clear All
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
     </div>
+</div>
 
-    <!-- Wishlist Stats -->
+<div class="container py-4">
+    <!-- Quick Stats -->
     <div class="wishlist-stats">
         <div class="stat-card">
-            <div class="stat-icon">
-                <i class="fas fa-heart"></i>
-            </div>
-            <div class="stat-info">
-                <h3>{{ wishlist.items_count }}</h3>
-                <p>Total Events</p>
-            </div>
+            <div class="stat-number">{{ items_count }}</div>
+            <div class="stat-label">Total Items</div>
         </div>
-        
         <div class="stat-card">
-            <div class="stat-icon" style="background: #17a2b8;">
-                <i class="fas fa-ticket-alt"></i>
-            </div>
-            <div class="stat-info">
-                <h3>{{ wishlist.total_price }}</h3>
-                <p>Total Value</p>
-            </div>
+            <div class="stat-number">{{ upcoming_events.count }}</div>
+            <div class="stat-label">Upcoming</div>
         </div>
-        
         <div class="stat-card">
-            <div class="stat-icon" style="background: #28a745;">
-                <i class="fas fa-calendar-check"></i>
-            </div>
-            <div class="stat-info">
-                <h3>{{ wishlist.items.filter.event.is_available=True.count }}</h3>
-                <p>Available Events</p>
-            </div>
+            <div class="stat-number">{{ past_events.count }}</div>
+            <div class="stat-label">Past Events</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">Rs. {{ total_value }}</div>
+            <div class="stat-label">Total Value</div>
         </div>
     </div>
 
-    <!-- Wishlist Actions -->
-    <div class="wishlist-actions">
-        <a href="{% url 'event_list' %}" class="action-btn">
-            <i class="fas fa-plus-circle"></i>
-            Browse More Events
-        </a>
-        {% if wishlist.items_count > 0 %}
-        <a href="{% url 'clear_wishlist' %}" class="action-btn danger">
-            <i class="fas fa-trash"></i>
-            Clear Wishlist
-        </a>
-        {% endif %}
-    </div>
-
-    <!-- Wishlist Items -->
-    {% if wishlist_items %}
-    <div class="wishlist-grid">
-        {% for item in wishlist_items %}
-        <div class="wishlist-item-card">
-            <div class="wishlist-item-image">
-                {% if item.event.image %}
-                    <img src="{{ item.event.image.url }}" alt="{{ item.event.title }}">
-                {% else %}
-                    <div class="wishlist-item-image-placeholder">
-                        <i class="fas fa-calendar-alt"></i>
-                    </div>
-                {% endif %}
-                
-                <button class="remove-from-wishlist" 
-                        data-item-id="{{ item.id }}"
-                        title="Remove from wishlist">
-                    <i class="fas fa-times"></i>
-                </button>
-
-                {% if item.event.is_featured %}
-                <div class="featured-badge">
-                    <i class="fas fa-star"></i>
-                    Featured
-                </div>
-                {% endif %}
-            </div>
-
-            <div class="wishlist-item-info">
-                <h3><a href="{% url 'event_detail' item.event.slug %}">{{ item.event.title }}</a></h3>
-                <p class="wishlist-item-description">{{ item.event.description|truncatewords:20 }}</p>
-                
-                <div class="wishlist-item-meta">
-                    <div class="meta-item">
-                        <i class="fas fa-calendar"></i>
-                        <span>{{ item.event.date|date:"M j, Y" }}</span>
-                    </div>
-                    <div class="meta-item">
-                        <i class="fas fa-clock"></i>
-                        <span>{{ item.event.time|time:"g:i A" }}</span>
-                    </div>
-                    <div class="meta-item">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <span>{{ item.event.location }}</span>
-                    </div>
-                    <div class="meta-item">
-                        <i class="fas fa-user"></i>
-                        <span>By {{ item.event.organizer.username }}</span>
-                    </div>
-                </div>
-
-                <div class="wishlist-item-footer">
-                    <div class="wishlist-item-price">
-                        <strong>Rs. {{ item.event.price }}</strong>
-                    </div>
-                    
-                    {% if item.event.is_available %}
-                    <div class="availability available">
-                        <i class="fas fa-check-circle"></i>
-                        {{ item.event.available_seats }} seats available
-                    </div>
-                    {% else %}
-                    <div class="availability sold-out">
-                        <i class="fas fa-times-circle"></i>
-                        Sold Out
-                    </div>
-                    {% endif %}
-                </div>
-
-                <div class="wishlist-item-actions">
-                    <a href="{% url 'event_detail' item.event.slug %}" class="btn btn-outline btn-sm">
-                        <i class="fas fa-eye"></i>
-                        View Details
-                    </a>
-                    
-                    {% if item.event.is_available %}
-                    <a href="{% url 'create_booking' item.event.id %}" class="quick-book-btn">
-                        <i class="fas fa-ticket-alt"></i>
-                        Book Now
-                    </a>
-                    {% else %}
-                    <button class="btn btn-disabled btn-sm" disabled>
-                        Sold Out
+    <!-- Filter Tabs -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <ul class="nav nav-pills" id="wishlistTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" type="button" role="tab">
+                        All Events ({{ items_count }})
                     </button>
-                    {% endif %}
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="upcoming-tab" data-bs-toggle="tab" data-bs-target="#upcoming" type="button" role="tab">
+                        Upcoming ({{ upcoming_events.count }})
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="past-tab" data-bs-toggle="tab" data-bs-target="#past" type="button" role="tab">
+                        Past ({{ past_events.count }})
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="wishlistTabsContent">
+        <!-- All Events Tab -->
+        <div class="tab-pane fade show active" id="all" role="tabpanel">
+            {% if wishlist_items %}
+            <div class="row">
+                {% for item in wishlist_items %}
+                <div class="col-xl-4 col-lg-6 mb-4">
+                    {% include 'wishlist/partials/wishlist_item_card.html' with item=item %}
                 </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            {% include 'wishlist/partials/empty_state.html' %}
+            {% endif %}
+        </div>
+
+        <!-- Upcoming Events Tab -->
+        <div class="tab-pane fade" id="upcoming" role="tabpanel">
+            {% if upcoming_events %}
+            <div class="row">
+                {% for item in upcoming_events %}
+                <div class="col-xl-4 col-lg-6 mb-4">
+                    {% include 'wishlist/partials/wishlist_item_card.html' with item=item %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-calendar-plus fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No Upcoming Events</h4>
+                <p class="text-muted">All your wishlist events have passed or there are no upcoming events.</p>
+                <a href="{% url 'events:event_list' %}" class="btn btn-primary">Browse Upcoming Events</a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Past Events Tab -->
+        <div class="tab-pane fade" id="past" role="tabpanel">
+            {% if past_events %}
+            <div class="row">
+                {% for item in past_events %}
+                <div class="col-xl-4 col-lg-6 mb-4">
+                    {% include 'wishlist/partials/wishlist_item_card.html' with item=item %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No Past Events</h4>
+                <p class="text-muted">You haven't added any past events to your wishlist.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Quick Actions Footer -->
+    {% if wishlist_items %}
+    <div class="card mt-5">
+        <div class="card-body text-center">
+            <h5 class="mb-3">Wishlist Actions</h5>
+            <div class="d-flex justify-content-center gap-3 flex-wrap">
+                <a href="{% url 'wishlist:share_wishlist' %}" class="btn btn-outline-primary">
+                    <i class="fas fa-share-alt"></i> Share Wishlist
+                </a>
+                <a href="{% url 'wishlist:clear_wishlist' %}" class="btn btn-outline-danger">
+                    <i class="fas fa-trash"></i> Clear All
+                </a>
+                <a href="{% url 'events:event_list' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add More Events
+                </a>
             </div>
         </div>
-        {% endfor %}
-    </div>
-    {% else %}
-    <div class="empty-wishlist">
-        <i class="fas fa-heart"></i>
-        <h3>Your Wishlist is Empty</h3>
-        <p>Start exploring events and add them to your wishlist for easy access later.</p>
-        <a href="{% url 'event_list' %}" class="btn btn-primary">
-            <i class="fas fa-search"></i>
-            Browse Events
-        </a>
     </div>
     {% endif %}
 </div>
@@ -167,76 +156,23 @@
 
 {% block extra_js %}
 <script>
+// Tab functionality
 document.addEventListener('DOMContentLoaded', function() {
-    // Remove from wishlist functionality
-    const removeButtons = document.querySelectorAll('.remove-from-wishlist');
-    
-    removeButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const itemId = this.getAttribute('data-item-id');
-            removeFromWishlist(itemId, this);
+    const tabs = document.querySelectorAll('#wishlistTabs .nav-link');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            // Update active tab
+            tabs.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
         });
     });
-    
-    function removeFromWishlist(itemId, button) {
-        const card = button.closest('.wishlist-item-card');
-        
-        // Show loading state
-        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-        button.disabled = true;
-        
-        fetch(`/wishlist/remove/${itemId}/`, {
-            method: 'GET',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRFToken': '{{ csrf_token }}'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Animate removal
-                card.style.transform = 'scale(0.8)';
-                card.style.opacity = '0';
-                
-                setTimeout(() => {
-                    card.remove();
-                    updateWishlistCount(data.wishlist_count);
-                    
-                    // Show message
-                    showMessage(data.message, 'success');
-                    
-                    // Check if wishlist is empty
-                    if (data.wishlist_count === 0) {
-                        location.reload();
-                    }
-                }, 300);
-            } else {
-                showMessage(data.message, 'error');
-                button.innerHTML = '<i class="fas fa-times"></i>';
-                button.disabled = false;
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showMessage('An error occurred. Please try again.', 'error');
-            button.innerHTML = '<i class="fas fa-times"></i>';
-            button.disabled = false;
-        });
-    }
-    
-    function updateWishlistCount(count) {
-        // Update any wishlist count indicators on the page
-        const countElements = document.querySelectorAll('.wishlist-count');
-        countElements.forEach(element => {
-            element.textContent = count;
-        });
-    }
-    
-    function showMessage(message, type) {
-        // You can implement a toast notification system here
-        alert(message); // Simple alert for now
-    }
 });
+
+// Update statistics when items are removed
+function updateWishlistStats() {
+    // This would update the stats dynamically when items are removed via AJAX
+    console.log('Updating wishlist statistics...');
+}
 </script>
 {% endblock %}

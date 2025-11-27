@@ -1,23 +1,13 @@
 {% if suggestions %}
-<div class="search-suggestions">
     {% for suggestion in suggestions %}
-    <div class="suggestion-item" data-type="{{ suggestion.type }}" data-text="{{ suggestion.text }}">
-        <div class="suggestion-icon">
-            {% if suggestion.type == 'event' %}
-            <i class="fas fa-calendar-alt"></i>
-            {% elif suggestion.type == 'category' %}
-            <i class="fas fa-tag"></i>
-            {% elif suggestion.type == 'location' %}
-            <i class="fas fa-map-marker-alt"></i>
-            {% else %}
-            <i class="fas fa-hashtag"></i>
-            {% endif %}
-        </div>
-        <div class="suggestion-content">
-            <div class="suggestion-text">{{ suggestion.text }}</div>
-            <div class="suggestion-category">{{ suggestion.category }}</div>
-        </div>
+    <div class="suggestion-item" onclick="selectSuggestion('{{ suggestion }}')">
+        <i class="fas fa-search me-2 text-muted"></i>
+        {{ suggestion }}
     </div>
     {% endfor %}
-</div>
+{% else %}
+    <div class="suggestion-item text-muted">
+        <i class="fas fa-info-circle me-2"></i>
+        No suggestions found
+    </div>
 {% endif %}

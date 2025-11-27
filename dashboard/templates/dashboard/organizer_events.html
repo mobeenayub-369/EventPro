@@ -1,75 +1,526 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'dashboard/css/dashboard.css' %}">
-{% endblock %}
-
 {% block title %}My Events - EventPro{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'dashboard/css/dashboard.css' %}">
+<style>
+.events-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+}
+.event-card {
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    margin-bottom: 1.5rem;
+}
+.event-card:hover {
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+.event-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+.stat-mini {
+    background: white;
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="dashboard-container">
-    <div class="dashboard-header">
-        <h1>My Events</h1>
-        <p>Manage your events and track their performance</p>
-        <a href="{% url 'create_event' %}" class="btn btn-primary">Create New Event</a>
+<!-- Events Header -->
+<div class="events-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="display-5 mb-3">My Events Management</h1>
+                <p class="lead mb-0">Create, manage, and track your events</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a href="{% url 'events:create_event' %}" class="btn btn-light btn-lg">
+                    <i class="fas fa-plus"></i> Create New Event
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container py-4">
+    <!-- Quick Stats -->
+    <div class="event-stats">
+        <div class="stat-mini">
+            <div class="h4 text-primary mb-1">{{ stats.total_events }}</div>
+            <small class="text-muted">Total Events</small>
+        </div>
+        <div class="stat-mini">
+            <div class="h4 text-success mb-1">{{ stats.active_events }}</div>
+            <small class="text-muted">Active Events</small>
+        </div>
+        <div class="stat-mini">
+            <div class="h4 text-warning mb-1">{{ stats.pending_events }}</div>
+            <small class="text-muted">Pending Approval</small>
+        </div>
+        <div class="stat-mini">
+            <div class="h4 text-info mb-1">{{ stats.total_bookings }}</div>
+            <small class="text-muted">Total Bookings</small>
+        </div>
+        <div class="stat-mini">
+            <div class="h4 text-danger mb-1">Rs. {{ stats.total_revenue }}</div>
+            <small class="text-muted">Total Revenue</small>
+        </div>
     </div>
 
-    {% if events %}
-    <div class="events-table">
-        <table>
-            <thead>
-                <tr>
-                    <th>Event</th>
-                    <th>Date</th>
-                    <th>Location</th>
-                    <th>Price</th>
-                    <th>Status</th>
-                    <th>Bookings</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for event in events %}
-                <tr>
-                    <td>
-                        <div class="event-info">
-                            {% if event.image %}
-                            <img src="{{ event.image.url }}" alt="{{ event.title }}" class="event-thumbnail">
-                            {% endif %}
+    <!-- Filters and Search -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <input type="text" class="form-control" placeholder="Search events..." id="searchEvents">
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="statusFilter">
+                        <option value="">All Statuses</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                        <option value="pending">Pending</option>
+                        <option value="draft">Draft</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="categoryFilter">
+                        <option value="">All Categories</option>
+                        {% for category in categories %}
+                        <option value="{{ category.slug }}">{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-outline-secondary w-100" onclick="resetFilters()">
+                        <i class="fas fa-refresh"></i> Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Events Grid/List View Toggle -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4>My Events ({{ events.paginator.count }})</h4>
+        <div class="btn-group">
+            <button class="btn btn-outline-primary active" id="listView">
+                <i class="fas fa-list"></i> List
+            </button>
+            <button class="btn btn-outline-primary" id="gridView">
+                <i class="fas fa-th"></i> Grid
+            </button>
+        </div>
+    </div>
+
+    <!-- Events List View -->
+    <div id="eventsListView">
+        {% if events %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Event</th>
+                        <th>Date & Time</th>
+                        <th>Category</th>
+                        <th>Status</th>
+                        <th>Bookings</th>
+                        <th>Revenue</th>
+                        <th>Rating</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for event in events %}
+                    <tr class="event-row">
+                        <td>
+                            <div class="d-flex align-items-center">
+                                {% if event.image %}
+                                <img src="{{ event.image.url }}" alt="{{ event.title }}"
+                                     class="rounded me-3" style="width: 60px; height: 60px; object-fit: cover;">
+                                {% else %}
+                                <div class="bg-light rounded me-3 d-flex align-items-center justify-content-center"
+                                     style="width: 60px; height: 60px;">
+                                    <i class="fas fa-calendar text-muted"></i>
+                                </div>
+                                {% endif %}
+                                <div>
+                                    <h6 class="mb-1">{{ event.title }}</h6>
+                                    <small class="text-muted">
+                                        <i class="fas fa-map-marker-alt"></i> {{ event.location }}
+                                    </small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
                             <div>
-                                <strong>{{ event.title }}</strong>
-                                <p class="event-category">{{ event.category.name }}</p>
+                                <div>{{ event.date|date:"M d, Y" }}</div>
+                                <small class="text-muted">{{ event.time|time:"g:i A" }}</small>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">{{ event.category.name }}</span>
+                        </td>
+                        <td>
+                            <span class="badge
+                                {% if event.is_active and event.is_approved %}bg-success
+                                {% elif event.is_approved %}bg-warning
+                                {% else %}bg-secondary{% endif %}">
+                                {% if event.is_active and event.is_approved %}Active
+                                {% elif event.is_approved %}Inactive
+                                {% else %}Pending{% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="text-center">
+                                <div class="h6 mb-0">{{ event.booking_count }}</div>
+                                <small class="text-muted">bookings</small>
+                            </div>
+                        </td>
+                        <td>
+                            <strong class="text-success">Rs. {{ event.total_revenue }}</strong>
+                        </td>
+                        <td>
+                            {% if event.average_rating %}
+                            <div class="text-warning">
+                                <i class="fas fa-star"></i> {{ event.average_rating|floatformat:1 }}
+                                <small class="text-muted">({{ event.review_count }})</small>
+                            </div>
+                            {% else %}
+                            <span class="text-muted">No ratings</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'events:event_detail' event.slug %}"
+                                   class="btn btn-outline-primary" title="View">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'events:edit_event' event.slug %}"
+                                   class="btn btn-outline-secondary" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <div class="dropdown">
+                                    <button class="btn btn-outline-info dropdown-toggle"
+                                            type="button" data-bs-toggle="dropdown">
+                                        <i class="fas fa-cog"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <a class="dropdown-item" href="{% url 'bookings:event_bookings' event.slug %}">
+                                                <i class="fas fa-ticket-alt"></i> View Bookings
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" href="{% url 'events:event_analytics' event.slug %}">
+                                                <i class="fas fa-chart-bar"></i> Analytics
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            {% if event.is_active %}
+                                            <a class="dropdown-item text-warning"
+                                               href="{% url 'events:toggle_event' event.slug %}">
+                                                <i class="fas fa-pause"></i> Deactivate
+                                            </a>
+                                            {% else %}
+                                            <a class="dropdown-item text-success"
+                                               href="{% url 'events:toggle_event' event.slug %}">
+                                                <i class="fas fa-play"></i> Activate
+                                            </a>
+                                            {% endif %}
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item text-danger"
+                                               href="{% url 'events:delete_event' event.slug %}"
+                                               onclick="return confirm('Are you sure you want to delete this event?')">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <!-- Empty State -->
+        <div class="text-center py-5">
+            <div class="empty-icon mb-4">
+                <i class="fas fa-calendar-plus fa-4x text-muted"></i>
+            </div>
+            <h3 class="text-muted mb-3">No Events Created Yet</h3>
+            <p class="text-muted mb-4">Start creating amazing events and reach your audience</p>
+            <div class="d-flex justify-content-center gap-3 flex-wrap">
+                <a href="{% url 'events:create_event' %}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus"></i> Create Your First Event
+                </a>
+                <a href="{% url 'events:event_list' %}?view=popular" class="btn btn-outline-primary btn-lg">
+                    <i class="fas fa-fire"></i> Get Inspiration
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Events Grid View (Hidden by default) -->
+    <div id="eventsGridView" class="row d-none">
+        {% for event in events %}
+        <div class="col-xl-4 col-lg-6 mb-4">
+            <div class="event-card">
+                <!-- Event Image -->
+                <div class="position-relative">
+                    {% if event.image %}
+                    <img src="{{ event.image.url }}" alt="{{ event.title }}"
+                         class="card-img-top" style="height: 200px; object-fit: cover;">
+                    {% else %}
+                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center"
+                         style="height: 200px;">
+                        <i class="fas fa-calendar-alt fa-3x text-muted"></i>
+                    </div>
+                    {% endif %}
+
+                    <!-- Status Badge -->
+                    <div class="position-absolute top-0 end-0 m-2">
+                        <span class="badge
+                            {% if event.is_active and event.is_approved %}bg-success
+                            {% elif event.is_approved %}bg-warning
+                            {% else %}bg-secondary{% endif %}">
+                            {% if event.is_active and event.is_approved %}Active
+                            {% elif event.is_approved %}Inactive
+                            {% else %}Pending{% endif %}
+                        </span>
+                    </div>
+
+                    <!-- Booking Count -->
+                    <div class="position-absolute top-0 start-0 m-2">
+                        <span class="badge bg-primary">
+                            <i class="fas fa-ticket-alt"></i> {{ event.booking_count }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Event Details -->
+                <div class="card-body">
+                    <h5 class="card-title">{{ event.title }}</h5>
+                    <p class="text-muted mb-2">
+                        <i class="fas fa-tag"></i> {{ event.category.name }}
+                    </p>
+                    <p class="mb-2">
+                        <i class="fas fa-map-marker-alt"></i> {{ event.location }}
+                    </p>
+                    <p class="mb-2">
+                        <i class="fas fa-calendar"></i> {{ event.date|date:"M d, Y" }}
+                    </p>
+                    <p class="mb-3">
+                        <i class="fas fa-clock"></i> {{ event.time|time:"g:i A" }}
+                    </p>
+
+                    <!-- Stats Row -->
+                    <div class="row text-center mb-3">
+                        <div class="col-4">
+                            <div class="text-primary">
+                                <div class="h6 mb-0">{{ event.booking_count }}</div>
+                                <small>Bookings</small>
                             </div>
                         </div>
-                    </td>
-                    <td>{{ event.date|date:"M j, Y" }}</td>
-                    <td>{{ event.location }}</td>
-                    <td>Rs. {{ event.price }}</td>
-                    <td>
-                        <span class="status-badge status-{{ event.is_active|yesno:'active,inactive' }}">
-                            {{ event.is_active|yesno:"Active,Inactive" }}
-                        </span>
-                    </td>
-                    <td>{{ event.bookings.count }}</td>
-                    <td>
-                        <div class="action-buttons">
-                            <a href="{% url 'event_detail' event.slug %}" class="btn btn-outline btn-sm">View</a>
-                            <a href="{% url 'edit_event' event.slug %}" class="btn btn-outline btn-sm">Edit</a>
+                        <div class="col-4">
+                            <div class="text-success">
+                                <div class="h6 mb-0">Rs. {{ event.total_revenue }}</div>
+                                <small>Revenue</small>
+                            </div>
                         </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                        <div class="col-4">
+                            <div class="text-warning">
+                                <div class="h6 mb-0">
+                                    {% if event.average_rating %}
+                                    {{ event.average_rating|floatformat:1 }}
+                                    {% else %}0.0{% endif %}
+                                </div>
+                                <small>Rating</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'events:event_detail' event.slug %}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-eye"></i> View Event
+                        </a>
+                        <div class="btn-group btn-group-sm">
+                            <a href="{% url 'events:edit_event' event.slug %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            <a href="{% url 'bookings:event_bookings' event.slug %}" class="btn btn-outline-info">
+                                <i class="fas fa-ticket-alt"></i> Bookings
+                            </a>
+                            <div class="dropdown">
+                                <button class="btn btn-outline-dark dropdown-toggle"
+                                        type="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'events:event_analytics' event.slug %}">
+                                            <i class="fas fa-chart-bar"></i> Analytics
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        {% if event.is_active %}
+                                        <a class="dropdown-item text-warning"
+                                           href="{% url 'events:toggle_event' event.slug %}">
+                                            <i class="fas fa-pause"></i> Deactivate
+                                        </a>
+                                        {% else %}
+                                        <a class="dropdown-item text-success"
+                                           href="{% url 'events:toggle_event' event.slug %}">
+                                            <i class="fas fa-play"></i> Activate
+                                        </a>
+                                        {% endif %}
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item text-danger"
+                                           href="{% url 'events:delete_event' event.slug %}"
+                                           onclick="return confirm('Are you sure you want to delete this event?')">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
     </div>
-    {% else %}
-    <div class="empty-state">
-        <i class="fas fa-calendar-plus"></i>
-        <h3>No Events Created</h3>
-        <p>You haven't created any events yet. Start by creating your first event!</p>
-        <a href="{% url 'create_event' %}" class="btn btn-primary">Create Your First Event</a>
+
+    <!-- Pagination -->
+    {% if events.has_other_pages %}
+    <nav aria-label="Events pagination" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if events.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ events.previous_page_number }}">Previous</a>
+            </li>
+            {% endif %}
+
+            {% for num in events.paginator.page_range %}
+            <li class="page-item {% if events.number == num %}active{% endif %}">
+                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+            </li>
+            {% endfor %}
+
+            {% if events.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ events.next_page_number }}">Next</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+    <!-- Bulk Actions -->
+    {% if events %}
+    <div class="card mt-4">
+        <div class="card-body">
+            <h5 class="mb-3">Bulk Actions</h5>
+            <div class="d-flex gap-2 flex-wrap">
+                <button class="btn btn-outline-primary">
+                    <i class="fas fa-play"></i> Activate Selected
+                </button>
+                <button class="btn btn-outline-warning">
+                    <i class="fas fa-pause"></i> Deactivate Selected
+                </button>
+                <button class="btn btn-outline-danger">
+                    <i class="fas fa-trash"></i> Delete Selected
+                </button>
+                <button class="btn btn-outline-info">
+                    <i class="fas fa-download"></i> Export Events
+                </button>
+            </div>
+        </div>
     </div>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// View Toggle
+document.getElementById('listView').addEventListener('click', function() {
+    document.getElementById('eventsListView').classList.remove('d-none');
+    document.getElementById('eventsGridView').classList.add('d-none');
+    this.classList.add('active');
+    document.getElementById('gridView').classList.remove('active');
+});
+
+document.getElementById('gridView').addEventListener('click', function() {
+    document.getElementById('eventsListView').classList.add('d-none');
+    document.getElementById('eventsGridView').classList.remove('d-none');
+    this.classList.add('active');
+    document.getElementById('listView').classList.remove('active');
+});
+
+// Search and Filter functionality
+function filterEvents() {
+    const searchTerm = document.getElementById('searchEvents').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+    const categoryFilter = document.getElementById('categoryFilter').value;
+
+    const eventRows = document.querySelectorAll('.event-row');
+
+    eventRows.forEach(row => {
+        const eventTitle = row.querySelector('h6').textContent.toLowerCase();
+        const eventStatus = row.querySelector('.badge').textContent.toLowerCase();
+        const eventCategory = row.querySelector('.badge.bg-secondary').textContent.toLowerCase();
+
+        const matchesSearch = eventTitle.includes(searchTerm);
+        const matchesStatus = !statusFilter || eventStatus.includes(statusFilter);
+        const matchesCategory = !categoryFilter || eventCategory.includes(categoryFilter);
+
+        if (matchesSearch && matchesStatus && matchesCategory) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+// Event listeners for filters
+document.getElementById('searchEvents').addEventListener('input', filterEvents);
+document.getElementById('statusFilter').addEventListener('change', filterEvents);
+document.getElementById('categoryFilter').addEventListener('change', filterEvents);
+
+function resetFilters() {
+    document.getElementById('searchEvents').value = '';
+    document.getElementById('statusFilter').value = '';
+    document.getElementById('categoryFilter').value = '';
+    filterEvents();
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    // Set default view to list
+    document.getElementById('listView').click();
+});
+</script>
 {% endblock %}

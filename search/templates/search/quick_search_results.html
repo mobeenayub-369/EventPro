@@ -1,44 +1,120 @@
-{% if results %}
-<div class="quick-search-results">
-    {% for result in results %}
-    <a href="{{ result.url }}" class="quick-result-item" data-type="{{ result.type }}">
-        <div class="result-image">
-            {% if result.image %}
-            <img src="{{ result.image }}" alt="{{ result.title }}">
-            {% else %}
-            <div class="result-image-placeholder">
-                {% if result.type == 'event' %}
-                <i class="fas fa-calendar-alt"></i>
-                {% elif result.type == 'category' %}
-                <i class="fas fa-tag"></i>
-                {% else %}
-                <i class="fas fa-user"></i>
-                {% endif %}
-            </div>
-            {% endif %}
+{% extends 'search_base.html' %}
+
+{% block content %}
+<div class="search-hero">
+    <div class="container">
+        <div class="search-container">
+            <h1 class="display-4 text-center mb-4">Find Amazing Events</h1>
+            <form method="GET" action="{% url 'search:search_events' %}" class="quick-search-form">
+                <div class="search-input-group">
+                    <input type="text"
+                           name="q"
+                           class="form-control search-input"
+                           placeholder="Search events, categories, organizers..."
+                           value="{{ query }}"
+                           id="search-input">
+                    <button type="submit" class="btn search-btn">
+                        <i class="fas fa-search"></i> Search
+                    </button>
+                </div>
+                <div id="search-suggestions" class="search-suggestions d-none"></div>
+            </form>
         </div>
-        <div class="result-content">
-            <div class="result-title">{{ result.title }}</div>
-            <div class="result-description">{{ result.description }}</div>
-            {% if result.date %}
-            <div class="result-meta">{{ result.date }}</div>
-            {% endif %}
-            {% if result.price %}
-            <div class="result-price">{{ result.price }}</div>
-            {% endif %}
-        </div>
-    </a>
-    {% endfor %}
-    
-    <div class="view-all-results">
-        <a href="{% url 'advanced_search' %}?q={{ query }}" class="view-all-link">
-            View all results for "{{ query }}"
-        </a>
     </div>
 </div>
-{% else %}
-<div class="no-quick-results">
-    <i class="fas fa-search"></i>
-    <p>No results found for "{{ query }}"</p>
+
+<div class="container">
+    <!-- Quick Filters -->
+    <div class="search-filters">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="filter-group">
+                    <label class="filter-title">Category</label>
+                    <select name="category" class="form-select" onchange="this.form.submit()">
+                        <option value="">All Categories</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.slug }}" {% if selected_filters.category == cat.slug %}selected{% endif %}>
+                            {{ cat.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="filter-group">
+                    <label class="filter-title">Sort By</label>
+                    <select name="sort_by" class="form-select" onchange="this.form.submit()">
+                        {% for value, label in form.sort_by.field.choices %}
+                        <option value="{{ value }}" {% if selected_filters.sort_by == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results -->
+    <div class="search-results-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h3>Search Results</h3>
+            <div class="results-count">
+                {{ results_count }} events found
+                {% if query %}for "{{ query }}"{% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if events %}
+    <div class="quick-results-grid">
+        {% for event in events %}
+        <div class="quick-result-card">
+            <img src="{{ event.image.url }}" alt="{{ event.title }}" class="img-fluid">
+            <div class="p-3">
+                <h5>{{ event.title }}</h5>
+                <p class="text-muted mb-2">{{ event.category.name }}</p>
+                <p class="mb-2"><strong>Rs. {{ event.price }}</strong></p>
+                <p class="mb-2"><i class="fas fa-map-marker-alt"></i> {{ event.location }}</p>
+                <p class="mb-3"><i class="fas fa-calendar"></i> {{ event.date|date:"M d, Y" }}</p>
+                <a href="{% url 'events:event_detail' event.slug %}" class="btn btn-primary btn-sm">View Event</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if events.has_other_pages %}
+    <nav aria-label="Search results pagination" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if events.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ events.previous_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Previous</a>
+            </li>
+            {% endif %}
+
+            {% for num in events.paginator.page_range %}
+            <li class="page-item {% if events.number == num %}active{% endif %}">
+                <a class="page-link" href="?page={{ num }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+            </li>
+            {% endfor %}
+
+            {% if events.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ events.next_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Next</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+        <h4 class="text-muted">No events found</h4>
+        <p class="text-muted">Try adjusting your search criteria</p>
+        <a href="{% url 'search:search_events' %}" class="btn btn-primary">Clear Filters</a>
+    </div>
+    {% endif %}
 </div>
-{% endif %}
+{% endblock %}

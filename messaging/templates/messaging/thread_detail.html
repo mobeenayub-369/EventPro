@@ -1,78 +1,330 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block title %}{{ title }} - EventPro{% endblock %}
+
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'messaging/css/messaging.css' %}">
 {% endblock %}
 
-{% block title %}Conversation with {{ other_participant.username }} - EventPro{% endblock %}
-
 {% block content %}
-<div class="thread-detail-container">
-    <div class="thread-header">
-        <div class="thread-user">
-            <div class="user-avatar">
-                {% if other_participant.profile_picture %}
-                    <img src="{{ other_participant.profile_picture.url }}" alt="{{ other_participant.username }}">
-                {% else %}
-                    <div class="avatar-placeholder">
-                        {{ other_participant.username|first|upper }}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <!-- Conversation Sidebar -->
+        <div class="col-lg-3 col-md-4 d-none d-md-block">
+            <!-- Conversation Info -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0"><i class="fas fa-user me-2"></i>Conversation Info</h6>
+                </div>
+                <div class="card-body">
+                    <!-- Other User Info -->
+                    <div class="text-center mb-3">
+                        <div class="avatar-lg mx-auto mb-2">
+                            <div class="avatar-placeholder bg-primary text-white rounded-circle d-flex align-items-center justify-content-center">
+                                {{ other_user.username|first|upper }}
+                            </div>
+                        </div>
+                        <h6 class="fw-bold mb-1">{{ other_user.username }}</h6>
+                        <small class="text-muted">Event Organizer</small>
                     </div>
-                {% endif %}
-            </div>
-            <div class="user-info">
-                <h2>{{ other_participant.get_full_name|default:other_participant.username }}</h2>
-                <p class="user-type">{{ other_participant.get_user_type_display }}</p>
-            </div>
-        </div>
-        <div class="thread-actions">
-            <a href="{% url 'inbox' %}" class="btn btn-outline">
-                <i class="fas fa-arrow-left"></i>
-                Back to Inbox
-            </a>
-        </div>
-    </div>
 
-    <div class="messages-container">
-        <div class="messages-list" id="messagesList">
-            {% for message in message_list %}
-            <div class="message {% if message.sender == request.user %}message-sent{% else %}message-received{% endif %}">
-                <div class="message-content">
-                    <p>{{ message.content }}</p>
-                    <div class="message-meta">
-                        <span class="message-time">{{ message.created_at|time:"g:i A" }}</span>
-                        {% if message.sender == request.user %}
-                            <span class="message-status {% if message.is_read %}read{% else %}sent{% endif %}">
-                                {% if message.is_read %}Read{% else %}Sent{% endif %}
-                            </span>
+                    <!-- Conversation Details -->
+                    <div class="conversation-details">
+                        <div class="detail-item mb-2">
+                            <small class="text-muted">Started:</small>
+                            <div class="fw-bold">{{ conversation.created_at|date:"M d, Y" }}</div>
+                        </div>
+                        <div class="detail-item mb-2">
+                            <small class="text-muted">Last Activity:</small>
+                            <div class="fw-bold">{{ conversation.updated_at|timesince }} ago</div>
+                        </div>
+                        <div class="detail-item mb-2">
+                            <small class="text-muted">Messages:</small>
+                            <div class="fw-bold">{{ messages.paginator.count }}</div>
+                        </div>
+                        {% if conversation.related_event %}
+                        <div class="detail-item">
+                            <small class="text-muted">Related Event:</small>
+                            <div class="fw-bold">
+                                <a href="{% url 'events:event_detail' conversation.related_event.id %}"
+                                   class="text-decoration-none">
+                                    {{ conversation.related_event.title }}
+                                </a>
+                            </div>
+                        </div>
                         {% endif %}
                     </div>
                 </div>
             </div>
-            {% endfor %}
+
+            <!-- Quick Actions -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="fas fa-cog me-2"></i>Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <!-- Archive/Unarchive -->
+                        <form method="post" action="{% url 'messaging:archive_conversation' conversation.id %}" class="d-grid">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm {% if conversation.is_archived %}btn-warning{% else %}btn-outline-warning{% endif %}">
+                                <i class="fas fa-{% if conversation.is_archived %}inbox{% else %}archive{% endif %} me-1"></i>
+                                {% if conversation.is_archived %}Unarchive{% else %}Archive{% endif %}
+                            </button>
+                        </form>
+
+                        <!-- Block User -->
+                        <a href="{% url 'messaging:block_user' other_user.id %}"
+                           class="btn btn-sm btn-outline-danger"
+                           onclick="return confirm('Are you sure you want to block {{ other_user.username }}?')">
+                            <i class="fas fa-ban me-1"></i>Block User
+                        </a>
+
+                        <!-- Delete Conversation -->
+                        <a href="{% url 'messaging:delete_conversation' conversation.id %}"
+                           class="btn btn-sm btn-outline-danger">
+                            <i class="fas fa-trash me-1"></i>Delete Conversation
+                        </a>
+
+                        <!-- Back to Inbox -->
+                        <a href="{% url 'messaging:inbox' %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Back to Inbox
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="message-input-container">
-            <form method="POST" class="message-form" id="messageForm">
-                {% csrf_token %}
-                <div class="input-group">
-                    {{ form.content }}
-                    <button type="submit" class="btn btn-primary send-btn">
-                        <i class="fas fa-paper-plane"></i>
-                        Send
-                    </button>
+        <!-- Main Conversation Area -->
+        <div class="col-lg-9 col-md-8">
+            <!-- Conversation Header -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <!-- Mobile Back Button -->
+                            <a href="{% url 'messaging:inbox' %}" class="btn btn-outline-secondary btn-sm me-3 d-md-none">
+                                <i class="fas fa-arrow-left"></i>
+                            </a>
+                            <div>
+                                <h5 class="mb-1 fw-bold">
+                                    <i class="fas fa-user me-2 text-primary"></i>
+                                    {{ other_user.username }}
+                                </h5>
+                                {% if conversation.subject %}
+                                <p class="mb-0 text-muted small">{{ conversation.subject }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <small class="text-muted">
+                                Conversation started {{ conversation.created_at|timesince }} ago
+                            </small>
+                            {% if conversation.is_archived %}
+                            <span class="badge bg-warning ms-2">Archived</span>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
-            </form>
+            </div>
+
+            <!-- Messages Container -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-0">
+                    <div class="messages-container" id="messagesContainer">
+                        {% if messages %}
+                            <!-- Load More Messages -->
+                            {% if messages.has_previous %}
+                            <div class="text-center py-3 border-bottom">
+                                <a href="?page={{ messages.previous_page_number }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-arrow-up me-1"></i>Load Older Messages
+                                </a>
+                            </div>
+                            {% endif %}
+
+                            <!-- Messages List -->
+                            <div class="messages-list p-3">
+                                {% for message in messages %}
+                                <div class="message-item mb-4 {% if message.sender == request.user %}message-sent{% else %}message-received{% endif %}"
+                                     data-message-id="{{ message.id }}">
+                                    <div class="message-wrapper">
+                                        <!-- Message Header -->
+                                        <div class="message-header d-flex justify-content-between align-items-center mb-1">
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar-xs me-2">
+                                                    <div class="avatar-placeholder {% if message.sender == request.user %}bg-success{% else %}bg-primary{% endif %} text-white rounded-circle d-flex align-items-center justify-content-center">
+                                                        {{ message.sender.username|first|upper }}
+                                                    </div>
+                                                </div>
+                                                <strong class="message-sender">
+                                                    {% if message.sender == request.user %}You{% else %}{{ message.sender.username }}{% endif %}
+                                                </strong>
+                                            </div>
+                                            <div class="message-meta">
+                                                <small class="text-muted">
+                                                    {{ message.timestamp|date:"M d, Y g:i A" }}
+                                                    {% if message.is_read and message.sender == request.user %}
+                                                    <i class="fas fa-check-double text-success ms-1" title="Read"></i>
+                                                    {% elif message.sender == request.user %}
+                                                    <i class="fas fa-check text-muted ms-1" title="Delivered"></i>
+                                                    {% endif %}
+                                                </small>
+                                            </div>
+                                        </div>
+
+                                        <!-- Message Content -->
+                                        <div class="message-content">
+                                            <div class="message-bubble {% if message.sender == request.user %}bg-primary text-white{% else %}bg-light{% endif %} rounded p-3">
+                                                <!-- Message Text -->
+                                                <div class="message-text">
+                                                    {{ message.content|linebreaks }}
+                                                </div>
+
+                                                <!-- Attachment -->
+                                                {% if message.attachment %}
+                                                <div class="message-attachment mt-2">
+                                                    <div class="attachment-card border rounded p-2 bg-white">
+                                                        <div class="d-flex align-items-center">
+                                                            <i class="fas fa-paperclip text-muted me-2"></i>
+                                                            <div class="flex-grow-1">
+                                                                <small class="fw-bold d-block">{{ message.attachment_name }}</small>
+                                                                <small class="text-muted">
+                                                                    {{ message.attachment.size|filesizeformat }}
+                                                                </small>
+                                                            </div>
+                                                            <a href="{{ message.attachment.url }}"
+                                                               class="btn btn-sm btn-outline-primary"
+                                                               target="_blank"
+                                                               download>
+                                                                <i class="fas fa-download"></i>
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <!-- Empty Conversation -->
+                            <div class="text-center py-5">
+                                <div class="empty-state-icon mb-4">
+                                    <i class="fas fa-comments fa-4x text-muted opacity-50"></i>
+                                </div>
+                                <h3 class="text-muted mb-3">No Messages Yet</h3>
+                                <p class="text-muted">Start the conversation by sending a message below.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reply Form -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" id="messageForm">
+                        {% csrf_token %}
+
+                        <!-- Message Input -->
+                        <div class="mb-3">
+                            {{ form.content }}
+                            {% if form.content.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.content.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Attachment and Submit -->
+                        <div class="d-flex justify-content-between align-items-center">
+                            <!-- Attachment -->
+                            <div class="flex-grow-1 me-3">
+                                {{ form.attachment }}
+                                {% if form.attachment.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.attachment.errors }}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Submit Button -->
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane me-1"></i>Send Message
+                            </button>
+                        </div>
+
+                        <!-- Form Help Text -->
+                        <div class="form-text">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Press Enter to send, Shift+Enter for new line. Files up to 10MB.
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'messaging/js/messaging.js' %}"></script>
 <script>
+// Auto-scroll to bottom of messages
+function scrollToBottom() {
+    const container = document.getElementById('messagesContainer');
+    if (container) {
+        container.scrollTop = container.scrollHeight;
+    }
+}
+
+// Mark messages as read when viewed
+function markMessagesAsRead() {
+    const unreadMessages = document.querySelectorAll('.message-item.message-received [data-message-id]');
+    unreadMessages.forEach(element => {
+        const messageId = element.getAttribute('data-message-id');
+        // Send AJAX request to mark as read
+        fetch(`/messaging/message/${messageId}/mark-read/`, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+    });
+}
+
+// Enhanced message form
 document.addEventListener('DOMContentLoaded', function() {
-    const messagesContainer = document.getElementById('messagesList');
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    scrollToBottom();
+    markMessagesAsRead();
+
+    const messageForm = document.getElementById('messageForm');
+    const messageInput = document.querySelector('textarea[name="content"]');
+
+    if (messageInput) {
+        messageInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                messageForm.submit();
+            }
+        });
+
+        // Auto-resize textarea
+        messageInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+    }
+
+    // Auto-refresh messages every 30 seconds
+    setInterval(() => {
+        // In a real implementation, this would fetch new messages via AJAX
+        console.log('Checking for new messages...');
+    }, 30000);
 });
 </script>
 {% endblock %}

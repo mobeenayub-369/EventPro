@@ -1,20 +1,19 @@
 from django import forms
-from .models import Notification
+from .models import NotificationPreference
 
-
-# NOTIFICATION FORM FOR ADMIN
-class NotificationForm(forms.ModelForm):
+class NotificationPreferenceForm(forms.ModelForm):
     class Meta:
-        model = Notification
-        fields = ['recipient', 'notification_type', 'title', 'message', 'related_object_id', 'related_object_type']
-
-
+        model = NotificationPreference
+        fields = [
+            'email_messages', 'email_orders', 'email_reviews', 'email_promotions',
+            'push_messages', 'push_orders', 'push_reviews'
+        ]
         widgets = {
-            'message': forms.Textarea(attrs={
-                'rows': 4,
-                'placeholder': 'Enter notification message...'
-            }),
-            'title': forms.TextInput(attrs={
-                'placeholder': 'Enter notification title...'
-            })
+            'email_messages': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'email_orders': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'email_reviews': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'email_promotions': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'push_messages': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'push_orders': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'push_reviews': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }

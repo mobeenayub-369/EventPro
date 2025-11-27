@@ -1,81 +1,264 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block title %}{{ title }}{% endblock %}
+
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'messaging/css/messaging.css' %}">
 {% endblock %}
 
-{% block title %}Messages - EventPro{% endblock %}
-
 {% block content %}
-<div class="messaging-container">
-    <div class="inbox-header">
-        <h1>Messages</h1>
-        <p>Your conversations</p>
-    </div>
-
-    <div class="inbox-content">
-        {% if threads %}
-        <div class="threads-list">
-            {% for thread in threads %}
-            <div class="thread-item">
-                <div class="thread-avatar">
-                    {% with other_user=thread.get_other_participant request.user %}
-                        {% if other_user.profile_picture %}
-                            <img src="{{ other_user.profile_picture.url }}" alt="{{ other_user.username }}">
-                        {% else %}
-                            <div class="avatar-placeholder">
-                                {{ other_user.username|first|upper }}
-                            </div>
-                        {% endif %}
-                    {% endwith %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-lg-3 col-md-4 mb-4">
+            <!-- Inbox Stats -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0"><i class="fas fa-inbox me-2"></i>Inbox</h6>
                 </div>
-                
-                <div class="thread-info">
-                    <div class="thread-header">
-                        <h3>
-                            {% with other_user=thread.get_other_participant request.user %}
-                                {{ other_user.get_full_name|default:other_user.username }}
-                            {% endwith %}
-                        </h3>
-                        <span class="thread-time">{{ thread.updated_at|timesince }} ago</span>
+                <div class="card-body">
+                    <div class="inbox-stats">
+                        <div class="stat-item d-flex justify-content-between mb-2">
+                            <span class="text-muted">Total:</span>
+                            <strong>{{ inbox_stats.total_conversations }}</strong>
+                        </div>
+                        <div class="stat-item d-flex justify-content-between mb-2">
+                            <span class="text-muted">Unread:</span>
+                            <strong class="text-warning">{{ inbox_stats.unread_conversations }}</strong>
+                        </div>
+                        <div class="stat-item d-flex justify-content-between">
+                            <span class="text-muted">Archived:</span>
+                            <strong class="text-info">{{ inbox_stats.archived_conversations }}</strong>
+                        </div>
                     </div>
-                    
-                    <div class="thread-preview">
-                        {% with last_message=thread.get_last_message %}
-                            {% if last_message %}
-                                <p class="message-preview">
-                                    {% if last_message.sender == request.user %}
-                                        You: 
-                                    {% endif %}
-                                    {{ last_message.content|truncatewords:10 }}
-                                </p>
-                                
-                                {% if last_message.is_read %}
-                                    <span class="read-status read">Read</span>
-                                {% else %}
-                                    <span class="read-status unread">Unread</span>
-                                {% endif %}
-                            {% else %}
-                                <p class="no-messages">No messages yet</p>
-                            {% endif %}
-                        {% endwith %}
-                    </div>
-                </div>
-                
-                <div class="thread-actions">
-                    <a href="{% url 'thread_detail' thread.id %}" class="btn btn-outline btn-sm">Open</a>
                 </div>
             </div>
-            {% endfor %}
+
+            <!-- Quick Actions -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'messaging:new_conversation' %}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus me-1"></i>New Message
+                        </a>
+                        <a href="{% url 'messaging:search_messages' %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-search me-1"></i>Search Messages
+                        </a>
+                        <a href="{% url 'messaging:message_settings' %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-cog me-1"></i>Settings
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="fas fa-filter me-2"></i>Filters</h6>
+                </div>
+                <div class="card-body">
+                    <div class="filter-options">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="showUnread"
+                                   {% if show_unread %}checked{% endif %}
+                                   onchange="toggleFilter('show_unread', this.checked)">
+                            <label class="form-check-label small" for="showUnread">
+                                Show Unread Only
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="showArchived"
+                                   {% if show_archived %}checked{% endif %}
+                                   onchange="toggleFilter('show_archived', this.checked)">
+                            <label class="form-check-label small" for="showArchived">
+                                Show Archived
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        {% else %}
-        <div class="empty-inbox">
-            <i class="fas fa-comments"></i>
-            <h3>No Messages Yet</h3>
-            <p>Start a conversation with other users</p>
+
+        <!-- Main Content -->
+        <div class="col-lg-9 col-md-8">
+            <!-- Search Bar -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body py-3">
+                    <form method="get" class="d-flex gap-2">
+                        <div class="flex-grow-1">
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0">
+                                    <i class="fas fa-search text-muted"></i>
+                                </span>
+                                {{ search_form.query }}
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search me-1"></i>Search
+                        </button>
+                        <a href="{% url 'messaging:inbox' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>Clear
+                        </a>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Conversations List -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom-0">
+                    <h5 class="mb-0">
+                        <i class="fas fa-comments me-2 text-primary"></i>
+                        Conversations
+                        {% if show_unread %}
+                        <span class="badge bg-warning ms-2">Unread Only</span>
+                        {% endif %}
+                        {% if show_archived %}
+                        <span class="badge bg-info ms-2">Archived</span>
+                        {% endif %}
+                    </h5>
+                </div>
+
+                <div class="card-body p-0">
+                    {% if conversations %}
+                        <div class="conversations-list">
+                            {% for conversation in conversations %}
+                            <div class="conversation-item border-bottom {% if not conversation.is_read %}conversation-unread{% endif %}">
+                                <div class="row align-items-center py-3 px-3">
+                                    <!-- Avatar and Info -->
+                                    <div class="col-md-6">
+                                        <div class="d-flex align-items-center">
+                                            <!-- User Avatar -->
+                                            <div class="avatar-sm me-3">
+                                                <div class="avatar-placeholder bg-primary text-white rounded-circle d-flex align-items-center justify-content-center">
+                                                    {{ conversation.get_other_participant.user.username|first|upper }}
+                                                </div>
+                                            </div>
+
+                                            <!-- Conversation Info -->
+                                            <div class="flex-grow-1">
+                                                <h6 class="mb-1 fw-bold">
+                                                    {{ conversation.get_other_participant.user.username }}
+                                                    {% if conversation.get_unread_count > 0 %}
+                                                    <span class="badge bg-warning ms-1">{{ conversation.get_unread_count }}</span>
+                                                    {% endif %}
+                                                </h6>
+
+                                                {% if conversation.subject %}
+                                                <p class="mb-1 text-muted small">{{ conversation.subject }}</p>
+                                                {% endif %}
+
+                                                {% with last_message=conversation.get_last_message %}
+                                                {% if last_message %}
+                                                <p class="mb-0 text-muted small message-preview">
+                                                    {{ last_message.content|truncatewords:15 }}
+                                                </p>
+                                                {% endif %}
+                                                {% endwith %}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Metadata and Actions -->
+                                    <div class="col-md-6">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <!-- Timestamp -->
+                                            <div class="text-end me-3">
+                                                <small class="text-muted">
+                                                    {{ conversation.updated_at|timesince }} ago
+                                                </small>
+                                                {% if conversation.related_event %}
+                                                <br>
+                                                <small class="text-info">
+                                                    <i class="fas fa-calendar me-1"></i>
+                                                    {{ conversation.related_event.title }}
+                                                </small>
+                                                {% endif %}
+                                            </div>
+
+                                            <!-- Action Buttons -->
+                                            <div class="d-flex gap-1">
+                                                <!-- View Conversation -->
+                                                <a href="{% url 'messaging:thread_detail' conversation.id %}"
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+
+                                                <!-- Archive/Unarchive -->
+                                                <form method="post" action="{% url 'messaging:archive_conversation' conversation.id %}" class="d-inline">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-sm btn-outline-warning"
+                                                            title="{% if conversation.is_archived %}Unarchive{% else %}Archive{% endif %}">
+                                                        <i class="fas fa-{% if conversation.is_archived %}inbox{% else %}archive{% endif %}"></i>
+                                                    </button>
+                                                </form>
+
+                                                <!-- Delete -->
+                                                <a href="{% url 'messaging:delete_conversation' conversation.id %}"
+                                                   class="btn btn-sm btn-outline-danger">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <!-- Empty State -->
+                        <div class="text-center py-5">
+                            <div class="empty-state-icon mb-4">
+                                <i class="fas fa-comments fa-4x text-muted opacity-50"></i>
+                            </div>
+                            <h3 class="text-muted mb-3">No Conversations</h3>
+                            <p class="text-muted mb-4">
+                                {% if show_unread %}
+                                You have no unread messages.
+                                {% elif show_archived %}
+                                You have no archived conversations.
+                                {% else %}
+                                Your inbox is empty. Start a conversation!
+                                {% endif %}
+                            </p>
+                            <a href="{% url 'messaging:new_conversation' %}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Start New Conversation
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
         </div>
-        {% endif %}
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'messaging/js/messaging.js' %}"></script>
+<script>
+function toggleFilter(filterName, isChecked) {
+    const url = new URL(window.location.href);
+
+    if (isChecked) {
+        url.searchParams.set(filterName, 'true');
+    } else {
+        url.searchParams.delete(filterName);
+    }
+
+    window.location.href = url.toString();
+}
+
+// Auto-refresh unread count every 30 seconds
+setInterval(() => {
+    fetch('{% url "messaging:get_unread_count" %}')
+        .then(response => response.json())
+        .then(data => {
+            // Update unread count in UI if needed
+            console.log('Unread count:', data.unread_count);
+        });
+}, 30000);
+</script>
 {% endblock %}

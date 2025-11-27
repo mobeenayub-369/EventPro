@@ -1,84 +1,133 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block title %}Create Support Ticket - EventPro{% endblock %}
+
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'support/css/support.css' %}">
 {% endblock %}
 
-{% block title %}Create Support Ticket - EventPro{% endblock %}
-
 {% block content %}
-<div class="create-ticket-container">
-    <div class="create-ticket-card">
-        <div class="support-header">
-            <h1>Create Support Ticket</h1>
-            <p>We're here to help! Describe your issue and we'll get back to you soon.</p>
-        </div>
-
-        <form method="POST" class="support-form">
-            {% csrf_token %}
-            
-            <div class="form-section">
-                <h3>Ticket Information</h3>
-                
-                <div class="form-group">
-                    <label>Subject *</label>
-                    {{ form.subject }}
-                    {% if form.subject.errors %}
-                    <div class="error-text">{{ form.subject.errors }}</div>
-                    {% endif %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-plus-circle"></i> Create Support Ticket</h4>
                 </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
 
-                <div class="form-group">
-                    <label>Description *</label>
-                    {{ form.description }}
-                    {% if form.description.errors %}
-                    <div class="error-text">{{ form.description.errors }}</div>
-                    {% endif %}
-                    <small class="form-text">Please provide detailed information about your issue.</small>
+                        <!-- Category -->
+                        <div class="mb-3">
+                            <label class="form-label">Category *</label>
+                            {{ form.category }}
+                            {% if form.category.errors %}
+                            <div class="text-danger">{{ form.category.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Subject -->
+                        <div class="mb-3">
+                            <label class="form-label">Subject *</label>
+                            {{ form.subject }}
+                            <small class="form-text text-muted">
+                                Briefly describe your issue (minimum 10 characters)
+                            </small>
+                            {% if form.subject.errors %}
+                            <div class="text-danger">{{ form.subject.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-3">
+                            <label class="form-label">Description *</label>
+                            {{ form.description }}
+                            <small class="form-text text-muted">
+                                Please provide detailed information about your issue. Include any error messages, steps to reproduce, and what you were trying to accomplish.
+                            </small>
+                            {% if form.description.errors %}
+                            <div class="text-danger">{{ form.description.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Priority -->
+                        <div class="mb-3">
+                            <label class="form-label">Priority</label>
+                            {{ form.priority }}
+                            <small class="form-text text-muted">
+                                <i class="fas fa-info-circle"></i>
+                                <strong>Low:</strong> General questions |
+                                <strong>Medium:</strong> Feature requests |
+                                <strong>High:</strong> Functional issues |
+                                <strong>Urgent:</strong> Critical problems
+                            </small>
+                        </div>
+
+                        <!-- Attachment -->
+                        <div class="mb-4">
+                            <label class="form-label">Attachment (Optional)</label>
+                            {{ form.attachment }}
+                            <small class="form-text text-muted">
+                                You can attach screenshots, documents, or other files that might help us understand your issue (Max: 10MB)
+                            </small>
+                        </div>
+
+                        <!-- Tips -->
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-lightbulb"></i> Tips for Faster Resolution:</h6>
+                            <ul class="mb-0">
+                                <li>Be specific and detailed in your description</li>
+                                <li>Include relevant event IDs or booking references</li>
+                                <li>Attach screenshots for visual issues</li>
+                                <li>Mention what you expected to happen vs what actually happened</li>
+                            </ul>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'support:support_dashboard' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Dashboard
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i> Submit Ticket
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
 
-            <div class="form-section">
-                <h3>Ticket Details</h3>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Ticket Type *</label>
-                        {{ form.ticket_type }}
-                        {% if form.ticket_type.errors %}
-                        <div class="error-text">{{ form.ticket_type.errors }}</div>
-                        {% endif %}
+            <!-- Quick Help -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-clock"></i> Response Time</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <div class="text-primary">
+                                <i class="fas fa-bolt fa-2x"></i>
+                                <h6 class="mt-2">Urgent</h6>
+                                <p class="mb-0">2-4 hours</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-warning">
+                                <i class="fas fa-exclamation-triangle fa-2x"></i>
+                                <h6 class="mt-2">High</h6>
+                                <p class="mb-0">8-12 hours</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-success">
+                                <i class="fas fa-check-circle fa-2x"></i>
+                                <h6 class="mt-2">Medium/Low</h6>
+                                <p class="mb-0">24 hours</p>
+                            </div>
+                        </div>
                     </div>
-
-                    <div class="form-group">
-                        <label>Priority *</label>
-                        {{ form.priority }}
-                        {% if form.priority.errors %}
-                        <div class="error-text">{{ form.priority.errors }}</div>
-                        {% endif %}
-                    </div>
                 </div>
             </div>
-
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary btn-large">
-                    <i class="fas fa-paper-plane"></i>
-                    Submit Ticket
-                </button>
-                <a href="{% url 'support_dashboard' %}" class="btn btn-outline">Cancel</a>
-            </div>
-        </form>
-
-        <!-- Help Tips -->
-        <div class="help-tips">
-            <h4>Before submitting, you might want to:</h4>
-            <ul>
-                <li>Check our <a href="{% url 'faq_list' %}">FAQs</a> for quick answers</li>
-                <li>Include relevant event IDs or order numbers</li>
-                <li>Describe the steps to reproduce the issue</li>
-                <li>Add screenshots if applicable (you can attach files after creating the ticket)</li>
-            </ul>
         </div>
     </div>
 </div>

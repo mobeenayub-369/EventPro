@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #007bff; color: white; padding: 20px; text-align: center; }
+        .content { background: #f9f9f9; padding: 20px; border-radius: 5px; }
+        .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
+        .btn { display: inline-block; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>EventPro</h1>
+        </div>
+
+        <div class="content">
+            <h2>{{ notification.title }}</h2>
+            <p>{{ notification.message }}</p>
+
+            {% if notification.action_url %}
+            <p>
+                <a href="{{ site_url }}{{ notification.action_url }}" class="btn">
+                    View Details
+                </a>
+            </p>
+            {% endif %}
+        </div>
+
+        <div class="footer">
+            <p>You received this email because you're registered with EventPro.</p>
+            <p>
+                <a href="{{ site_url }}/notifications/preferences/">
+                    Manage your notification preferences
+                </a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

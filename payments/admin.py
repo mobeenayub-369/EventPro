@@ -1,37 +1,48 @@
 from django.contrib import admin
-from .models import Payment, Refund
+from .models import *
 
+@admin.register(PaymentMethod)
+class PaymentMethodAdmin(admin.ModelAdmin):
+    list_display = ['name', 'is_active', 'processing_fee']
+    list_editable = ['is_active']
+    list_filter = ['is_active']
 
-# STEP 10: IMPLEMENTATION - Create new admin file for payments app
-# This separates Payment admin from bookings admin to avoid conflicts
-
-# Payment Admin Configuration
-@admin.register(Payment)
-class PaymentAdmin(admin.ModelAdmin):
-    # Fields to display in admin list view
-    list_display = ['id', 'booking', 'user', 'amount', 'payment_method', 'status', 'created_at']
-
-    # Filter options for payment list
-    list_filter = ['payment_method', 'status', 'created_at']
-
-    # Searchable fields
-    search_fields = ['transaction_id', 'booking__booking_id', 'user__username']
-
-    # Read-only fields
+@admin.register(Transaction)
+class TransactionAdmin(admin.ModelAdmin):
+    list_display = ['transaction_id', 'user', 'amount', 'payment_method', 'status', 'created_at']
+    list_filter = ['status', 'payment_method', 'created_at']
+    search_fields = ['transaction_id', 'user__username', 'booking__id']
     readonly_fields = ['created_at', 'updated_at']
+    list_per_page = 20
 
-    # Date-based navigation
-    date_hierarchy = 'created_at'
+@admin.register(JazzCashTransaction)
+class JazzCashTransactionAdmin(admin.ModelAdmin):
+    list_display = ['transaction', 'pp_TxnRefNo', 'pp_ResponseCode', 'pp_TxnDateTime']
+    search_fields = ['pp_TxnRefNo', 'transaction__transaction_id']
 
+@admin.register(EasyPaisaTransaction)
+class EasyPaisaTransactionAdmin(admin.ModelAdmin):
+    list_display = ['transaction', 'transaction_auth_id', 'response_code', 'mobile_account']
+    search_fields = ['transaction_auth_id', 'mobile_account']
 
-# Refund Admin Configuration
-@admin.register(Refund)
-class RefundAdmin(admin.ModelAdmin):
-    # Fields to display in admin list view
-    list_display = ['id', 'payment', 'amount', 'status', 'created_at']
+@admin.register(BankTransfer)
+class BankTransferAdmin(admin.ModelAdmin):
+    list_display = ['transaction', 'bank_name', 'account_number', 'slip_number', 'transfer_date']
+    search_fields = ['slip_number', 'bank_name']
 
-    # Filter options for refund list
-    list_filter = ['status', 'created_at']
+@admin.register(CardTransaction)
+class CardTransactionAdmin(admin.ModelAdmin):
+    list_display = ['transaction', 'card_type', 'card_number', 'authorization_code']
+    search_fields = ['card_number', 'authorization_code']
 
-    # Searchable fields
-    search_fields = ['payment__transaction_id', 'reason']
+@admin.register(Withdrawal)
+class WithdrawalAdmin(admin.ModelAdmin):
+    list_display = ['transaction_id', 'user', 'amount', 'method', 'status', 'created_at']
+    list_filter = ['status', 'method', 'created_at']
+    search_fields = ['transaction_id', 'user__username']
+    readonly_fields = ['created_at', 'updated_at']
+    list_editable = ['status']
+
+@admin.register(PaymentGatewaySettings)
+class PaymentGatewaySettingsAdmin(admin.ModelAdmin):
+    list_display = ['jazzcash_merchant_id', 'easypaisa_store_id', 'updated_at']

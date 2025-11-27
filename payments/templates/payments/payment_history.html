@@ -1,196 +1,101 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from django.http import JsonResponse, HttpResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
-import json
-import uuid
+{% extends 'base.html' %}
 
-from .models import Payment, Refund
-from .forms import PaymentForm, RefundRequestForm
-from bookings.models import Booking
+{% block title %}Payment History - EventPro{% endblock %}
 
-# Create Payment View
-@login_required
-def create_payment(request, booking_id):
-    # Get booking object
-    booking = get_object_or_404(Booking, id=booking_id, user=request.user)
-    
-    # Check if booking already has payment
-    if hasattr(booking, 'payment'):
-        messages.info(request, 'Payment already exists for this booking.')
-        return redirect('payment_detail', payment_id=booking.payment.id)
-    
-    # Check if booking is confirmed
-    if booking.status != 'confirmed':
-        messages.error(request, 'Cannot process payment for unconfirmed booking.')
-        return redirect('booking_detail', booking_id=booking.id)
-    
-    if request.method == 'POST':
-        form = PaymentForm(request.POST)
-        if form.is_valid():
-            # Create payment instance
-            payment = form.save(commit=False)
-            payment.booking = booking
-            payment.user = request.user
-            payment.amount = booking.total_amount
-            payment.save()
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-12">
+            <h2>Payment History</h2>
             
-            messages.success(request, 'Payment initialized successfully!')
-            return redirect('process_payment', payment_id=payment.id)
-    else:
-        form = PaymentForm()
-    
-    context = {
-        'form': form,
-        'booking': booking,
-        'title': 'Create Payment'
-    }
-    return render(request, 'payments/create_payment.html', context)
+            <!-- Statistics -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card text-white bg-primary">
+                        <div class="card-body">
+                            <h5>Total Spent</h5>
+                            <h3>Rs. {{ total_spent }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-success">
+                        <div class="card-body">
+                            <h5>Successful</h5>
+                            <h3>{{ successful_payments }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-danger">
+                        <div class="card-body">
+                            <h5>Failed</h5>
+                            <h3>{{ failed_payments }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-info">
+                        <div class="card-body">
+                            <h5>Total</h5>
+                            <h3>{{ total_payments }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-# Process Payment View
-@login_required
-def process_payment(request, payment_id):
-    payment = get_object_or_404(Payment, id=payment_id, user=request.user)
-    
-    # Simulate payment processing (replace with actual gateway integration)
-    if request.method == 'POST':
-        # Generate fake transaction ID for demo
-        transaction_id = f"TXN_{uuid.uuid4().hex[:12].upper()}"
-        
-        # Mark payment as completed
-        payment.mark_completed(transaction_id)
-        
-        # Update booking status
-        payment.booking.status = 'paid'
-        payment.booking.save()
-        
-        messages.success(request, 'Payment completed successfully!')
-        return redirect('payment_success', payment_id=payment.id)
-    
-    context = {
-        'payment': payment,
-        'title': 'Process Payment'
-    }
-    return render(request, 'payments/process_payment.html', context)
-
-# Payment Success View
-@login_required
-def payment_success(request, payment_id):
-    payment = get_object_or_404(Payment, id=payment_id, user=request.user)
-    
-    context = {
-        'payment': payment,
-        'title': 'Payment Successful'
-    }
-    return render(request, 'payments/payment_success.html', context)
-
-# Payment Failure View
-@login_required
-def payment_failure(request, payment_id):
-    payment = get_object_or_404(Payment, id=payment_id, user=request.user)
-    
-    # Update payment status to failed
-    payment.status = 'failed'
-    payment.save()
-    
-    context = {
-        'payment': payment,
-        'title': 'Payment Failed'
-    }
-    return render(request, 'payments/payment_failure.html', context)
-
-# Payment History View
-@login_required
-def payment_history(request):
-    payments = Payment.objects.filter(user=request.user).select_related('booking', 'booking__event')
-    
-    context = {
-        'payments': payments,
-        'title': 'Payment History'
-    }
-    return render(request, 'payments/payment_history.html', context)
-
-# Payment Detail View
-@login_required
-def payment_detail(request, payment_id):
-    payment = get_object_or_404(Payment, id=payment_id, user=request.user)
-    
-    context = {
-        'payment': payment,
-        'title': f'Payment #{payment.id}'
-    }
-    return render(request, 'payments/payment_detail.html', context)
-
-# Request Refund View
-@login_required
-def request_refund(request, payment_id):
-    payment = get_object_or_404(Payment, id=payment_id, user=request.user)
-    
-    # Check if payment is eligible for refund
-    if not payment.is_successful():
-        messages.error(request, 'Only completed payments can be refunded.')
-        return redirect('payment_detail', payment_id=payment.id)
-    
-    # Check if refund already exists
-    if payment.refunds.exists():
-        messages.info(request, 'Refund already requested for this payment.')
-        return redirect('refund_history')
-    
-    if request.method == 'POST':
-        form = RefundRequestForm(request.POST)
-        if form.is_valid():
-            refund = form.save(commit=False)
-            refund.payment = payment
-            refund.amount = payment.amount  # Full refund
-            refund.save()
-            
-            messages.success(request, 'Refund request submitted successfully!')
-            return redirect('refund_history')
-    else:
-        form = RefundRequestForm()
-    
-    context = {
-        'form': form,
-        'payment': payment,
-        'title': 'Request Refund'
-    }
-    return render(request, 'payments/request_refund.html', context)
-
-# Refund History View
-@login_required
-def refund_history(request):
-    refunds = Refund.objects.filter(payment__user=request.user).select_related('payment')
-    
-    context = {
-        'refunds': refunds,
-        'title': 'Refund History'
-    }
-    return render(request, 'payments/refund_history.html', context)
-
-# Stripe Webhook (Example)
-@csrf_exempt
-@require_POST
-def stripe_webhook(request):
-    # This is a simplified example - implement proper Stripe webhook handling
-    try:
-        payload = request.body
-        event = json.loads(payload)
-        
-        # Handle different event types
-        if event['type'] == 'payment_intent.succeeded':
-            # Update payment status
-            payment_intent = event['data']['object']
-            transaction_id = payment_intent['id']
-            
-            try:
-                payment = Payment.objects.get(transaction_id=transaction_id)
-                payment.mark_completed()
-            except Payment.DoesNotExist:
-                pass
-        
-        return JsonResponse({'status': 'success'})
-    
-    except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+            <!-- Transactions Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Recent Transactions</h5>
+                </div>
+                <div class="card-body">
+                    {% if transactions %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Transaction ID</th>
+                                    <th>Event</th>
+                                    <th>Amount</th>
+                                    <th>Method</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transaction in transactions %}
+                                <tr>
+                                    <td>{{ transaction.transaction_id }}</td>
+                                    <td>{{ transaction.booking.event.title }}</td>
+                                    <td>Rs. {{ transaction.amount }}</td>
+                                    <td>{{ transaction.payment_method.get_name_display }}</td>
+                                    <td>
+                                        <span class="badge {% if transaction.status == 'completed' %}bg-success{% elif transaction.status == 'failed' %}bg-danger{% else %}bg-warning{% endif %}">
+                                            {{ transaction.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ transaction.created_at|date:"M d, Y" }}</td>
+                                    <td>
+                                        <a href="{% url 'payments:payment_detail' transaction.transaction_id %}" 
+                                           class="btn btn-sm btn-outline-primary">View</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-receipt fa-3x text-muted mb-3"></i>
+                        <h4 class="text-muted">No payments yet</h4>
+                        <p class="text-muted">Your payment history will appear here.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

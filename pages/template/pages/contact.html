@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block title %}Contact Us - EventPro{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="text-center mb-5">
+                <h1 class="display-4">Contact Us</h1>
+                <p class="lead">We'd love to hear from you. Send us a message!</p>
+            </div>
+
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-body">
+                            <form method="POST">
+                                {% csrf_token %}
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.name.label_tag }}
+                                            {{ form.name }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.email.label_tag }}
+                                            {{ form.email }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    {{ form.subject.label_tag }}
+                                    {{ form.subject }}
+                                </div>
+
+                                <div class="mb-3">
+                                    {{ form.message.label_tag }}
+                                    {{ form.message }}
+                                </div>
+
+                                <button type="submit" class="btn btn-primary btn-lg w-100">
+                                    Send Message
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="contact-info-card text-white p-4">
+                        <h4 class="mb-4">Get in Touch</h4>
+                        
+                        <div class="contact-method">
+                            <i class="fas fa-envelope"></i>
+                            <div>
+                                <h6>Email</h6>
+                                <p class="mb-0">support@eventpro.com</p>
+                            </div>
+                        </div>
+                        
+                        <div class="contact-method">
+                            <i class="fas fa-phone"></i>
+                            <div>
+                                <h6>Phone</h6>
+                                <p class="mb-0">+92 300 1234567</p>
+                            </div>
+                        </div>
+                        
+                        <div class="contact-method">
+                            <i class="fas fa-clock"></i>
+                            <div>
+                                <h6>Response Time</h6>
+                                <p class="mb-0">Within 24 hours</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

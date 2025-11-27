@@ -1,319 +1,211 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block title %}{{ title }} - EventPro{% endblock %}
+
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'reviews/css/reviews.css' %}">
 {% endblock %}
 
-{% block title %}{{ review.title }} - EventPro{% endblock %}
-
 {% block content %}
-<div class="review-detail-container">
-    <div class="review-detail-card">
-        <!-- Review Header -->
-        <div class="review-detail-header">
-            <div class="reviewer-info">
-                <div class="reviewer-avatar large">
-                    {% if review.user.profile_picture %}
-                        <img src="{{ review.user.profile_picture.url }}" alt="{{ review.user.username }}">
-                    {% else %}
-                        <div class="avatar-placeholder large">
-                            {{ review.user.username|first|upper }}
+<div class="container mt-4">
+    <!-- Breadcrumb Navigation -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'events:event_list' %}" class="text-decoration-none">Events</a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'events:event_detail' event.id %}" class="text-decoration-none">
+                    {{ event.title|truncatewords:3 }}
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'reviews:event_reviews' event.id %}" class="text-decoration-none">Reviews</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">Review Details</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Review Detail Card -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">Review Details</h4>
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary btn-sm dropdown-toggle"
+                                    type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-ellipsis-h"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                {% if user == review.user %}
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'reviews:edit_review' review.id %}">
+                                        <i class="fas fa-edit me-2"></i>Edit Review
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item text-danger" href="{% url 'reviews:delete_review' review.id %}">
+                                        <i class="fas fa-trash me-2"></i>Delete Review
+                                    </a>
+                                </li>
+                                {% endif %}
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'reviews:event_reviews' event.id %}">
+                                        <i class="fas fa-list me-2"></i>All Reviews for This Event
+                                    </a>
+                                </li>
+                            </ul>
                         </div>
-                    {% endif %}
-                </div>
-                <div class="reviewer-details">
-                    <h2>{{ review.user.get_full_name|default:review.user.username }}</h2>
-                    <div class="review-meta">
-                        <span class="review-date">Reviewed on {{ review.created_at|date:"F j, Y" }}</span>
-                        {% if review.is_verified %}
-                        <span class="verified-badge">
-                            <i class="fas fa-check-circle"></i>
-                            Verified Attendee
-                        </span>
-                        {% endif %}
-                        {% if review.is_edited %}
-                        <span class="edited-badge">Edited</span>
-                        {% endif %}
-                        {% if review.reviewed_at %}
-                        <span class="attended-date">
-                            <i class="fas fa-calendar-check"></i>
-                            Attended {{ review.reviewed_at|date:"F j, Y" }}
-                        </span>
-                        {% endif %}
-                        {% if review.has_images %}
-                        <span class="has-images-badge">
-                            <i class="fas fa-camera"></i>
-                            Has Photos
-                        </span>
-                        {% endif %}
                     </div>
                 </div>
-            </div>
 
-            <div class="review-rating large">
-                <div class="star-rating">
-                    {% for i in "12345" %}
-                        {% if forloop.counter <= review.rating %}
-                            <i class="fas fa-star"></i>
-                        {% else %}
-                            <i class="far fa-star"></i>
-                        {% endif %}
-                    {% endfor %}
-                </div>
-                <span class="rating-text">{{ review.get_rating_display }}</span>
-            </div>
-        </div>
-
-        <!-- Review Content -->
-        <div class="review-detail-content">
-            <h1 class="review-title">{{ review.title }}</h1>
-            <div class="review-comment">
-                {{ review.comment|linebreaks }}
-            </div>
-        </div>
-
-        <!-- Review Images -->
-        {% if review_images %}
-        <div class="review-images-section">
-            <h3>Photos from the Event</h3>
-            <div class="review-images-grid">
-                {% for image in review_images %}
-                <div class="review-image-item">
-                    <img src="{{ image.url }}" alt="Event photo {{ forloop.counter }}" class="review-image"
-                         onclick="openImageModal('{{ image.url }}')">
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- Review Actions -->
-        <div class="review-detail-actions">
-            <div class="action-buttons">
-                <!-- Like/Helpful Button -->
-                <button class="btn btn-outline helpful-btn" data-review-id="{{ review.id }}">
-                    <i class="far fa-thumbs-up"></i>
-                    Helpful <span class="helpful-count">(0)</span>
-                </button>
-
-                <!-- Share Button -->
-                <button class="btn btn-outline share-btn">
-                    <i class="fas fa-share"></i>
-                    Share
-                </button>
-
-                <!-- Report Button -->
-                {% if user.is_authenticated and user != review.user %}
-                <a href="{% url 'report_review' review.id %}" class="btn btn-outline">
-                    <i class="fas fa-flag"></i>
-                    Report
-                </a>
-                {% endif %}
-
-                <!-- Edit/Delete for review owner -->
-                {% if user == review.user %}
-                <div class="owner-actions">
-                    {% if review.can_edit %}
-                    <a href="{% url 'edit_review' review.id %}" class="btn btn-outline">
-                        <i class="fas fa-edit"></i>
-                        Edit Review
-                    </a>
-                    {% endif %}
-                    <a href="{% url 'delete_review' review.id %}" class="btn btn-danger">
-                        <i class="fas fa-trash"></i>
-                        Delete Review
-                    </a>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Organizer Response -->
-        {% if review.response %}
-        <div class="organizer-response detailed">
-            <div class="response-header">
-                <div class="response-avatar large">
-                    {% if review.response.organizer.profile_picture %}
-                        <img src="{{ review.response.organizer.profile_picture.url }}" alt="{{ review.response.organizer.username }}">
-                    {% else %}
-                        <div class="avatar-placeholder large organizer">
-                            {{ review.response.organizer.username|first|upper }}
-                        </div>
-                    {% endif %}
-                </div>
-                <div class="response-details">
-                    <h3>Response from the Organizer</h3>
-                    <p class="organizer-name">{{ review.response.organizer.get_full_name|default:review.response.organizer.username }}</p>
-                    <span class="response-date">Responded on {{ review.response.created_at|date:"F j, Y" }}</span>
-                </div>
-            </div>
-            <div class="response-content">
-                <p>{{ review.response.response_text|linebreaks }}</p>
-            </div>
-
-            {% if user == review.response.organizer %}
-            <div class="response-actions">
-                <a href="{% url 'edit_response' review.id %}" class="btn btn-outline btn-sm">
-                    <i class="fas fa-edit"></i>
-                    Edit Response
-                </a>
-            </div>
-            {% endif %}
-        </div>
-        {% elif user == review.event.organizer %}
-        <!-- Add Response Button for Organizer -->
-        <div class="add-response-section">
-            <p>Respond to this review to address the attendee's feedback.</p>
-            <a href="{% url 'create_response' review.id %}" class="btn btn-primary">
-                <i class="fas fa-reply"></i>
-                Add Response
-            </a>
-        </div>
-        {% endif %}
-    </div>
-
-    <!-- Event Information Sidebar -->
-    <div class="event-sidebar">
-        <div class="event-card">
-            <h3>Event Details</h3>
-            <div class="event-info">
-                <div class="event-image">
-                    {% if review.event.image %}
-                        <img src="{{ review.event.image.url }}" alt="{{ review.event.title }}">
-                    {% else %}
-                        <div class="event-image-placeholder">
-                            <i class="fas fa-calendar-alt"></i>
-                        </div>
-                    {% endif %}
-                </div>
-                <div class="event-details">
-                    <h4>
-                        <a href="{% url 'event_detail' review.event.slug %}">
-                            {{ review.event.title }}
-                        </a>
-                    </h4>
-                    <p class="event-meta">
-                        <i class="fas fa-calendar"></i>
-                        {{ review.event.date|date:"F j, Y" }} at {{ review.event.time|time:"g:i A" }}
-                    </p>
-                    <p class="event-meta">
-                        <i class="fas fa-map-marker-alt"></i>
-                        {{ review.event.location }}
-                    </p>
-                    <p class="event-meta">
-                        <i class="fas fa-user"></i>
-                        {{ review.event.organizer.get_full_name|default:review.event.organizer.username }}
-                    </p>
-                </div>
-            </div>
-
-            <div class="event-actions">
-                <a href="{% url 'event_reviews' review.event.slug %}" class="btn btn-outline btn-sm">
-                    <i class="fas fa-star"></i>
-                    View All Reviews
-                </a>
-                <a href="{% url 'event_detail' review.event.slug %}" class="btn btn-primary btn-sm">
-                    <i class="fas fa-info-circle"></i>
-                    Event Details
-                </a>
-            </div>
-        </div>
-
-        <!-- More Reviews from Same Event -->
-        <div class="more-reviews-card">
-            <h4>More Reviews for This Event</h4>
-            <div class="more-reviews-list">
-                {% for other_review in review.event.reviews.all|slice:":3" %}
-                    {% if other_review.id != review.id and other_review.is_approved %}
-                    <div class="mini-review">
-                        <div class="mini-review-header">
-                            <div class="mini-rating">
-                                <div class="star-rating small">
-                                    {% for i in "12345" %}
-                                        {% if forloop.counter <= other_review.rating %}
-                                            <i class="fas fa-star"></i>
-                                        {% else %}
-                                            <i class="far fa-star"></i>
-                                        {% endif %}
-                                    {% endfor %}
+                <div class="card-body p-4">
+                    <!-- Review Header -->
+                    <div class="review-header mb-4">
+                        <div class="row align-items-center">
+                            <div class="col-auto">
+                                <div class="avatar-lg">
+                                    <div class="avatar-placeholder bg-primary text-white rounded-circle d-flex align-items-center justify-content-center">
+                                        {{ review.user.username|first|upper }}
+                                    </div>
                                 </div>
                             </div>
-                            <span class="mini-date">{{ other_review.created_at|date:"M j" }}</span>
+                            <div class="col">
+                                <h5 class="fw-bold mb-1">{{ review.user.username }}</h5>
+                                <p class="text-muted mb-1">
+                                    Reviewed
+                                    <a href="{% url 'events:event_detail' event.id %}" class="fw-bold text-decoration-none">
+                                        {{ event.title }}
+                                    </a>
+                                </p>
+                                <div class="d-flex align-items-center flex-wrap gap-2">
+                                    <span class="rating-badge-large">
+                                        <span class="badge bg-warning text-dark fs-6">
+                                            {{ review.rating }} <i class="fas fa-star"></i>
+                                            <span class="ms-1">{{ review.get_rating_stars }}</span>
+                                        </span>
+                                    </span>
+                                    <small class="text-muted">
+                                        <i class="fas fa-calendar me-1"></i>
+                                        {{ review.created_at|date:"F d, Y" }}
+                                    </small>
+                                    {% if review.is_verified %}
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check me-1"></i>Verified Attendee
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
                         </div>
-                        <p class="mini-title">{{ other_review.title|truncatewords:8 }}</p>
-                        {% if other_review.has_images %}
-                        <span class="has-images-badge" style="font-size: 0.7rem; margin-bottom: 5px;">
-                            <i class="fas fa-camera"></i>
-                            Photos
-                        </span>
+                    </div>
+
+                    <!-- Review Content -->
+                    <div class="review-content-section mb-4">
+                        {% if review.comment %}
+                        <div class="review-comment-card p-4 bg-light rounded">
+                            <h6 class="fw-bold mb-3">Review Comment</h6>
+                            <p class="mb-0 fs-6">{{ review.comment|linebreaks }}</p>
+                        </div>
+                        {% else %}
+                        <div class="review-comment-card p-4 bg-light rounded text-center">
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-comment-slash me-2"></i>
+                                No additional comments provided
+                            </p>
+                        </div>
                         {% endif %}
-                        <a href="{% url 'review_detail' other_review.id %}" class="read-more">Read full review</a>
+                    </div>
+
+                    <!-- Review Metrics -->
+                    <div class="review-metrics mb-4">
+                        <div class="row text-center">
+                            <div class="col-md-4">
+                                <div class="metric-card p-3 border rounded">
+                                    <h4 class="text-primary fw-bold mb-1">{{ review.helpful_count }}</h4>
+                                    <p class="text-muted mb-0 small">Helpful Votes</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="metric-card p-3 border rounded">
+                                    <h4 class="text-success fw-bold mb-1">
+                                        {{ review.rating }}/5
+                                    </h4>
+                                    <p class="text-muted mb-0 small">Rating Given</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="metric-card p-3 border rounded">
+                                    <h4 class="text-info fw-bold mb-1">
+                                        {{ review_age }}
+                                    </h4>
+                                    <p class="text-muted mb-0 small">Days Ago</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Organizer Response -->
+                    {% if review.organizer_response %}
+                    <div class="organizer-response-section mb-4">
+                        <div class="response-card p-4 bg-success bg-opacity-10 rounded border border-success">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="avatar-sm me-3">
+                                    <div class="avatar-placeholder bg-success text-white rounded-circle d-flex align-items-center justify-content-center">
+                                        {{ event.organizer.username|first|upper }}
+                                    </div>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold text-success mb-0">
+                                        <i class="fas fa-user-tie me-1"></i>
+                                        Response from {{ event.organizer.username }}
+                                    </h6>
+                                    <small class="text-muted">
+                                        {{ review.response_created_at|date:"F d, Y" }}
+                                    </small>
+                                </div>
+                            </div>
+                            <p class="mb-0 text-dark">{{ review.organizer_response|linebreaks }}</p>
+                        </div>
                     </div>
                     {% endif %}
-                {% endfor %}
+
+                    <!-- Action Buttons -->
+                    <div class="review-actions-section">
+                        <div class="d-flex flex-wrap gap-2 justify-content-between">
+                            <div class="d-flex gap-2">
+                                <!-- Helpful Button -->
+                                <button class="btn btn-outline-primary helpful-btn"
+                                        data-review-id="{{ review.id }}"
+                                        data-helpful="true">
+                                    <i class="fas fa-thumbs-up me-1"></i>
+                                    Helpful ({{ review.helpful_count }})
+                                </button>
+
+                                <!-- Back to Reviews -->
+                                <a href="{% url 'reviews:event_reviews' event.id %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-left me-1"></i>Back to All Reviews
+                                </a>
+                            </div>
+
+                            {% if user.is_authenticated and user == event.organizer and not review.organizer_response %}
+                            <!-- Respond Button for Organizer -->
+                            <a href="{% url 'reviews:add_review_response' review.id %}"
+                               class="btn btn-warning">
+                                <i class="fas fa-reply me-1"></i>Respond to Review
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
             </div>
-            <a href="{% url 'event_reviews' review.event.slug %}" class="btn btn-outline btn-sm full-width">
-                View All {{ review.event.reviews.count }} Reviews
-            </a>
         </div>
     </div>
-</div>
-
-<!-- Image Modal -->
-<div id="imageModal" class="image-modal">
-    <span class="close-modal">&times;</span>
-    <img class="modal-content" id="modalImage">
 </div>
 {% endblock %}
 
 {% block extra_js %}
-<script>
-// Image modal functionality
-const modal = document.getElementById("imageModal");
-const modalImg = document.getElementById("modalImage");
-const closeModal = document.querySelector(".close-modal");
-
-function openImageModal(src) {
-    modal.style.display = "block";
-    modalImg.src = src;
-}
-
-// Close modal when clicking X
-if (closeModal) {
-    closeModal.onclick = function() {
-        modal.style.display = "none";
-    }
-}
-
-// Close modal when clicking outside the image
-if (modal) {
-    modal.onclick = function(event) {
-        if (event.target === modal) {
-            modal.style.display = "none";
-        }
-    }
-}
-
-// Helpful button functionality
-const helpfulButtons = document.querySelectorAll('.helpful-btn');
-helpfulButtons.forEach(button => {
-    button.addEventListener('click', function() {
-        const reviewId = this.getAttribute('data-review-id');
-
-        // Toggle active state
-        this.classList.toggle('active');
-
-        if (this.classList.contains('active')) {
-            this.innerHTML = '<i class="fas fa-thumbs-up"></i> Helpful <span class="helpful-count">(1)</span>';
-            this.classList.add('btn-primary');
-            this.classList.remove('btn-outline');
-        } else {
-            this.innerHTML = '<i class="far fa-thumbs-up"></i> Helpful <span class="helpful-count">(0)</span>';
-            this.classList.remove('btn-primary');
-            this.classList.add('btn-outline');
-        }
-    });
-});
-</script>
+<script src="{% static 'reviews/js/reviews.js' %}"></script>
 {% endblock %}

@@ -1,112 +1,121 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block title %}Event Categories - EventPro{% endblock %}
+
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'categories/css/categories.css' %}">
 {% endblock %}
 
-{% block title %}Event Categories - EventPro{% endblock %}
-
 {% block content %}
-<div class="categories-container">
-    <div class="page-header">
-        <h1>Event Categories</h1>
-        <p>Discover events by category</p>
+<div class="container mt-5">
+    <!-- Page Header -->
+    <div class="row mb-5">
+        <div class="col-12 text-center">
+            <h1 class="display-4 fw-bold text-primary mb-3">Event Categories</h1>
+            <p class="lead text-muted">Discover events by category and find what interests you most</p>
+        </div>
     </div>
 
-    <!-- Display Messages -->
-    {% if messages %}
-    <div class="messages">
-        {% for message in messages %}
-        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-        {% endfor %}
+    <!-- Search Box -->
+    <div class="row mb-4">
+        <div class="col-md-8 mx-auto">
+            <div class="input-group input-group-lg shadow-sm">
+                <span class="input-group-text bg-white border-end-0">
+                    <i class="fas fa-search text-muted"></i>
+                </span>
+                <input type="text" id="categorySearch" class="form-control border-start-0"
+                       placeholder="Search categories by name or description...">
+            </div>
+        </div>
     </div>
-    {% endif %}
 
-    <div class="categories-grid">
+    <!-- Categories Grid -->
+    <div class="row" id="categoriesContainer">
         {% for category in categories %}
-        <div class="category-card">
-            <a href="{% url 'category_events' category.slug %}" class="category-link">
-                <div class="category-image">
-                    <!-- IMAGE UPLOAD: Enhanced image display with error handling -->
-                    {% if category.image %}
-                        <img src="{{ category.image.url }}"
-                             alt="{{ category.name }}"
-                             loading="lazy"
-                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+        <div class="col-xl-3 col-lg-4 col-md-6 mb-4 category-item">
+            <div class="category-card card h-100 shadow-sm border-0">
+                <div class="card-body text-center p-4">
+                    <!-- Category Icon -->
+                    <div class="category-icon-wrapper mb-3">
+                        <div class="category-icon-circle bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center">
+                            <i class="{{ category.get_icon_class }} fa-2x"></i>
+                        </div>
+                    </div>
+
+                    <!-- Category Name -->
+                    <h5 class="card-title fw-bold text-dark mb-2">{{ category.name }}</h5>
+
+                    <!-- Category Description -->
+                    <p class="card-text text-muted small mb-3">
+                        {{ category.description|default:"Explore various events in this category" }}
+                    </p>
+
+                    <!-- Category Status Badge -->
+                    {% if not category.is_active %}
+                    <div class="mb-3">
+                        <span class="badge bg-warning text-dark">
+                            <i class="fas fa-eye-slash me-1"></i>Inactive
+                        </span>
+                    </div>
                     {% endif %}
 
-                    <!-- Fallback placeholder when no image or image fails to load -->
-                    <div class="category-image-placeholder"
-                         style="{% if category.image %}display: none;{% endif %}">
-                        <i class="fas fa-folder"></i>
-                    </div>
+                    <!-- Action Button -->
+                    <a href="{% url 'categories:category_detail' category.slug %}"
+                       class="btn btn-outline-primary btn-sm stretched-link">
+                        <i class="fas fa-arrow-right me-1"></i>Browse Events
+                    </a>
                 </div>
-                <div class="category-info">
-                    <h3>{{ category.name }}</h3>
-                    <p>{{ category.description|truncatewords:20|default:"No description available" }}</p>
-                    <div class="category-meta">
-                        <span class="events-count">
-                            {{ category.events_count }} event{{ category.events_count|pluralize }}
-                        </span>
-                        {% if category.has_image %}
-                        <span class="image-badge" title="Has image">
-                            <i class="fas fa-image"></i>
-                        </span>
-                        {% endif %}
-                    </div>
+
+                <!-- Card Footer with Stats -->
+                <div class="card-footer bg-transparent border-top-0 pt-0 text-center">
+                    <small class="text-muted">
+                        <i class="fas fa-calendar-check me-1"></i>
+                        <span class="event-count">Coming Soon</span> Events
+                    </small>
                 </div>
-            </a>
+            </div>
         </div>
         {% empty %}
-        <!-- Empty state when no categories available -->
-        <div class="empty-state">
-            <i class="fas fa-folder-open"></i>
-            <h3>No Categories Available</h3>
-            <p>There are no event categories at the moment. Check back later!</p>
+        <!-- Empty State -->
+        <div class="col-12">
+            <div class="text-center py-5 my-5">
+                <div class="category-empty-icon mb-4">
+                    <i class="fas fa-folder-open fa-4x text-muted opacity-50"></i>
+                </div>
+                <h3 class="text-muted mb-3">No Categories Available</h3>
+                <p class="text-muted mb-4">There are no event categories to display at the moment.</p>
+                {% if user.is_authenticated and user.is_staff %}
+                <a href="{% url 'categories:category_create' %}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus me-2"></i>Create First Category
+                </a>
+                {% endif %}
+            </div>
         </div>
         {% endfor %}
     </div>
 </div>
 
-<style>
-/* Additional styles for category list */
-.image-badge {
-    background: var(--primary);
-    color: var(--white);
-    padding: 4px 8px;
-    border-radius: 50%;
-    font-size: 10px;
-    width: 20px;
-    height: 20px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
+<!-- No Results Message (Hidden Initially) -->
+<div id="noResults" class="d-none">
+    <div class="text-center py-5 my-5">
+        <i class="fas fa-search fa-4x text-muted mb-4 opacity-50"></i>
+        <h3 class="text-muted">No Categories Found</h3>
+        <p class="text-muted">Try adjusting your search terms or browse all categories.</p>
+        <button class="btn btn-outline-secondary" onclick="clearSearch()">
+            <i class="fas fa-times me-1"></i>Clear Search
+        </button>
+    </div>
+</div>
+{% endblock %}
 
-.alert {
-    padding: 12px 16px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    font-size: 14px;
+{% block extra_js %}
+<script src="{% static 'categories/js/categories.js' %}"></script>
+<script>
+// Additional JavaScript for search functionality
+function clearSearch() {
+    document.getElementById('categorySearch').value = '';
+    filterCategories();
 }
-
-.alert-success {
-    background: #efffee;
-    border: 1px solid #c6f5d5;
-    color: #1c7237;
-}
-
-.alert-error {
-    background: #fee;
-    border: 1px solid #f5c6cb;
-    color: #721c24;
-}
-
-.alert-info {
-    background: #eef;
-    border: 1px solid #c6d5f5;
-    color: #1c2472;
-}
-</style>
+</script>
 {% endblock %}

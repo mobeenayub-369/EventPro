@@ -1,112 +1,264 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'dashboard/css/dashboard.css' %}">
-{% endblock %}
-
 {% block title %}Customer Dashboard - EventPro{% endblock %}
 
-{% block content %}
-<div class="dashboard-container">
-    <div class="dashboard-header">
-        <h1>Welcome, {{ request.user.username }}!</h1>
-        <p>Manage your bookings and discover new events</p>
-    </div>
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'dashboard/css/dashboard.css' %}">
+<style>
+.customer-hero {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 3rem 0;
+    margin-bottom: 2rem;
+}
+.booking-timeline {
+    position: relative;
+    padding-left: 30px;
+}
+.timeline-item {
+    position: relative;
+    margin-bottom: 2rem;
+}
+.timeline-point {
+    position: absolute;
+    left: -30px;
+    top: 5px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #007bff;
+    border: 3px solid white;
+}
+</style>
+{% endblock %}
 
-    <!-- Statistics Cards -->
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-icon">
+{% block content %}
+<!-- Customer Hero Section -->
+<div class="customer-hero">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="display-5 mb-3">Welcome, {{ user.get_full_name|default:user.username }}! 🎉</h1>
+                <p class="lead mb-0">Manage your event bookings and discover new experiences</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <div class="btn-group">
+                    <a href="{% url 'events:event_list' %}" class="btn btn-outline-light">
+                        <i class="fas fa-search"></i> Find Events
+                    </a>
+                    <a href="{% url 'bookings:booking_list' %}" class="btn btn-light">
+                        <i class="fas fa-ticket-alt"></i> My Bookings
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container py-4">
+    <!-- Quick Stats -->
+    <div class="quick-stats">
+        <div class="stat-card primary">
+            <div class="stat-icon text-primary">
                 <i class="fas fa-ticket-alt"></i>
             </div>
-            <div class="stat-info">
-                <h3>{{ total_bookings }}</h3>
-                <p>Total Bookings</p>
-            </div>
+            <div class="stat-number">{{ stats.total_bookings }}</div>
+            <div class="stat-label">Total Bookings</div>
+            <a href="{% url 'bookings:booking_list' %}" class="stretched-link"></a>
         </div>
-        
-        <div class="stat-card">
-            <div class="stat-icon">
+
+        <div class="stat-card success">
+            <div class="stat-icon text-success">
                 <i class="fas fa-calendar-check"></i>
             </div>
-            <div class="stat-info">
-                <h3>{{ upcoming_bookings }}</h3>
-                <p>Upcoming Events</p>
+            <div class="stat-number">{{ stats.upcoming_bookings }}</div>
+            <div class="stat-label">Upcoming Events</div>
+            <a href="{% url 'bookings:booking_list' %}?status=upcoming" class="stretched-link"></a>
+        </div>
+
+        <div class="stat-card warning">
+            <div class="stat-icon text-warning">
+                <i class="fas fa-star"></i>
             </div>
+            <div class="stat-number">{{ stats.total_reviews }}</div>
+            <div class="stat-label">Reviews Given</div>
+            <a href="{% url 'reviews:my_reviews' %}" class="stretched-link"></a>
+        </div>
+
+        <div class="stat-card info">
+            <div class="stat-icon text-info">
+                <i class="fas fa-heart"></i>
+            </div>
+            <div class="stat-number">{{ stats.wishlist_items }}</div>
+            <div class="stat-label">Wishlist Items</div>
+            <a href="{% url 'wishlist:wishlist_view' %}" class="stretched-link"></a>
         </div>
     </div>
 
-    <div class="dashboard-content">
-        <div class="content-grid">
-            <!-- Recent Bookings -->
-            <div class="content-card">
-                <div class="card-header">
-                    <h3>Your Recent Bookings</h3>
-                    <a href="{% url 'customer_bookings' %}" class="view-all">View All</a>
+    <div class="row">
+        <!-- Left Column -->
+        <div class="col-lg-8">
+            <!-- Upcoming Bookings -->
+            <div class="widget">
+                <div class="widget-header">
+                    <h5 class="mb-0"><i class="fas fa-calendar-day"></i> Upcoming Events</h5>
+                    <a href="{% url 'bookings:booking_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
                 </div>
-                <div class="card-body">
-                    {% if recent_bookings %}
-                    <div class="bookings-list">
-                        {% for booking in recent_bookings %}
-                        <div class="booking-item">
-                            <div class="booking-info">
-                                <h4>{{ booking.event.title }}</h4>
-                                <p class="booking-date">{{ booking.event.date|date:"M j, Y" }}</p>
-                                <p class="booking-location">{{ booking.event.location }}</p>
+                {% if upcoming_bookings %}
+                <div class="list-group list-group-flush">
+                    {% for booking in upcoming_bookings %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">{{ booking.event.title }}</h6>
+                                <p class="mb-1 text-muted">
+                                    <i class="fas fa-map-marker-alt"></i> {{ booking.event.location }}
+                                </p>
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar"></i> {{ booking.event.date|date:"M d, Y" }} •
+                                    <i class="fas fa-clock"></i> {{ booking.event.time|time:"g:i A" }}
+                                </small>
                             </div>
-                            <div class="booking-meta">
-                                <span class="amount">Rs. {{ booking.total_amount }}</span>
-                                <span class="status-badge status-{{ booking.booking_status }}">
-                                    {{ booking.get_booking_status_display }}
-                                </span>
+                            <div class="text-end">
+                                <span class="badge bg-{{ booking.status_color }} mb-2">{{ booking.get_status_display }}</span>
+                                <br>
+                                <small class="text-muted">{{ booking.tickets }} ticket{{ booking.tickets|pluralize }}</small>
                             </div>
                         </div>
-                        {% endfor %}
+                        <div class="mt-2">
+                            <a href="{% url 'bookings:booking_detail' booking.id %}" class="btn btn-sm btn-outline-primary">View Details</a>
+                            {% if booking.event.date >= today %}
+                            <a href="{% url 'events:event_detail' booking.event.slug %}" class="btn btn-sm btn-outline-secondary">Event Page</a>
+                            {% endif %}
+                        </div>
                     </div>
-                    {% else %}
-                    <div class="empty-state">
-                        <p>No bookings yet</p>
-                        <a href="{% url 'events' %}" class="btn btn-primary btn-sm">Explore Events</a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4 text-muted">
+                    <i class="fas fa-calendar-plus fa-2x mb-3"></i>
+                    <p>No upcoming events booked yet</p>
+                    <a href="{% url 'events:event_list' %}" class="btn btn-primary">Find Events</a>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="widget">
+                <div class="widget-header">
+                    <h5 class="mb-0"><i class="fas fa-history"></i> Recent Activity</h5>
+                </div>
+                <div class="booking-timeline">
+                    {% for activity in recent_activities %}
+                    <div class="timeline-item">
+                        <div class="timeline-point"></div>
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">{{ activity.description }}</h6>
+                                        <p class="mb-0 text-muted">{{ activity.event.title }}</p>
+                                    </div>
+                                    <small class="text-muted">{{ activity.created_at|timesince }} ago</small>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    {% endif %}
+                    {% empty %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="fas fa-bell-slash fa-2x mb-3"></i>
+                        <p>No recent activity</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="col-lg-4">
+            <!-- Quick Actions -->
+            <div class="widget">
+                <div class="widget-header">
+                    <h5 class="mb-0"><i class="fas fa-bolt"></i> Quick Actions</h5>
+                </div>
+                <div class="d-grid gap-2">
+                    <a href="{% url 'events:event_list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-search"></i> Browse Events
+                    </a>
+                    <a href="{% url 'bookings:booking_list' %}" class="btn btn-outline-success">
+                        <i class="fas fa-ticket-alt"></i> My Bookings
+                    </a>
+                    <a href="{% url 'wishlist:wishlist_view' %}" class="btn btn-outline-warning">
+                        <i class="fas fa-heart"></i> My Wishlist
+                        {% if stats.wishlist_items > 0 %}
+                        <span class="badge bg-danger ms-1">{{ stats.wishlist_items }}</span>
+                        {% endif %}
+                    </a>
+                    <a href="{% url 'reviews:my_reviews' %}" class="btn btn-outline-info">
+                        <i class="fas fa-star"></i> My Reviews
+                    </a>
+                    <a href="{% url 'messaging:inbox' %}" class="btn btn-outline-dark">
+                        <i class="fas fa-envelope"></i> Messages
+                        {% if stats.unread_messages > 0 %}
+                        <span class="badge bg-danger ms-1">{{ stats.unread_messages }}</span>
+                        {% endif %}
+                    </a>
                 </div>
             </div>
 
             <!-- Recommended Events -->
-            <div class="content-card">
-                <div class="card-header">
-                    <h3>Recommended For You</h3>
+            <div class="widget">
+                <div class="widget-header">
+                    <h5 class="mb-0"><i class="fas fa-fire"></i> Recommended For You</h5>
                 </div>
-                <div class="card-body">
-                    {% if recommended_events %}
-                    <div class="events-grid">
-                        {% for event in recommended_events %}
-                        <div class="event-card">
-                            <div class="event-image">
-                                {% if event.image %}
-                                    <img src="{{ event.image.url }}" alt="{{ event.title }}">
-                                {% else %}
-                                    <div class="event-image-placeholder">
-                                        <i class="fas fa-calendar-alt"></i>
-                                    </div>
-                                {% endif %}
+                {% if recommended_events %}
+                <div class="list-group list-group-flush">
+                    {% for event in recommended_events %}
+                    <div class="list-group-item">
+                        <div class="d-flex align-items-start">
+                            {% if event.image %}
+                            <img src="{{ event.image.url }}" alt="{{ event.title }}"
+                                 class="rounded me-3" style="width: 50px; height: 50px; object-fit: cover;">
+                            {% else %}
+                            <div class="bg-light rounded me-3 d-flex align-items-center justify-content-center"
+                                 style="width: 50px; height: 50px;">
+                                <i class="fas fa-calendar text-muted"></i>
                             </div>
-                            <div class="event-info">
-                                <h4>{{ event.title }}</h4>
-                                <p class="event-date">{{ event.date|date:"M j, Y" }}</p>
-                                <p class="event-price">Rs. {{ event.price }}</p>
-                                <a href="{% url 'event_detail' event.slug %}" class="btn btn-primary btn-sm">View Details</a>
+                            {% endif %}
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">{{ event.title|truncatewords:4 }}</h6>
+                                <small class="text-muted">
+                                    {{ event.date|date:"M d" }} • Rs. {{ event.price }}
+                                </small>
                             </div>
                         </div>
-                        {% endfor %}
+                        <div class="mt-2">
+                            <a href="{% url 'events:event_detail' event.slug %}" class="btn btn-sm btn-outline-primary w-100">View</a>
+                        </div>
                     </div>
-                    {% else %}
-                    <div class="empty-state">
-                        <p>No recommendations yet</p>
-                        <a href="{% url 'events' %}" class="btn btn-primary btn-sm">Explore Events</a>
-                    </div>
-                    {% endif %}
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-3 text-muted">
+                    <i class="fas fa-compass fa-2x mb-2"></i>
+                    <p class="mb-0">Explore events to get recommendations</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Event Categories -->
+            <div class="widget">
+                <div class="widget-header">
+                    <h5 class="mb-0"><i class="fas fa-tags"></i> Popular Categories</h5>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    {% for category in popular_categories %}
+                    <a href="{% url 'events:event_list' %}?category={{ category.slug }}"
+                       class="btn btn-outline-secondary btn-sm">
+                        {{ category.name }}
+                    </a>
+                    {% endfor %}
                 </div>
             </div>
         </div>

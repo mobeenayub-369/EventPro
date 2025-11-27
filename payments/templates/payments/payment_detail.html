@@ -1,188 +1,239 @@
 {% extends 'base.html' %}
-{% load static %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'payments/css/payments.css' %}">
-{% endblock %}
-
-{% block title %}Payment #{{ payment.id }} - EventPro{% endblock %}
+{% block title %}Transaction Details - EventPro{% endblock %}
 
 {% block content %}
-<div class="payment-detail-container">
-    <div class="payment-detail-header">
-        <h1>Payment Details</h1>
-        <p>Transaction #{{ payment.id }}</p>
-    </div>
-
-    <div class="payment-detail-content">
-        <div class="payment-main">
-            <!-- Payment Information -->
-            <div class="payment-card">
-                <div class="payment-header">
-                    <h2>Payment Information</h2>
-                    {% with status=payment.get_status_display_with_color %}
-                    <span class="status-badge status-{{ status.color }} large">
-                        {{ status.text }}
-                    </span>
-                    {% endwith %}
-                </div>
-
-                <div class="payment-details">
-                    <div class="detail-row">
-                        <div class="detail-label">Payment ID</div>
-                        <div class="detail-value">#{{ payment.id }}</div>
-                    </div>
-                    <div class="detail-row">
-                        <div class="detail-label">Transaction ID</div>
-                        <div class="detail-value">
-                            {% if payment.transaction_id %}
-                            <code>{{ payment.transaction_id }}</code>
-                            {% else %}
-                            <span class="text-muted">Not available</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class="detail-row">
-                        <div class="detail-label">Amount</div>
-                        <div class="detail-value">
-                            <strong class="amount">{{ payment.amount }} {{ payment.currency }}</strong>
-                        </div>
-                    </div>
-                    <div class="detail-row">
-                        <div class="detail-label">Payment Method</div>
-                        <div class="detail-value">
-                            <i class="fas fa-credit-card"></i>
-                            {{ payment.get_payment_method_display }}
-                        </div>
-                    </div>
-                    <div class="detail-row">
-                        <div class="detail-label">Booking Reference</div>
-                        <div class="detail-value">
-                            <a href="{% url 'booking_detail' payment.booking.id %}">
-                                Booking #{{ payment.booking.id }}
-                            </a>
-                        </div>
-                    </div>
-                </div>
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Transaction Details</h2>
+                <a href="{% url 'payments:payment_history' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to History
+                </a>
             </div>
 
-            <!-- Event Information -->
-            <div class="event-card">
-                <h3>Event Details</h3>
-                <div class="event-info">
-                    <div class="event-image">
-                        {% if payment.booking.event.image %}
-                            <img src="{{ payment.booking.event.image.url }}" alt="{{ payment.booking.event.title }}">
-                        {% else %}
-                            <div class="event-image-placeholder">
-                                <i class="fas fa-calendar-alt"></i>
+            <!-- Transaction Card -->
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Transaction #{{ transaction.transaction_id }}</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Status Badge -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <span class="badge {% if transaction.status == 'completed' %}bg-success{% elif transaction.status == 'failed' %}bg-danger{% elif transaction.status == 'pending' %}bg-warning{% else %}bg-secondary{% endif %} fs-6">
+                                {{ transaction.get_status_display }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Transaction Details -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Payment Information</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <th>Amount:</th>
+                                    <td>Rs. {{ transaction.amount }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Currency:</th>
+                                    <td>{{ transaction.currency }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Payment Method:</th>
+                                    <td>
+                                        {% if transaction.payment_method %}
+                                            {{ transaction.payment_method.get_name_display }}
+                                        {% else %}
+                                            <span class="text-muted">Not specified</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Created:</th>
+                                    <td>{{ transaction.created_at|date:"M d, Y H:i" }}</td>
+                                </tr>
+                                {% if transaction.completed_at %}
+                                <tr>
+                                    <th>Completed:</th>
+                                    <td>{{ transaction.completed_at|date:"M d, Y H:i" }}</td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+
+                        <div class="col-md-6">
+                            <h6>Booking Information</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <th>Event:</th>
+                                    <td>
+                                        <a href="{% url 'events:event_detail' transaction.booking.event.id %}" class="text-decoration-none">
+                                            {{ transaction.booking.event.title }}
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Booking ID:</th>
+                                    <td>#{{ transaction.booking.id }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Event Date:</th>
+                                    <td>{{ transaction.booking.event.date|date:"M d, Y" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Organizer:</th>
+                                    <td>{{ transaction.booking.event.organizer.get_full_name }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Gateway Specific Details -->
+                    {% if transaction.payment_method.name == 'bank_transfer' and transaction.banktransfer %}
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h6>Bank Transfer Details</h6>
+                            <div class="alert alert-info">
+                                <table class="table table-sm mb-0">
+                                    <tr>
+                                        <th>Bank Name:</th>
+                                        <td>{{ transaction.banktransfer.bank_name }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Account Title:</th>
+                                        <td>{{ transaction.banktransfer.account_title }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Account Number:</th>
+                                        <td>{{ transaction.banktransfer.account_number }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Slip Number:</th>
+                                        <td>{{ transaction.banktransfer.slip_number }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Transfer Date:</th>
+                                        <td>{{ transaction.banktransfer.transfer_date|date:"M d, Y" }}</td>
+                                    </tr>
+                                </table>
                             </div>
-                        {% endif %}
-                    </div>
-                    <div class="event-details">
-                        <h4>{{ payment.booking.event.title }}</h4>
-                        <p class="event-date">
-                            <i class="fas fa-calendar"></i>
-                            {{ payment.booking.event.date|date:"F j, Y" }} at {{ payment.booking.event.time|time:"g:i A" }}
-                        </p>
-                        <p class="event-location">
-                            <i class="fas fa-map-marker-alt"></i>
-                            {{ payment.booking.event.location }}
-                        </p>
-                        <p class="event-tickets">
-                            <i class="fas fa-ticket-alt"></i>
-                            {{ payment.booking.tickets_count }} ticket{{ payment.booking.tickets_count|pluralize }}
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="payment-sidebar">
-            <!-- Timeline -->
-            <div class="timeline-card">
-                <h3>Payment Timeline</h3>
-                <div class="timeline">
-                    <div class="timeline-item {% if payment.created_at %}completed{% endif %}">
-                        <div class="timeline-marker"></div>
-                        <div class="timeline-content">
-                            <strong>Payment Created</strong>
-                            <p>{{ payment.created_at|date:"M j, Y g:i A" }}</p>
                         </div>
                     </div>
-                    <div class="timeline-item {% if payment.is_successful %}completed{% endif %}">
-                        <div class="timeline-marker"></div>
-                        <div class="timeline-content">
-                            <strong>Payment Processed</strong>
-                            <p>
-                                {% if payment.completed_at %}
-                                {{ payment.completed_at|date:"M j, Y g:i A" }}
-                                {% else %}
-                                Pending
-                                {% endif %}
-                            </p>
-                        </div>
-                    </div>
-                    <div class="timeline-item {% if payment.booking.event.date < today %}completed{% endif %}">
-                        <div class="timeline-marker"></div>
-                        <div class="timeline-content">
-                            <strong>Event Completed</strong>
-                            <p>
-                                {% if payment.booking.event.date < today %}
-                                {{ payment.booking.event.date|date:"M j, Y" }}
-                                {% else %}
-                                Upcoming
-                                {% endif %}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Actions -->
-            <div class="actions-card">
-                <h3>Actions</h3>
-                <div class="action-buttons-vertical">
-                    <a href="{% url 'booking_detail' payment.booking.id %}" class="btn btn-outline">
-                        <i class="fas fa-ticket-alt"></i>
-                        View Booking
-                    </a>
-                    <a href="{% url 'event_detail' payment.booking.event.slug %}" class="btn btn-outline">
-                        <i class="fas fa-calendar"></i>
-                        View Event
-                    </a>
-                    
-                    {% if payment.is_successful %}
-                    <a href="{% url 'request_refund' payment.id %}" class="btn btn-warning">
-                        <i class="fas fa-undo"></i>
-                        Request Refund
-                    </a>
                     {% endif %}
-                    
-                    <button onclick="window.print()" class="btn btn-outline">
-                        <i class="fas fa-print"></i>
-                        Print Receipt
-                    </button>
+
+                    <!-- Failure Reason -->
+                    {% if transaction.status == 'failed' and transaction.gateway_response.failure_reason %}
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="alert alert-danger">
+                                <h6>Failure Reason</h6>
+                                <p class="mb-0">{{ transaction.gateway_response.failure_reason }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Actions -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'bookings:booking_detail' transaction.booking.id %}" class="btn btn-primary">
+                                    <i class="fas fa-calendar-check"></i> View Booking
+                                </a>
+
+                                {% if transaction.status == 'failed' %}
+                                <a href="{% url 'payments:create_payment' transaction.booking.id %}" class="btn btn-warning">
+                                    <i class="fas fa-redo"></i> Try Again
+                                </a>
+                                {% endif %}
+
+                                <button onclick="window.print()" class="btn btn-outline-secondary">
+                                    <i class="fas fa-print"></i> Print Receipt
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Refund Status -->
-            {% if payment.refunds.exists %}
-            <div class="refund-card">
-                <h3>Refund Status</h3>
-                {% for refund in payment.refunds.all %}
-                <div class="refund-info">
-                    <strong>Refund #{{ refund.id }}</strong>
-                    <span class="status-badge status-{{ refund.status }}">
-                        {{ refund.get_status_display }}
-                    </span>
-                    <p class="refund-reason">{{ refund.reason }}</p>
-                    <small>Requested: {{ refund.created_at|date:"M j, Y" }}</small>
+            <!-- Timeline -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0">Transaction Timeline</h6>
                 </div>
-                {% endfor %}
+                <div class="card-body">
+                    <div class="timeline">
+                        <div class="timeline-item {% if transaction.created_at %}active{% endif %}">
+                            <div class="timeline-point"></div>
+                            <div class="timeline-content">
+                                <h6>Transaction Created</h6>
+                                <p class="text-muted mb-0">{{ transaction.created_at|date:"M d, Y H:i" }}</p>
+                            </div>
+                        </div>
+
+                        {% if transaction.completed_at %}
+                        <div class="timeline-item active">
+                            <div class="timeline-point"></div>
+                            <div class="timeline-content">
+                                <h6>Payment Completed</h6>
+                                <p class="text-muted mb-0">{{ transaction.completed_at|date:"M d, Y H:i" }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="timeline-item {% if transaction.updated_at != transaction.created_at %}active{% endif %}">
+                            <div class="timeline-point"></div>
+                            <div class="timeline-content">
+                                <h6>Last Updated</h6>
+                                <p class="text-muted mb-0">{{ transaction.updated_at|date:"M d, Y H:i" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            {% endif %}
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+}
+.timeline-point {
+    position: absolute;
+    left: -30px;
+    top: 5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #6c757d;
+    border: 2px solid white;
+}
+.timeline-item.active .timeline-point {
+    background-color: #007bff;
+}
+.timeline-content {
+    padding-bottom: 10px;
+}
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: -24px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: #e9ecef;
+}
+</style>
 {% endblock %}

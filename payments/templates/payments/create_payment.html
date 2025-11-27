@@ -1,132 +1,90 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'payments/css/payments.css' %}">
-{% endblock %}
-
-{% block title %}Create Payment - EventPro{% endblock %}
+{% block title %}Make Payment - EventPro{% endblock %}
 
 {% block content %}
-<div class="create-payment-container">
-    <div class="create-payment-card">
-        <div class="create-payment-header">
-            <h1>Complete Payment</h1>
-            <p>Secure payment for your booking</p>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Make Payment</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Booking Summary -->
+                    <div class="alert alert-info">
+                        <h5>Booking Summary</h5>
+                        <p><strong>Event:</strong> {{ booking.event.title }}</p>
+                        <p><strong>Amount:</strong> Rs. {{ booking.total_amount }}</p>
+                        <p><strong>Booking ID:</strong> {{ booking.id }}</p>
+                    </div>
+
+                    <!-- Payment Methods -->
+                    <h5 class="mb-3">Select Payment Method</h5>
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div class="row">
+                            {% for method in payment_methods %}
+                            <div class="col-md-6 mb-3">
+                                <input type="radio" name="payment_method" value="{{ method.id }}"
+                                       id="method_{{ method.id }}" class="d-none">
+                                <label for="method_{{ method.id }}" class="payment-method-card card h-100">
+                                    <div class="card-body text-center">
+                                        <div class="payment-icon mb-3">
+                                            {% if method.name == 'jazzcash' %}
+                                                <i class="fas fa-mobile-alt fa-2x jazzcash-color"></i>
+                                            {% elif method.name == 'easypaisa' %}
+                                                <i class="fas fa-wallet fa-2x easypaisa-color"></i>
+                                            {% elif method.name == 'bank_transfer' %}
+                                                <i class="fas fa-university fa-2x bank-transfer-color"></i>
+                                            {% elif method.name == 'credit_debit_card' %}
+                                                <i class="fas fa-credit-card fa-2x card-color"></i>
+                                            {% endif %}
+                                        </div>
+                                        <h6>{{ method.get_name_display }}</h6>
+                                        <small class="text-muted">{{ method.description }}</small>
+                                        {% if method.processing_fee > 0 %}
+                                        <div class="mt-2">
+                                            <small class="text-danger">Processing Fee: Rs. {{ method.processing_fee }}</small>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg w-100">Continue to Payment</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
-
-        <div class="payment-summary">
-            <h3>Booking Summary</h3>
-            <div class="summary-details">
-                <div class="summary-item">
-                    <span>Event:</span>
-                    <strong>{{ booking.event.title }}</strong>
-                </div>
-                <div class="summary-item">
-                    <span>Date:</span>
-                    <span>{{ booking.event.date|date:"F j, Y" }}</span>
-                </div>
-                <div class="summary-item">
-                    <span>Tickets:</span>
-                    <span>{{ booking.tickets_count }}</span>
-                </div>
-                <div class="summary-item">
-                    <span>Total Amount:</span>
-                    <strong class="total-amount">{{ booking.total_amount }} PKR</strong>
-                </div>
-            </div>
-        </div>
-
-        <form method="POST" class="payment-form">
-            {% csrf_token %}
-            
-            <div class="form-section">
-                <h3>Payment Method</h3>
-                
-                <div class="form-group">
-                    <label>Select Payment Method *</label>
-                    {{ form.payment_method }}
-                    {% if form.payment_method.errors %}
-                    <div class="error-text">{{ form.payment_method.errors }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="payment-methods-info">
-                    <div class="method-info" id="credit_card_info">
-                        <i class="fas fa-shield-alt"></i>
-                        <span>Secure credit card processing powered by Stripe</span>
-                    </div>
-                    <div class="method-info" id="easypaisa_info">
-                        <i class="fas fa-mobile-alt"></i>
-                        <span>Pay via Easypaisa mobile account or retail store</span>
-                    </div>
-                    <div class="method-info" id="jazzcash_info">
-                        <i class="fas fa-wallet"></i>
-                        <span>Pay via JazzCash mobile account or retail store</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-section">
-                <h3>Additional Information</h3>
-                
-                <div class="form-group">
-                    <label>Payment Notes (Optional)</label>
-                    {{ form.description }}
-                    {% if form.description.errors %}
-                    <div class="error-text">{{ form.description.errors }}</div>
-                    {% endif %}
-                    <small class="help-text">Any special instructions or notes regarding this payment</small>
-                </div>
-            </div>
-
-            <!-- Terms and Conditions -->
-            <div class="terms-section">
-                <div class="form-group">
-                    <label class="checkbox-label">
-                        <input type="checkbox" name="terms" required>
-                        <span class="checkmark"></span>
-                        I agree to the <a href="{% url 'page_detail' 'terms' %}" target="_blank">Terms of Service</a> 
-                        and <a href="{% url 'page_detail' 'privacy' %}" target="_blank">Privacy Policy</a>
-                    </label>
-                </div>
-            </div>
-
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary btn-large">
-                    <i class="fas fa-lock"></i>
-                    Proceed to Payment
-                </button>
-                <a href="{% url 'booking_detail' booking.id %}" class="btn btn-outline">Cancel</a>
-            </div>
-        </form>
     </div>
 </div>
 {% endblock %}
 
-{% block extra_js %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const paymentMethodSelect = document.querySelector('#id_payment_method');
-    const methodInfos = document.querySelectorAll('.method-info');
-    
-    function showMethodInfo() {
-        // Hide all method info first
-        methodInfos.forEach(info => info.style.display = 'none');
-        
-        // Show selected method info
-        const selectedMethod = paymentMethodSelect.value;
-        const selectedInfo = document.getElementById(selectedMethod + '_info');
-        if (selectedInfo) {
-            selectedInfo.style.display = 'flex';
-        }
-    }
-    
-    // Initial call
-    showMethodInfo();
-    
-    // Add event listener
-    paymentMethodSelect.addEventListener('change', showMethodInfo);
-});
-</script>
+{% block extra_css %}
+<style>
+.payment-method-card {
+    border: 2px solid #dee2e6;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.payment-method-card:hover {
+    border-color: #007bff;
+    transform: translateY(-2px);
+}
+input[type="radio"]:checked + .payment-method-card {
+    border-color: #007bff;
+    background-color: #f8f9ff;
+}
+.jazzcash-color { color: #f15a29; }
+.easypaisa-color { color: #00a651; }
+.bank-transfer-color { color: #0056b3; }
+.card-color { color: #ff6b6b; }
+</style>
 {% endblock %}

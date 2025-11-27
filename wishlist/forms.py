@@ -1,37 +1,26 @@
 from django import forms
-from .models import Wishlist, WishlistItem
+from .models import WishlistItem
 
-
-# Wishlist item form (for adding events to wishlist)
 class WishlistItemForm(forms.ModelForm):
     class Meta:
         model = WishlistItem
-        fields = ['event']
+        fields = ['notes']
+        widgets = {
+            'notes': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Add notes about this event (optional)...'
+            }),
+        }
 
-    def __init__(self, *args, **kwargs):
-        self.user = kwargs.pop('user', None)
-        super().__init__(*args, **kwargs)
-
-        # Limit events to active events only
-        if self.user:
-            from events.models import Event
-            self.fields['event'].queryset = Event.objects.filter(is_active=True)
-
-    def clean(self):
-        cleaned_data = super().clean()
-        event = cleaned_data.get('event')
-
-        # Check if event is already in user's wishlist
-        if event and self.user:
-            if WishlistItem.objects.filter(wishlist=self.user.wishlist, event=event).exists():
-                raise forms.ValidationError('This event is already in your wishlist.')
-
-        return cleaned_data
-
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-        if self.user:
-            instance.wishlist = self.user.wishlist
-        if commit:
-            instance.save()
-        return instance
+class WishlistShareForm(forms.Form):
+    expires_in = forms.ChoiceField(
+        choices=[
+            (1, '1 Day'),
+            (3, '3 Days'),
+            (7, '1 Week'),
+            (30, '1 Month'),
+        ],
+        initial=7,
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )

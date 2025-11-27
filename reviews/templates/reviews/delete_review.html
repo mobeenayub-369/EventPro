@@ -1,96 +1,59 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'reviews/css/reviews.css' %}">
-{% endblock %}
-
-{% block title %}Delete Review - EventPro{% endblock %}
+{% block title %}{{ title }} - EventPro{% endblock %}
 
 {% block content %}
-<div class="delete-review-container">
-    <div class="delete-review-card">
-        <div class="delete-review-header">
-            <i class="fas fa-exclamation-triangle"></i>
-            <h1>Delete Review</h1>
-        </div>
-
-        <div class="delete-review-content">
-            <!-- Warning Message -->
-            <div class="warning-message">
-                <h3>Are you sure you want to delete this review?</h3>
-                <p>This action cannot be undone. Your review and any associated data will be permanently removed.</p>
-            </div>
-
-            <!-- Review Preview -->
-            <div class="review-preview">
-                <div class="preview-header">
-                    <div class="event-info">
-                        <div class="event-image">
-                            {% if review.event.image %}
-                                <img src="{{ review.event.image.url }}" alt="{{ review.event.title }}">
-                            {% else %}
-                                <div class="event-image-placeholder small">
-                                    <i class="fas fa-calendar-alt"></i>
-                                </div>
-                            {% endif %}
-                        </div>
-                        <div class="event-details">
-                            <h4>{{ review.event.title }}</h4>
-                            <p>{{ review.event.date|date:"F j, Y" }}</p>
-                        </div>
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-trash me-2"></i>Delete Review
+                    </h4>
+                </div>
+                <div class="card-body p-4 text-center">
+                    <!-- Warning Icon -->
+                    <div class="mb-4">
+                        <i class="fas fa-exclamation-triangle fa-3x text-warning"></i>
                     </div>
-                    
-                    <div class="review-rating">
-                        <div class="star-rating">
-                            {% for i in "12345" %}
-                                {% if forloop.counter <= review.rating %}
-                                    <i class="fas fa-star"></i>
-                                {% else %}
-                                    <i class="far fa-star"></i>
-                                {% endif %}
-                            {% endfor %}
+
+                    <!-- Confirmation Message -->
+                    <h5 class="mb-3">Are you sure you want to delete your review?</h5>
+
+                    <!-- Review Preview -->
+                    <div class="review-preview mb-4 p-3 bg-light rounded">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <strong class="text-dark">{{ review.get_rating_stars }}</strong>
+                            <small class="text-muted">
+                                {{ review.created_at|date:"M d, Y" }}
+                            </small>
                         </div>
+                        {% if review.comment %}
+                        <p class="mb-0 text-muted">{{ review.comment|truncatewords:30 }}</p>
+                        {% else %}
+                        <p class="mb-0 text-muted"><em>No comment provided</em></p>
+                        {% endif %}
                     </div>
-                </div>
-                
-                <div class="preview-content">
-                    <h5>{{ review.title }}</h5>
-                    <p>{{ review.comment|truncatewords:30 }}</p>
-                </div>
-                
-                <div class="preview-meta">
-                    <span>Posted on {{ review.created_at|date:"F j, Y" }}</span>
-                    {% if review.is_verified %}
-                    <span class="verified-badge">Verified</span>
-                    {% endif %}
+
+                    <p class="text-muted mb-4">
+                        This action cannot be undone. Your review will be permanently deleted.
+                    </p>
+
+                    <!-- Delete Form -->
+                    <form method="post" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-lg">
+                            <i class="fas fa-trash me-2"></i>Yes, Delete Review
+                        </button>
+                    </form>
+
+                    <a href="{% url 'reviews:event_reviews' event.id %}" class="btn btn-outline-secondary btn-lg ms-2">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </a>
                 </div>
             </div>
-
-            <!-- Impact Notice -->
-            <div class="impact-notice">
-                <h4>What will be deleted:</h4>
-                <ul>
-                    <li>Your review content and rating</li>
-                    <li>Any helpful votes your review received</li>
-                    {% if review.response %}
-                    <li>The organizer's response to your review</li>
-                    {% endif %}
-                    <li>All associated review data</li>
-                </ul>
-            </div>
-
-            <!-- Delete Form -->
-            <form method="POST" class="delete-form">
-                {% csrf_token %}
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-danger btn-large">
-                        <i class="fas fa-trash"></i>
-                        Yes, Delete Review
-                    </button>
-                    <a href="{% url 'review_detail' review.id %}" class="btn btn-outline">Cancel</a>
-                </div>
-            </form>
         </div>
     </div>
 </div>

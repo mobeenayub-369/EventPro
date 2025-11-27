@@ -1,134 +1,319 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'dashboard/css/dashboard.css' %}">
-{% endblock %}
-
 {% block title %}Organizer Dashboard - EventPro{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'dashboard/css/dashboard.css' %}">
+<style>
+.organizer-hero {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+    color: white;
+    padding: 3rem 0;
+    margin-bottom: 2rem;
+}
+.revenue-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 2rem;
+}
+.metric-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    text-align: center;
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="dashboard-container">
-    <div class="dashboard-header">
-        <h1>Organizer Dashboard</h1>
-        <p>Manage your events and track performance</p>
+<!-- Organizer Hero Section -->
+<div class="organizer-hero">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="display-5 mb-3">Organizer Dashboard 🎪</h1>
+                <p class="lead mb-0">Manage your events and track your performance</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <div class="btn-group">
+                    <a href="{% url 'events:create_event' %}" class="btn btn-outline-light">
+                        <i class="fas fa-plus"></i> Create Event
+                    </a>
+                    <a href="{% url 'events:event_list' %}" class="btn btn-light">
+                        <i class="fas fa-list"></i> My Events
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container py-4">
+    <!-- Revenue Overview -->
+    <div class="revenue-card mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h3 class="mb-2">Revenue Overview</h3>
+                <p class="mb-0">Track your earnings and performance metrics</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <h2 class="display-4 mb-0">Rs. {{ revenue.total_revenue }}</h2>
+                <p class="mb-0">Total Revenue</p>
+            </div>
+        </div>
     </div>
 
-    <!-- Statistics Cards -->
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-icon">
-                <i class="fas fa-calendar-alt"></i>
+    <!-- Quick Stats -->
+    <div class="quick-stats">
+        <div class="stat-card primary">
+            <div class="stat-icon text-primary">
+                <i class="fas fa-calendar"></i>
             </div>
-            <div class="stat-info">
-                <h3>{{ total_events }}</h3>
-                <p>Total Events</p>
-            </div>
+            <div class="stat-number">{{ stats.total_events }}</div>
+            <div class="stat-label">Total Events</div>
+            <a href="{% url 'events:event_list' %}" class="stretched-link"></a>
         </div>
-        
-        <div class="stat-card">
-            <div class="stat-icon">
-                <i class="fas fa-play-circle"></i>
-            </div>
-            <div class="stat-info">
-                <h3>{{ active_events }}</h3>
-                <p>Active Events</p>
-            </div>
-        </div>
-        
-        <div class="stat-card">
-            <div class="stat-icon">
+
+        <div class="stat-card success">
+            <div class="stat-icon text-success">
                 <i class="fas fa-ticket-alt"></i>
             </div>
-            <div class="stat-info">
-                <h3>{{ total_bookings }}</h3>
-                <p>Total Bookings</p>
+            <div class="stat-number">{{ stats.active_events }}</div>
+            <div class="stat-label">Active Events</div>
+        </div>
+
+        <div class="stat-card warning">
+            <div class="stat-icon text-warning">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-number">{{ stats.total_bookings }}</div>
+            <div class="stat-label">Total Bookings</div>
+        </div>
+
+        <div class="stat-card info">
+            <div class="stat-icon text-info">
+                <i class="fas fa-star"></i>
+            </div>
+            <div class="stat-number">{{ stats.average_rating|floatformat:1 }}</div>
+            <div class="stat-label">Avg. Rating</div>
+        </div>
+    </div>
+
+    <!-- Revenue Metrics -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="metric-card">
+                <div class="text-success">
+                    <i class="fas fa-money-bill-wave fa-2x mb-2"></i>
+                    <div class="h4">Rs. {{ revenue.monthly_revenue }}</div>
+                    <small>This Month</small>
+                </div>
             </div>
         </div>
-        
-        <div class="stat-card">
-            <div class="stat-icon">
-                <i class="fas fa-money-bill-wave"></i>
+        <div class="col-md-4">
+            <div class="metric-card">
+                <div class="text-primary">
+                    <i class="fas fa-chart-line fa-2x mb-2"></i>
+                    <div class="h4">Rs. {{ revenue.weekly_revenue }}</div>
+                    <small>This Week</small>
+                </div>
             </div>
-            <div class="stat-info">
-                <h3>Rs. {{ total_revenue }}</h3>
-                <p>Total Revenue</p>
+        </div>
+        <div class="col-md-4">
+            <div class="metric-card">
+                <div class="text-info">
+                    <i class="fas fa-calendar-check fa-2x mb-2"></i>
+                    <div class="h4">{{ revenue.pending_payouts }}</div>
+                    <small>Pending Payouts</small>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="dashboard-content">
-        <div class="content-grid">
+    <div class="row">
+        <!-- Left Column -->
+        <div class="col-lg-8">
             <!-- Recent Events -->
-            <div class="content-card">
-                <div class="card-header">
-                    <h3>Recent Events</h3>
-                    <a href="{% url 'organizer_events' %}" class="view-all">View All</a>
+            <div class="widget">
+                <div class="widget-header">
+                    <h5 class="mb-0"><i class="fas fa-calendar-week"></i> Recent Events</h5>
+                    <a href="{% url 'events:event_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
                 </div>
-                <div class="card-body">
-                    {% if recent_events %}
-                    <div class="events-list">
-                        {% for event in recent_events %}
-                        <div class="event-item">
-                            <div class="event-image">
-                                {% if event.image %}
-                                    <img src="{{ event.image.url }}" alt="{{ event.title }}">
-                                {% else %}
-                                    <div class="event-image-placeholder">
-                                        <i class="fas fa-calendar-alt"></i>
+                {% if recent_events %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Event</th>
+                                <th>Date</th>
+                                <th>Bookings</th>
+                                <th>Revenue</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for event in recent_events %}
+                            <tr>
+                                <td>
+                                    <strong>{{ event.title }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ event.category.name }}</small>
+                                </td>
+                                <td>{{ event.date|date:"M d, Y" }}</td>
+                                <td>
+                                    <span class="badge bg-primary">{{ event.booking_count }}</span>
+                                </td>
+                                <td>
+                                    <strong>Rs. {{ event.total_revenue }}</strong>
+                                </td>
+                                <td>
+                                    <span class="badge {% if event.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                                        {{ event.is_active|yesno:"Active,Inactive" }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'events:event_detail' event.slug %}" class="btn btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'events:edit_event' event.slug %}" class="btn btn-outline-secondary">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
                                     </div>
-                                {% endif %}
-                            </div>
-                            <div class="event-details">
-                                <h4>{{ event.title }}</h4>
-                                <p class="event-date">{{ event.date|date:"M j, Y" }}</p>
-                                <span class="status-badge status-{{ event.is_active|yesno:'active,inactive' }}">
-                                    {{ event.is_active|yesno:"Active,Inactive" }}
-                                </span>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    {% else %}
-                    <div class="empty-state">
-                        <p>No events created yet</p>
-                        <a href="{% url 'create_event' %}" class="btn btn-primary btn-sm">Create Event</a>
-                    </div>
-                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
+                {% else %}
+                <div class="text-center py-4 text-muted">
+                    <i class="fas fa-calendar-plus fa-2x mb-3"></i>
+                    <p>No events created yet</p>
+                    <a href="{% url 'events:create_event' %}" class="btn btn-primary">Create Your First Event</a>
+                </div>
+                {% endif %}
             </div>
 
             <!-- Recent Bookings -->
-            <div class="content-card">
-                <div class="card-header">
-                    <h3>Recent Bookings</h3>
-                    <a href="{% url 'organizer_bookings' %}" class="view-all">View All</a>
+            <div class="widget">
+                <div class="widget-header">
+                    <h5 class="mb-0"><i class="fas fa-ticket-alt"></i> Recent Bookings</h5>
+                    <a href="{% url 'bookings:organizer_bookings' %}" class="btn btn-sm btn-outline-primary">View All</a>
                 </div>
-                <div class="card-body">
-                    {% if recent_bookings %}
-                    <div class="bookings-list">
-                        {% for booking in recent_bookings %}
-                        <div class="booking-item">
-                            <div class="booking-info">
-                                <h4>{{ booking.event.title }}</h4>
-                                <p class="booking-user">{{ booking.user.username }}</p>
-                                <p class="booking-date">{{ booking.created_at|date:"M j, Y" }}</p>
+                {% if recent_bookings %}
+                <div class="list-group list-group-flush">
+                    {% for booking in recent_bookings %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">{{ booking.event.title }}</h6>
+                                <p class="mb-1 text-muted">
+                                    Booked by {{ booking.user.get_full_name|default:booking.user.username }}
+                                </p>
+                                <small class="text-muted">
+                                    {{ booking.tickets }} ticket{{ booking.tickets|pluralize }} •
+                                    Rs. {{ booking.total_amount }} •
+                                    {{ booking.created_at|timesince }} ago
+                                </small>
                             </div>
-                            <div class="booking-meta">
-                                <span class="amount">Rs. {{ booking.total_amount }}</span>
-                                <span class="status-badge status-{{ booking.booking_status }}">
-                                    {{ booking.get_booking_status_display }}
-                                </span>
+                            <span class="badge bg-{{ booking.status_color }}">{{ booking.get_status_display }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4 text-muted">
+                    <i class="fas fa-ticket-alt fa-2x mb-3"></i>
+                    <p>No bookings yet</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="col-lg-4">
+            <!-- Quick Actions -->
+            <div class="widget">
+                <div class="widget-header">
+                    <h5 class="mb-0"><i class="fas fa-bolt"></i> Quick Actions</h5>
+                </div>
+                <div class="d-grid gap-2">
+                    <a href="{% url 'events:create_event' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Create New Event
+                    </a>
+                    <a href="{% url 'events:event_list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-list"></i> Manage Events
+                    </a>
+                    <a href="{% url 'bookings:organizer_bookings' %}" class="btn btn-outline-success">
+                        <i class="fas fa-ticket-alt"></i> View Bookings
+                    </a>
+                    <a href="{% url 'payments:payment_analytics' %}" class="btn btn-outline-info">
+                        <i class="fas fa-chart-bar"></i> Revenue Analytics
+                    </a>
+                    <a href="{% url 'support:create_ticket' %}" class="btn btn-outline-warning">
+                        <i class="fas fa-question-circle"></i> Get Support
+                    </a>
+                </div>
+            </div>
+
+            <!-- Performance Metrics -->
+            <div class="widget">
+                <div class="widget-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Performance</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item d-flex justify-content-between">
+                        <span>Conversion Rate</span>
+                        <strong>{{ performance.conversion_rate }}%</strong>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between">
+                        <span>Avg. Booking Value</span>
+                        <strong>Rs. {{ performance.avg_booking_value }}</strong>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between">
+                        <span>Customer Satisfaction</span>
+                        <strong>{{ performance.satisfaction_rate }}%</strong>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between">
+                        <span>Repeat Customers</span>
+                        <strong>{{ performance.repeat_customers }}%</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notifications -->
+            <div class="widget">
+                <div class="widget-header">
+                    <h5 class="mb-0"><i class="fas fa-bell"></i> Notifications</h5>
+                    <span class="badge bg-danger">{{ notifications|length }}</span>
+                </div>
+                {% if notifications %}
+                <div class="list-group list-group-flush">
+                    {% for notification in notifications %}
+                    <div class="list-group-item">
+                        <div class="d-flex align-items-start">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-{{ notification.icon }} text-{{ notification.type }}"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <p class="mb-1">{{ notification.message }}</p>
+                                <small class="text-muted">{{ notification.time }}</small>
                             </div>
                         </div>
-                        {% endfor %}
                     </div>
-                    {% else %}
-                    <div class="empty-state">
-                        <p>No bookings yet</p>
-                    </div>
-                    {% endif %}
+                    {% endfor %}
                 </div>
+                {% else %}
+                <div class="text-center py-3 text-muted">
+                    <i class="fas fa-bell-slash fa-2x mb-2"></i>
+                    <p class="mb-0">No new notifications</p>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>

@@ -1,152 +1,224 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
-from django.contrib import messages
 from django.http import JsonResponse
-from django.db import IntegrityError
+from django.contrib import messages
+from django.db.models import Q
+from django.utils import timezone
 
-from .models import Wishlist, WishlistItem
-from .forms import WishlistItemForm
+from .models import Wishlist, WishlistItem, WishlistShare, WishlistNotification
 from events.models import Event
 
 
-# Wishlist Detail View
 @login_required
-def wishlist_detail(request):
-    # Get or create user's wishlist
+def wishlist_view(request):
+    """User's wishlist page"""
     wishlist, created = Wishlist.objects.get_or_create(user=request.user)
-    wishlist_items = wishlist.items.all().select_related('event', 'event__organizer', 'event__category')
+    wishlist_items = wishlist.items.all()
+
+    # Calculate statistics
+    total_value = sum(item.event.price for item in wishlist_items if item.event.price)
+    upcoming_events = wishlist_items.filter(event__date__gte=timezone.now().date())
+    past_events = wishlist_items.filter(event__date__lt=timezone.now().date())
 
     context = {
         'wishlist': wishlist,
         'wishlist_items': wishlist_items,
+        'total_value': total_value,
+        'upcoming_events': upcoming_events,
+        'past_events': past_events,
+        'items_count': wishlist.items_count,
     }
-    return render(request, 'wishlist/wishlist_detail.html', context)
+    return render(request, 'wishlist/wishlist.html', context)
 
 
-# Add to Wishlist View
 @login_required
 def add_to_wishlist(request, event_id):
-    event = get_object_or_404(Event, id=event_id, is_active=True)
+    """Add event to wishlist (AJAX)"""
+    if request.method == 'POST':
+        event = get_object_or_404(Event, id=event_id, is_active=True, is_approved=True)
+        wishlist, created = Wishlist.objects.get_or_create(user=request.user)
 
-    # Get or create user's wishlist
-    wishlist, created = Wishlist.objects.get_or_create(user=request.user)
-
-    # Check if event is already in wishlist
-    if WishlistItem.objects.filter(wishlist=wishlist, event=event).exists():
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        # Check if already in wishlist
+        if WishlistItem.objects.filter(wishlist=wishlist, event=event).exists():
             return JsonResponse({
                 'success': False,
                 'message': 'Event is already in your wishlist.'
             })
-        messages.warning(request, 'This event is already in your wishlist.')
-        return redirect('event_detail', slug=event.slug)
 
-    # Add event to wishlist
-    try:
+        # Add to wishlist
         WishlistItem.objects.create(wishlist=wishlist, event=event)
 
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({
-                'success': True,
-                'message': 'Event added to wishlist!',
-                'wishlist_count': wishlist.items_count
-            })
-
-        messages.success(request, 'Event added to your wishlist!')
-        return redirect('event_detail', slug=event.slug)
-
-    except IntegrityError:
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({
-                'success': False,
-                'message': 'Failed to add event to wishlist.'
-            })
-        messages.error(request, 'Failed to add event to wishlist.')
-        return redirect('event_detail', slug=event.slug)
-
-
-# Remove from Wishlist View
-@login_required
-def remove_from_wishlist(request, item_id):
-    wishlist_item = get_object_or_404(WishlistItem, id=item_id, wishlist__user=request.user)
-    event_slug = wishlist_item.event.slug
-
-    # Remove item from wishlist
-    wishlist_item.delete()
-
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        wishlist = Wishlist.objects.get(user=request.user)
         return JsonResponse({
             'success': True,
-            'message': 'Event removed from wishlist.',
+            'message': 'Event added to wishlist successfully!',
             'wishlist_count': wishlist.items_count
         })
 
-    messages.success(request, 'Event removed from your wishlist.')
-
-    # Redirect back to appropriate page
-    referer = request.META.get('HTTP_REFERER')
-    if referer and 'wishlist' in referer:
-        return redirect('wishlist_detail')
-    else:
-        return redirect('event_detail', slug=event_slug)
+    return JsonResponse({'success': False, 'message': 'Invalid request.'})
 
 
-# Clear Wishlist View
 @login_required
-def clear_wishlist(request):
-    wishlist = get_object_or_404(Wishlist, user=request.user)
-
+def remove_from_wishlist(request, event_id):
+    """Remove event from wishlist (AJAX)"""
     if request.method == 'POST':
-        items_count = wishlist.items_count
-        wishlist.items.all().delete()
+        event = get_object_or_404(Event, id=event_id)
+        wishlist = get_object_or_404(Wishlist, user=request.user)
 
-        messages.success(request, f'All {items_count} events removed from your wishlist.')
-        return redirect('wishlist_detail')
+        try:
+            wishlist_item = WishlistItem.objects.get(wishlist=wishlist, event=event)
+            wishlist_item.delete()
 
-    # Show confirmation page for GET requests
-    return render(request, 'wishlist/clear_wishlist.html', {'wishlist': wishlist})
+            return JsonResponse({
+                'success': True,
+                'message': 'Event removed from wishlist.',
+                'wishlist_count': wishlist.items_count
+            })
+        except WishlistItem.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'message': 'Event not found in your wishlist.'
+            })
+
+    return JsonResponse({'success': False, 'message': 'Invalid request.'})
 
 
-# Toggle Wishlist View (AJAX)
 @login_required
 def toggle_wishlist(request, event_id):
-    event = get_object_or_404(Event, id=event_id, is_active=True)
-    wishlist, created = Wishlist.objects.get_or_create(user=request.user)
+    """Toggle event in wishlist (AJAX)"""
+    if request.method == 'POST':
+        event = get_object_or_404(Event, id=event_id, is_active=True, is_approved=True)
+        wishlist, created = Wishlist.objects.get_or_create(user=request.user)
 
-    # Check if event is in wishlist
-    wishlist_item = WishlistItem.objects.filter(wishlist=wishlist, event=event).first()
+        try:
+            # Remove if exists
+            wishlist_item = WishlistItem.objects.get(wishlist=wishlist, event=event)
+            wishlist_item.delete()
+            action = 'removed'
+        except WishlistItem.DoesNotExist:
+            # Add if not exists
+            WishlistItem.objects.create(wishlist=wishlist, event=event)
+            action = 'added'
 
-    if wishlist_item:
-        # Remove from wishlist
-        wishlist_item.delete()
-        action = 'removed'
-        is_in_wishlist = False
-    else:
-        # Add to wishlist
-        WishlistItem.objects.create(wishlist=wishlist, event=event)
-        action = 'added'
-        is_in_wishlist = True
-
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return JsonResponse({
             'success': True,
             'action': action,
-            'is_in_wishlist': is_in_wishlist,
+            'message': f'Event {action} from wishlist.',
             'wishlist_count': wishlist.items_count,
-            'message': f'Event {action} from wishlist!'
+            'in_wishlist': action == 'added'
         })
 
-    messages.success(request, f'Event {action} from your wishlist!')
-    return redirect('event_detail', slug=event.slug)
+    return JsonResponse({'success': False, 'message': 'Invalid request.'})
 
 
-# Wishlist Count API View
 @login_required
-def wishlist_count(request):
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        wishlist, created = Wishlist.objects.get_or_create(user=request.user)
+def clear_wishlist(request):
+    """Clear entire wishlist"""
+    if request.method == 'POST':
+        wishlist = get_object_or_404(Wishlist, user=request.user)
+        items_count = wishlist.items_count
+        wishlist.items.all().delete()
+
+        messages.success(request, f'Cleared {items_count} items from your wishlist.')
+        return redirect('wishlist:wishlist_view')
+
+    return redirect('wishlist:wishlist_view')
+
+
+@login_required
+def share_wishlist(request):
+    """Create shareable wishlist link"""
+    wishlist = get_object_or_404(Wishlist, user=request.user)
+
+    if request.method == 'POST':
+        # Deactivate previous active shares
+        WishlistShare.objects.filter(wishlist=wishlist, is_active=True).update(is_active=False)
+
+        # Create new share
+        share = WishlistShare.objects.create(
+            wishlist=wishlist,
+            created_by=request.user
+        )
+
+        share_url = request.build_absolute_uri(
+            f'/wishlist/shared/{share.share_token}/'
+        )
+
         return JsonResponse({
-            'count': wishlist.items_count
+            'success': True,
+            'share_url': share_url,
+            'expires_at': share.expires_at.strftime('%b %d, %Y %H:%M')
         })
-    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+    # Get active shares
+    active_shares = WishlistShare.objects.filter(
+        wishlist=wishlist,
+        is_active=True,
+        expires_at__gt=timezone.now()
+    )
+
+    context = {
+        'wishlist': wishlist,
+        'active_shares': active_shares,
+    }
+    return render(request, 'wishlist/share_wishlist.html', context)
+
+
+def shared_wishlist(request, share_token):
+    """View shared wishlist"""
+    share = get_object_or_404(
+        WishlistShare,
+        share_token=share_token,
+        is_active=True,
+        expires_at__gt=timezone.now()
+    )
+
+    wishlist = share.wishlist
+    wishlist_items = wishlist.items.all()
+
+    context = {
+        'share': share,
+        'wishlist': wishlist,
+        'wishlist_items': wishlist_items,
+        'is_owner': request.user == wishlist.user,
+    }
+    return render(request, 'wishlist/shared_wishlist.html', context)
+
+
+@login_required
+def wishlist_notifications(request):
+    """User's wishlist notifications"""
+    notifications = WishlistNotification.objects.filter(
+        user=request.user
+    ).order_by('-created_at')
+
+    # Mark as read when viewing
+    unread_notifications = notifications.filter(is_read=False)
+    unread_notifications.update(is_read=True)
+
+    context = {
+        'notifications': notifications,
+    }
+    return render(request, 'wishlist/notifications.html', context)
+
+
+# Utility functions
+def check_wishlist_notifications():
+    """Check and create wishlist notifications (run as cron job)"""
+    # This would be called periodically to check for:
+    # - Price drops
+    # - Events becoming available
+    # - Event reminders
+    # - Almost full events
+    pass
+
+
+@login_required
+def get_wishlist_count(request):
+    """Get wishlist items count for navbar (AJAX)"""
+    try:
+        wishlist = Wishlist.objects.get(user=request.user)
+        count = wishlist.items_count
+    except Wishlist.DoesNotExist:
+        count = 0
+
+    return JsonResponse({'count': count})

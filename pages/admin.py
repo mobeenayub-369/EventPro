@@ -1,52 +1,26 @@
 from django.contrib import admin
-from .models import Page
+from .models import Page, FAQ, ContactSubmission
 
-
-# Page Admin Configuration
 @admin.register(Page)
 class PageAdmin(admin.ModelAdmin):
-    # Display fields in list view
-    list_display = ['title', 'slug', 'status', 'show_in_header', 'show_in_footer',
-                    'order', 'created_by', 'created_at', 'is_published']
-
-    # Filter options
-    list_filter = ['status', 'show_in_header', 'show_in_footer', 'created_at']
-
-    # Search functionality
+    list_display = ['title', 'slug', 'page_type', 'is_active', 'order', 'created_at']
+    list_filter = ['page_type', 'is_active', 'show_in_footer', 'show_in_navigation']
     search_fields = ['title', 'content', 'slug']
-
-    # Prepopulated fields
+    list_editable = ['is_active', 'order']
     prepopulated_fields = {'slug': ('title',)}
+    readonly_fields = ['created_at', 'updated_at']
 
-    # Editable in list view
-    list_editable = ['status', 'order', 'show_in_header', 'show_in_footer']
+@admin.register(FAQ)
+class FAQAdmin(admin.ModelAdmin):
+    list_display = ['question', 'category', 'order', 'is_active', 'created_at']
+    list_filter = ['category', 'is_active']
+    search_fields = ['question', 'answer']
+    list_editable = ['order', 'is_active']
 
-    # Date-based navigation
-    date_hierarchy = 'created_at'
-
-    # Read-only fields
-    readonly_fields = ['created_at', 'updated_at', 'published_at']
-
-    # Field organization in edit view
-    fieldsets = (
-        ('Basic Information', {
-            'fields': ('title', 'slug', 'content')
-        }),
-        ('SEO Settings', {
-            'fields': ('meta_title', 'meta_description'),
-            'classes': ('collapse',)
-        }),
-        ('Page Settings', {
-            'fields': ('status', 'show_in_header', 'show_in_footer', 'order')
-        }),
-        ('Timestamps', {
-            'fields': ('created_at', 'updated_at', 'published_at'),
-            'classes': ('collapse',)
-        }),
-    )
-
-    # Auto-set created_by user
-    def save_model(self, request, obj, form, change):
-        if not obj.pk:  # Only for new objects
-            obj.created_by = request.user
-        super().save_model(request, obj, form, change)
+@admin.register(ContactSubmission)
+class ContactSubmissionAdmin(admin.ModelAdmin):
+    list_display = ['name', 'email', 'subject', 'status', 'created_at']
+    list_filter = ['status', 'created_at']
+    search_fields = ['name', 'email', 'subject', 'message']
+    readonly_fields = ['created_at', 'updated_at', 'ip_address', 'user_agent']
+    list_editable = ['status']

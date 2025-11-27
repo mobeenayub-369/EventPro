@@ -1,212 +1,103 @@
-{% extends 'base.html' %}
-{% load static %}
+{% extends 'search_base.html' %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'search/css/search.css' %}">
-{% endblock %}
-
-{% block title %}{{ title }} - EventPro{% endblock %}
+{% block title %}Events in {{ category.name }} - EventPro{% endblock %}
 
 {% block content %}
-<div class="category-events-container">
-    <!-- Category Header -->
-    <div class="category-header">
-        <div class="category-hero">
-            {% if category.image %}
-                <img src="{{ category.image.url }}" alt="{{ category.name }}" class="category-hero-image">
-            {% else %}
-                <div class="category-hero-placeholder">
-                    <i class="fas fa-tags"></i>
-                </div>
-            {% endif %}
-            
-            <div class="category-hero-overlay">
-                <div class="category-hero-content">
-                    <h1>{{ category.name }}</h1>
-                    <p class="category-description">{{ category.description|default:"Explore amazing events in this category" }}</p>
-                    <div class="category-stats">
-                        <span class="stat">
-                            <strong>{{ total_results }}</strong>
-                            <span>Events</span>
-                        </span>
-                        {% if category.events.count > 0 %}
-                        <span class="stat">
-                            <strong>{{ category.events.count }}</strong>
-                            <span>Total</span>
-                        </span>
-                        {% endif %}
-                    </div>
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-12">
+            <!-- Category Header -->
+            <div class="category-header text-center mb-5">
+                <h1 class="display-4">{{ category.name }} Events</h1>
+                {% if category.description %}
+                <p class="lead text-muted">{{ category.description }}</p>
+                {% endif %}
+                <div class="category-stats mt-3">
+                    <span class="badge bg-primary fs-6">{{ events.paginator.count }} events found</span>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <div class="category-content">
-        <!-- Main Content -->
-        <div class="category-main">
-            <!-- Events Section -->
-            <section class="events-section">
-                <div class="section-header">
-                    <h2>Events in {{ category.name }}</h2>
-                    <p>{{ total_results }} event{{ total_results|pluralize }} available</p>
-                </div>
-
-                {% if events %}
-                <div class="events-grid">
-                    {% for event in events %}
-                    <div class="event-card">
-                        <div class="event-image">
-                            {% if event.image %}
-                                <img src="{{ event.image.url }}" alt="{{ event.title }}">
-                            {% else %}
-                                <div class="event-image-placeholder">
-                                    <i class="fas fa-calendar-alt"></i>
-                                </div>
-                            {% endif %}
-                            
-                            {% if event.is_featured %}
-                            <div class="featured-badge">
-                                <i class="fas fa-star"></i>
-                                Featured
-                            </div>
-                            {% endif %}
+            <!-- Events Grid -->
+            {% if events %}
+            <div class="row">
+                {% for event in events %}
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card event-card h-100">
+                        {% if event.image %}
+                        <img src="{{ event.image.url }}" class="card-img-top" alt="{{ event.title }}" style="height: 200px; object-fit: cover;">
+                        {% else %}
+                        <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                            <i class="fas fa-calendar-alt fa-3x text-muted"></i>
                         </div>
+                        {% endif %}
 
-                        <div class="event-info">
-                            <h3><a href="{% url 'event_detail' event.slug %}">{{ event.title }}</a></h3>
-                            <p class="event-description">{{ event.description|truncatewords:20 }}</p>
-                            
-                            <div class="event-meta">
-                                <div class="meta-item">
-                                    <i class="fas fa-calendar"></i>
-                                    <span>{{ event.date|date:"M j, Y" }}</span>
+                        <div class="card-body">
+                            <h5 class="card-title">{{ event.title }}</h5>
+                            <p class="card-text text-muted">{{ event.description|truncatewords:20 }}</p>
+
+                            <div class="event-meta mb-3">
+                                <div class="d-flex justify-content-between text-sm">
+                                    <span><i class="fas fa-map-marker-alt"></i> {{ event.location }}</span>
+                                    <span><i class="fas fa-calendar"></i> {{ event.date|date:"M d" }}</span>
                                 </div>
-                                <div class="meta-item">
-                                    <i class="fas fa-map-marker-alt"></i>
-                                    <span>{{ event.location }}</span>
+                                <div class="d-flex justify-content-between mt-2">
+                                    <span><i class="fas fa-tag"></i> {{ event.category.name }}</span>
+                                    <span class="text-primary fw-bold">Rs. {{ event.price }}</span>
                                 </div>
                             </div>
 
-                            <div class="event-footer">
-                                <div class="event-price">
-                                    <strong>
-                                        {% if event.price > 0 %}
-                                        Rs. {{ event.price }}
-                                        {% else %}
-                                        Free
-                                        {% endif %}
-                                    </strong>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="event-rating">
+                                    {% if event.average_rating %}
+                                    <span class="text-warning">
+                                        <i class="fas fa-star"></i> {{ event.average_rating|floatformat:1 }}
+                                    </span>
+                                    <small class="text-muted">({{ event.review_count }})</small>
+                                    {% else %}
+                                    <span class="text-muted">No ratings yet</span>
+                                    {% endif %}
                                 </div>
-                                <div class="event-organizer">
-                                    By {{ event.organizer.username }}
-                                </div>
+                                <a href="{% url 'events:event_detail' event.slug %}" class="btn btn-primary btn-sm">View Details</a>
                             </div>
                         </div>
                     </div>
-                    {% endfor %}
                 </div>
+                {% endfor %}
+            </div>
 
-                <!-- Pagination -->
-                {% if events.has_other_pages %}
-                <div class="pagination">
+            <!-- Pagination -->
+            {% if events.has_other_pages %}
+            <nav aria-label="Category events pagination" class="mt-5">
+                <ul class="pagination justify-content-center">
                     {% if events.has_previous %}
-                    <a href="?page={{ events.previous_page_number }}" class="page-link">
-                        <i class="fas fa-chevron-left"></i>
-                        Previous
-                    </a>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ events.previous_page_number }}">Previous</a>
+                    </li>
                     {% endif %}
 
-                    <span class="current-page">
-                        Page {{ events.number }} of {{ events.paginator.num_pages }}
-                    </span>
+                    {% for num in events.paginator.page_range %}
+                    <li class="page-item {% if events.number == num %}active{% endif %}">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% endfor %}
 
                     {% if events.has_next %}
-                    <a href="?page={{ events.next_page_number }}" class="page-link">
-                        Next
-                        <i class="fas fa-chevron-right"></i>
-                    </a>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ events.next_page_number }}">Next</a>
+                    </li>
                     {% endif %}
-                </div>
-                {% endif %}
-
-                {% else %}
-                <div class="no-events">
-                    <i class="fas fa-calendar-times"></i>
-                    <h3>No Events Found</h3>
-                    <p>There are no events in this category at the moment.</p>
-                    <a href="{% url 'advanced_search' %}" class="btn btn-primary">
-                        Browse All Events
-                    </a>
-                </div>
-                {% endif %}
-            </section>
-        </div>
-
-        <!-- Sidebar -->
-        <div class="category-sidebar">
-            <!-- Similar Categories -->
-            {% if similar_categories %}
-            <div class="similar-categories-card">
-                <h3>Similar Categories</h3>
-                <div class="similar-categories">
-                    {% for similar_cat in similar_categories %}
-                    <a href="{% url 'category_events' similar_cat.slug %}" class="similar-category">
-                        <div class="category-icon">
-                            <i class="fas fa-tag"></i>
-                        </div>
-                        <div class="category-info">
-                            <strong>{{ similar_cat.name }}</strong>
-                            <span>{{ similar_cat.events.count }} events</span>
-                        </div>
-                    </a>
-                    {% endfor %}
-                </div>
-            </div>
+                </ul>
+            </nav>
             {% endif %}
 
-            <!-- Category Info -->
-            <div class="category-info-card">
-                <h3>About This Category</h3>
-                <div class="category-details">
-                    {% if category.description %}
-                    <p>{{ category.description }}</p>
-                    {% endif %}
-                    
-                    <div class="category-meta">
-                        <div class="meta-item">
-                            <i class="fas fa-calendar"></i>
-                            <span>Active since {{ category.created_at|date:"M Y" }}</span>
-                        </div>
-                        {% if category.updated_at %}
-                        <div class="meta-item">
-                            <i class="fas fa-sync"></i>
-                            <span>Updated {{ category.updated_at|timesince }} ago</span>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No events in this category</h4>
+                <p class="text-muted">Check back later for new events in {{ category.name }}</p>
+                <a href="{% url 'events:event_list' %}" class="btn btn-primary">Browse All Events</a>
             </div>
-
-            <!-- Quick Actions -->
-            <div class="quick-actions-card">
-                <h3>Explore More</h3>
-                <div class="quick-actions">
-                    <a href="{% url 'advanced_search' %}" class="btn btn-outline full-width">
-                        <i class="fas fa-search"></i>
-                        Advanced Search
-                    </a>
-                    <a href="{% url 'event_list' %}" class="btn btn-outline full-width">
-                        <i class="fas fa-list"></i>
-                        All Events
-                    </a>
-                    {% if user.is_authenticated and user.user_type == 'organizer' %}
-                    <a href="{% url 'create_event' %}" class="btn btn-primary full-width">
-                        <i class="fas fa-plus"></i>
-                        Create Event
-                    </a>
-                    {% endif %}
-                </div>
-            </div>
+            {% endif %}
         </div>
     </div>
 </div>

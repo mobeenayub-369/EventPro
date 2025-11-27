@@ -1,57 +1,54 @@
 from django import forms
-from .models import SupportTicket, TicketResponse, FAQ
+from .models import SupportTicket, TicketResponse, KnowledgeBaseArticle
 
-# Create support ticket form
+
 class SupportTicketForm(forms.ModelForm):
     class Meta:
         model = SupportTicket
-        fields = [
-            'subject', 'description', 'ticket_type', 'priority'
-        ]
-
-        # Widgets Customization
+        fields = ['category', 'subject', 'description', 'priority', 'attachment']
         widgets = {
-            'description': forms.Textarea(attrs={
-                'rows': 6,
-                'placeholder': 'Describe your issue in detail...'
-            }),
+            'category': forms.Select(attrs={'class': 'form-control'}),
             'subject': forms.TextInput(attrs={
-                'placeholder': 'Enter a brief subject for your ticket...'
-            })
+                'class': 'form-control',
+                'placeholder': 'Brief description of your issue'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 6,
+                'placeholder': 'Please provide detailed information about your issue...'
+            }),
+            'priority': forms.Select(attrs={'class': 'form-control'}),
+            'attachment': forms.FileInput(attrs={'class': 'form-control'}),
         }
 
-    # Field customization
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['priority'].empty_label = None
+    def clean_subject(self):
+        subject = self.cleaned_data.get('subject')
+        if len(subject) < 10:
+            raise forms.ValidationError("Subject must be at least 10 characters long.")
+        return subject
 
-# Ticket response form
+
 class TicketResponseForm(forms.ModelForm):
     class Meta:
         model = TicketResponse
-        fields = ['message', 'attachment', 'is_internal_note']
-
-        # Widgets Customization
+        fields = ['message', 'attachment']
         widgets = {
             'message': forms.Textarea(attrs={
+                'class': 'form-control',
                 'rows': 4,
                 'placeholder': 'Type your response here...'
-            })
+            }),
+            'attachment': forms.FileInput(attrs={'class': 'form-control'}),
         }
 
-# FAQ form
-class FAQForm(forms.ModelForm):
-    class Meta:
-        model = FAQ
-        fields = ['question', 'answer', 'category', 'is_active', 'order']
 
-        # Widgets Customization
+class KnowledgeBaseForm(forms.ModelForm):
+    class Meta:
+        model = KnowledgeBaseArticle
+        fields = ['category', 'title', 'slug', 'content', 'is_published']
         widgets = {
-            'question': forms.TextInput(attrs={
-                'placeholder': 'Enter frequently asked question...'
-            }),
-            'answer': forms.Textarea(attrs={
-                'rows': 5,
-                'placeholder': 'Enter the answer...'
-            })
+            'category': forms.Select(attrs={'class': 'form-control'}),
+            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'slug': forms.TextInput(attrs={'class': 'form-control'}),
+            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 10}),
         }

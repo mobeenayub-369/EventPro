@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ category.name }} Events - EventPro{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'categories/css/categories.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Breadcrumb Navigation -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'categories:category_list' %}" class="text-decoration-none">
+                    <i class="fas fa-home me-1"></i>Categories
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">{{ category.name }}</li>
+        </ol>
+    </nav>
+
+    <!-- Category Header -->
+    <div class="row align-items-center mb-5">
+        <div class="col-md-8">
+            <div class="d-flex align-items-center mb-3">
+                <!-- Category Icon -->
+                <div class="category-detail-icon me-3">
+                    <div class="category-icon-circle bg-primary text-white rounded-circle d-flex align-items-center justify-content-center">
+                        <i class="{{ category.get_icon_class }} fa-2x"></i>
+                    </div>
+                </div>
+
+                <!-- Category Title and Info -->
+                <div>
+                    <h1 class="display-5 fw-bold text-dark mb-1">{{ category.name }}</h1>
+                    {% if not category.is_active %}
+                    <span class="badge bg-warning text-dark">
+                        <i class="fas fa-eye-slash me-1"></i>Inactive Category
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Category Description -->
+            <p class="lead text-muted mb-4">
+                {{ category.Description|default:"Explore various events in this category. Find events that match your interests and preferences." }}
+            </p>
+
+            <!-- Category Meta Information -->
+            <div class="category-meta d-flex flex-wrap gap-4 text-muted">
+                <div class="meta-item">
+                    <i class="fas fa-calendar-plus me-2"></i>
+                    <strong>Created:</strong> {{ category.created_at|date:"M d, Y" }}
+                </div>
+                <div class="meta-item">
+                    <i class="fas fa-sync-alt me-2"></i>
+                    <strong>Updated:</strong> {{ category.updated_at|timesince }} ago
+                </div>
+                <div class="meta-item">
+                    <i class="fas fa-calendar-check me-2"></i>
+                    <strong>Events:</strong> <span id="eventsCount">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 text-md-end">
+            <!-- Action Buttons -->
+            <div class="d-flex flex-column gap-2">
+                {% if user.is_authenticated and user.is_staff %}
+                <a href="{% url 'categories:category_update' category.slug %}" class="btn btn-outline-primary">
+                    <i class="fas fa-edit me-1"></i>Edit Category
+                </a>
+                <a href="{% url 'categories:category_delete' category.slug %}" class="btn btn-outline-danger">
+                    <i class="fas fa-trash me-1"></i>Delete Category
+                </a>
+                {% endif %}
+
+                <!-- Share Button -->
+                <button class="btn btn-outline-secondary" onclick="shareCategory('{{ category.slug }}')">
+                    <i class="fas fa-share-alt me-1"></i>Share Category
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Events Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="h4 fw-bold text-dark">
+                    <i class="fas fa-events me-2"></i>Events in {{ category.name }}
+                </h2>
+
+                <!-- Events Filter (Will be functional when events are integrated) -->
+                <div class="events-filter">
+                    <select class="form-select form-select-sm" id="eventsFilter" disabled>
+                        <option selected>Sort by: Date (Coming Soon)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Events Container -->
+            <div id="eventsContainer">
+                <!-- Temporary Placeholder - Replace with actual events -->
+                <div class="alert alert-info border-0 shadow-sm">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-info-circle me-3 fa-2x text-primary"></i>
+                        <div class="flex-grow-1">
+                            <h5 class="alert-heading mb-2">Events Integration Coming Soon</h5>
+                            <p class="mb-0">
+                                Events for the <strong>{{ category.name }}</strong> category will be displayed here once
+                                the integration with the events app is complete. This section will show all events
+                                belonging to this category with details like event title, date, location, and description.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sample Event Cards (Remove when real events are added) -->
+                <div class="row g-4 mt-2">
+                    <!-- Sample Event 1 -->
+                    <div class="col-lg-6">
+                        <div class="card event-placeholder-card border-dashed h-100">
+                            <div class="card-body text-center p-5">
+                                <i class="fas fa-calendar-plus fa-3x text-muted mb-3 opacity-50"></i>
+                                <h5 class="text-muted mb-2">Sample Event 1</h5>
+                                <p class="text-muted small mb-3">Event details will appear here</p>
+                                <span class="badge bg-light text-muted">Date: Coming Soon</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sample Event 2 -->
+                    <div class="col-lg-6">
+                        <div class="card event-placeholder-card border-dashed h-100">
+                            <div class="card-body text-center p-5">
+                                <i class="fas fa-calendar-plus fa-3x text-muted mb-3 opacity-50"></i>
+                                <h5 class="text-muted mb-2">Sample Event 2</h5>
+                                <p class="text-muted small mb-3">Event details will appear here</p>
+                                <span class="badge bg-light text-muted">Date: Coming Soon</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Load More Button (Will be functional when events are integrated) -->
+            <div class="text-center mt-5">
+                <button id="loadMoreEvents" class="btn btn-outline-primary" disabled>
+                    <i class="fas fa-spinner me-2"></i>Load More Events (Coming Soon)
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'categories/js/categories.js' %}"></script>
+<script>
+// Category detail page specific JavaScript
+function shareCategory(categorySlug) {
+    const shareUrl = `${window.location.origin}/categories/${categorySlug}/`;
+
+    if (navigator.share) {
+        navigator.share({
+            title: 'Check out {{ category.name }} events on EventPro',
+            text: 'Explore amazing {{ category.name }} events on EventPro',
+            url: shareUrl
+        });
+    } else {
+        // Fallback: Copy to clipboard
+        navigator.clipboard.writeText(shareUrl).then(() => {
+            alert('Category link copied to clipboard!');
+        });
+    }
+}
+</script>
+{% endblock %}

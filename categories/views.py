@@ -1,74 +1,51 @@
 from django.shortcuts import render, get_object_or_404
-from django.db.models import Count
-from .models import Category, Tag
-from events.models import Event
+from django.views.generic import ListView, DetailView
+from .models import Category
 
 
-# List Active Categories with Image Support
-def category_list(request):
+class CategoryListView(ListView):
     """
-    Display all active categories with their images and event counts
-    Optimized query with image URL handling
+    View to display all active categories in a list format.
+    Only shows categories that are marked as active.
     """
-    # IMAGE UPLOAD: Get categories with event counts and image support
-    categories = Category.objects.filter(is_active=True).annotate(
-        events_count=Count('event')
-    ).order_by('name')
 
-    return render(request, 'categories/category_list.html', {
-        'categories': categories
-    })
+    model = Category
+    template_name = 'categories/category_list.html'
+    context_object_name = 'categories'  # Variable name in template
+
+    def get_queryset(self):
+        """
+        Override to return only active categories, ordered by name.
+        """
+        return Category.objects.filter(is_active=True).order_by('name')
 
 
-# Specific Category Events with Image Support
-def category_events(request, category_slug):
+class CategoryDetailView(DetailView):
     """
-    Display events for a specific category with category image
-    Includes error handling for missing categories
+    View to display detailed information about a specific category.
+    Shows category details and will eventually show events in this category.
     """
-    # IMAGE UPLOAD: Get category with image and related events
-    category = get_object_or_404(Category, slug=category_slug, is_active=True)
 
-    # Get active events for this category
-    events = Event.objects.filter(category=category, is_active=True).select_related(
-        'organizer', 'category'
-    ).order_by('-created_at')
+    model = Category
+    template_name = 'categories/category_detail.html'
+    context_object_name = 'category'  # Variable name in template
 
-    return render(request, 'categories/category_events.html', {
-        'category': category,
-        'events': events
-    })
+    def get_queryset(self):
+        """
+        Override to return only active categories.
+        Prevents access to inactive categories via direct URL.
+        """
+        return Category.objects.filter(is_active=True)
 
+    def get_context_data(self, **kwargs):
+        """
+        Add additional context data to the template.
+        Currently prepares for future integration with events.
+        """
+        context = super().get_context_data(**kwargs)
+        category = self.get_object()
 
-# Specific Events by Tags with Error Handling
-def tag_events(request, tag_slug):
-    """
-    Display events for a specific tag
-    Fixed the tag filtering issue in the original code
-    """
-    tag = get_object_or_404(Tag, slug=tag_slug)
+        # TODO: Add related events when events app is integrated
+        # context['events'] = category.event_set.filter(is_active=True)
 
-    # FIX: Corrected filter from 'tags_slug' to proper ManyToMany relationship
-    events = Event.objects.filter(tags__slug=tag_slug, is_active=True).select_related(
-        'organizer', 'category'
-    ).order_by('-created_at')
-
-    return render(request, 'categories/tag_events.html', {
-        'tag': tag,
-        'events': events
-    })
-
-
-# Tag List request with Count
-def tag_list(request):
-    """
-    Display all tags with their event counts
-    """
-    # IMAGE UPLOAD: Get tags with event counts
-    tags = Tag.objects.annotate(
-        events_count=Count('event')
-    ).order_by('name')
-
-    return render(request, 'categories/tag_list.html', {
-        'tags': tags
-    })
+        return context

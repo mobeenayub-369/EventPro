@@ -1,150 +1,172 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block title %}Support Dashboard - EventPro{% endblock %}
+
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'support/css/support.css' %}">
 {% endblock %}
 
-{% block title %}Support Dashboard - EventPro{% endblock %}
-
 {% block content %}
-<div class="support-dashboard-container">
-    <div class="support-header">
-        <h1>Support Center</h1>
-        <p>Get help with your events and account</p>
+<div class="support-hero">
+    <div class="container">
+        <h1 class="display-4 text-center mb-4">Support Center</h1>
+        <p class="lead text-center">How can we help you today?</p>
     </div>
+</div>
 
+<div class="container py-4">
     <!-- Quick Actions -->
     <div class="quick-actions">
-        <a href="{% url 'create_ticket' %}" class="action-btn">
-            <i class="fas fa-plus-circle"></i>
-            Create New Ticket
-        </a>
-        <a href="{% url 'my_tickets' %}" class="action-btn">
-            <i class="fas fa-ticket-alt"></i>
-            View My Tickets
-        </a>
-        <a href="{% url 'faq_list' %}" class="action-btn">
-            <i class="fas fa-question-circle"></i>
-            Browse FAQs
-        </a>
-    </div>
+        <div class="action-card">
+            <div class="action-icon">
+                <i class="fas fa-plus-circle"></i>
+            </div>
+            <h5>Create Ticket</h5>
+            <p class="text-muted">Submit a new support request</p>
+            <a href="{% url 'support:create_ticket' %}" class="btn btn-primary">Get Help</a>
+        </div>
 
-    <!-- Stats Cards -->
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-icon">
+        <div class="action-card">
+            <div class="action-icon">
                 <i class="fas fa-ticket-alt"></i>
             </div>
-            <div class="stat-info">
-                <h3>{{ ticket_stats.total }}</h3>
-                <p>Total Tickets</p>
-            </div>
+            <h5>My Tickets</h5>
+            <p class="text-muted">View your support tickets</p>
+            <a href="{% url 'support:ticket_list' %}" class="btn btn-outline-primary">View Tickets</a>
         </div>
-        
-        <div class="stat-card">
-            <div class="stat-icon" style="background: #17a2b8;">
-                <i class="fas fa-clock"></i>
+
+        <div class="action-card">
+            <div class="action-icon">
+                <i class="fas fa-book"></i>
             </div>
-            <div class="stat-info">
-                <h3>{{ ticket_stats.open }}</h3>
-                <p>Open Tickets</p>
-            </div>
+            <h5>Knowledge Base</h5>
+            <p class="text-muted">Find answers to common questions</p>
+            <a href="{% url 'support:knowledgebase' %}" class="btn btn-outline-primary">Browse Articles</a>
         </div>
-        
-        <div class="stat-card">
-            <div class="stat-icon" style="background: #ffc107;">
-                <i class="fas fa-spinner"></i>
+
+        <div class="action-card">
+            <div class="action-icon">
+                <i class="fas fa-question-circle"></i>
             </div>
-            <div class="stat-info">
-                <h3>{{ ticket_stats.in_progress }}</h3>
-                <p>In Progress</p>
-            </div>
+            <h5>FAQs</h5>
+            <p class="text-muted">Frequently asked questions</p>
+            <a href="{% url 'support:faq_list' %}" class="btn btn-outline-primary">View FAQs</a>
         </div>
-        
+    </div>
+
+    <!-- Statistics -->
+    <div class="dashboard-stats">
         <div class="stat-card">
-            <div class="stat-icon" style="background: #28a745;">
-                <i class="fas fa-check-circle"></i>
-            </div>
-            <div class="stat-info">
-                <h3>{{ ticket_stats.resolved }}</h3>
-                <p>Resolved</p>
-            </div>
+            <div class="stat-number">{{ open_tickets }}</div>
+            <div class="stat-label">Open Tickets</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ resolved_tickets }}</div>
+            <div class="stat-label">Resolved Tickets</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ total_tickets }}</div>
+            <div class="stat-label">Total Tickets</div>
         </div>
     </div>
 
     <!-- Recent Tickets -->
-    <div class="recent-tickets">
-        <div class="section-header">
-            <h2>Recent Support Tickets</h2>
-            <a href="{% url 'my_tickets' %}" class="btn btn-outline">View All</a>
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Recent Support Tickets</h5>
         </div>
-
-        {% if tickets %}
-        <div class="tickets-list">
-            {% for ticket in tickets %}
-            <div class="ticket-card">
-                <div class="ticket-header">
-                    <div class="ticket-info">
-                        <h3>
-                            <a href="{% url 'support_ticket_detail' ticket.ticket_id %}">
-                                {{ ticket.subject }}
-                            </a>
-                        </h3>
-                        <div class="ticket-meta">
-                            <span class="ticket-id">#{{ ticket.ticket_id }}</span>
-                            <span class="ticket-type">{{ ticket.get_ticket_type_display }}</span>
-                            <span class="priority-badge priority-{{ ticket.priority }}">
-                                {{ ticket.get_priority_display }}
-                            </span>
-                            <span class="status-badge status-{{ ticket.status }}">
+        <div class="card-body">
+            {% if recent_tickets %}
+            <div class="list-group">
+                {% for ticket in recent_tickets %}
+                <a href="{% url 'support:ticket_detail' ticket.ticket_id %}"
+                   class="list-group-item list-group-item-action">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">{{ ticket.subject }}</h6>
+                        <small>
+                            <span class="ticket-status-badge status-{{ ticket.status }}">
                                 {{ ticket.get_status_display }}
                             </span>
-                        </div>
+                        </small>
                     </div>
-                    <div class="ticket-date">
-                        {{ ticket.created_at|date:"M j, Y" }}
-                    </div>
-                </div>
-                <p class="ticket-description">
-                    {{ ticket.description|truncatewords:30 }}
-                </p>
+                    <p class="mb-1 text-muted">{{ ticket.description|truncatewords:20 }}</p>
+                    <small class="text-muted">
+                        Created: {{ ticket.created_at|date:"M d, Y" }} |
+                        Priority: <span class="priority-badge priority-{{ ticket.priority }}">
+                            {{ ticket.get_priority_display }}
+                        </span>
+                    </small>
+                </a>
+                {% endfor %}
             </div>
-            {% endfor %}
+            {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-ticket-alt fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No support tickets yet</h5>
+                <p class="text-muted">Create your first support ticket to get help</p>
+                <a href="{% url 'support:create_ticket' %}" class="btn btn-primary">Create Ticket</a>
+            </div>
+            {% endif %}
         </div>
-        {% else %}
-        <div class="empty-state">
-            <i class="fas fa-ticket-alt"></i>
-            <h3>No Support Tickets</h3>
-            <p>You haven't created any support tickets yet.</p>
-            <a href="{% url 'create_ticket' %}" class="btn btn-primary">Create Your First Ticket</a>
-        </div>
-        {% endif %}
     </div>
 
-    <!-- Staff Quick Access -->
-    {% if request.user.is_staff %}
-    <div class="staff-section">
-        <div class="section-header">
-            <h2>Staff Tools</h2>
-            <a href="{% url 'staff_ticket_list' %}" class="btn btn-primary">Manage All Tickets</a>
+    <!-- Quick Help -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-clock"></i> Response Times</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <span class="badge bg-danger me-2">Urgent</span>
+                            <small>2-4 hours response time</small>
+                        </li>
+                        <li class="mb-2">
+                            <span class="badge bg-warning me-2">High</span>
+                            <small>8-12 hours response time</small>
+                        </li>
+                        <li class="mb-2">
+                            <span class="badge bg-primary me-2">Medium</span>
+                            <small>24 hours response time</small>
+                        </li>
+                        <li>
+                            <span class="badge bg-success me-2">Low</span>
+                            <small>24-48 hours response time</small>
+                        </li>
+                    </ul>
+                </div>
+            </div>
         </div>
-        
-        <div class="quick-actions">
-            <a href="{% url 'staff_ticket_list' %}?status=open" class="action-btn">
-                <i class="fas fa-exclamation-circle"></i>
-                Open Tickets
-            </a>
-            <a href="{% url 'staff_ticket_list' %}?assigned_to_me=1" class="action-btn">
-                <i class="fas fa-user-check"></i>
-                Assigned to Me
-            </a>
-            <a href="{% url 'staff_ticket_list' %}?priority=urgent" class="action-btn">
-                <i class="fas fa-fire"></i>
-                Urgent Tickets
-            </a>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-phone-alt"></i> Contact Information</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-envelope text-primary me-2"></i>
+                            <small>support@eventpro.com</small>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-phone text-primary me-2"></i>
+                            <small>+92 300 1234567</small>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-clock text-primary me-2"></i>
+                            <small>Mon-Fri: 9AM-6PM</small>
+                        </li>
+                        <li>
+                            <i class="fas fa-globe text-primary me-2"></i>
+                            <small>Sat-Sun: Emergency only</small>
+                        </li>
+                    </ul>
+                </div>
+            </div>
         </div>
     </div>
-    {% endif %}
 </div>
 {% endblock %}

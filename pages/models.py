@@ -1,54 +1,88 @@
 from django.db import models
+from django.utils import timezone
+from django.urls import reverse
 from django.contrib.auth.models import User
-from django.utils.text import slugify
 
 
-# Page Model for static content management
 class Page(models.Model):
-    # Status choices for pages
-    STATUS_CHOICES = [
-        ('draft', 'Draft'),
-        ('published', 'Published'),
-    ]
+    PAGE_TYPES = (
+        ('about', 'About Us'),
+        ('how_it_works', 'How It Works'),
+        ('contact', 'Contact Us'),
+        ('faq', 'FAQ'),
+        ('terms', 'Terms & Conditions'),
+        ('privacy', 'Privacy Policy'),
+        ('custom', 'Custom Page'),
+    )
 
-    # Basic page information
-    title = models.CharField(max_length=200, help_text="Enter the page title")
-    slug = models.SlugField(max_length=200, unique=True, help_text="URL-friendly version of the title")
-    content = models.TextField(help_text="Main content of the page")
+    title = models.CharField(max_length=200)
+    slug = models.SlugField(unique=True)
+    content = models.TextField()
+    page_type = models.CharField(max_length=20, choices=PAGE_TYPES, default='custom')
+    meta_title = models.CharField(max_length=200, blank=True)
+    meta_description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    show_in_footer = models.BooleanField(default=False)
+    show_in_navigation = models.BooleanField(default=False)
+    order = models.IntegerField(default=0)
 
-    # SEO and meta information
-    meta_title = models.CharField(max_length=200, blank=True, help_text="SEO title tag")
-    meta_description = models.TextField(blank=True, help_text="SEO meta description")
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='pages_created')
+    updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='pages_updated')
 
-    # Page settings
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='draft')
-    show_in_footer = models.BooleanField(default=False, help_text="Display in footer navigation")
-    show_in_header = models.BooleanField(default=False, help_text="Display in header navigation")
-    order = models.IntegerField(default=0, help_text="Display order in navigation")
-
-    # Timestamps
-    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='pages_created')
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
-    published_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ['order', 'title']
-        verbose_name = 'Page'
-        verbose_name_plural = 'Pages'
 
     def __str__(self):
         return self.title
 
-    # Auto-generate slug from title
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = slugify(self.title)
-        super().save(*args, **kwargs)
+    def get_absolute_url(self):
+        return reverse('pages:page_detail', kwargs={'slug': self.slug})
 
-    # Check if page is published
-    def is_published(self):
-        return self.status == 'published'
 
-    is_published.boolean = True
-    is_published.short_description = 'Published'
+class FAQ(models.Model):
+    question = models.CharField(max_length=300)
+    answer = models.TextField()
+    category = models.CharField(max_length=100, default='general')
+    order = models.IntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ['category', 'order', 'question']
+        verbose_name = 'FAQ'
+        verbose_name_plural = 'FAQs'
+
+    def __str__(self):
+        return self.question
+
+
+class ContactSubmission(models.Model):
+    STATUS_CHOICES = (
+        ('new', 'New'),
+        ('read', 'Read'),
+        ('replied', 'Replied'),
+        ('closed', 'Closed'),
+    )
+
+    name = models.CharField(max_length=100)
+    email = models.EmailField()
+    subject = models.CharField(max_length=200)
+    message = models.TextField()
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='new')
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(blank=True)
+
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Contact Submission'
+        verbose_name_plural = 'Contact Submissions'
+
+    def __str__(self):
+        return f"{self.name} - {self.subject}"
