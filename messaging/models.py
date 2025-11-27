@@ -23,15 +23,16 @@ class Conversation(models.Model):
     is_blocked = models.BooleanField(default=False, verbose_name="Blocked")
 
     # Related event (if conversation is about a specific event)
-    related_event = models.ForeignKey(
-        'events.Event',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='conversations'
-    )
+    # related_event = models.ForeignKey(
+    #     'events.Event',
+    #     on_delete=models.SET_NULL,
+    #     null=True,
+    #     blank=True,
+        # related_name='conversations'
+    # )
 
     class Meta:
+        app_label = 'messaging'
         ordering = ['-updated_at']
         verbose_name = "Conversation"
         verbose_name_plural = "Conversations"

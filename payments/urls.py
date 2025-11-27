@@ -21,7 +21,7 @@ urlpatterns = [
 
     # Payment Status
     path('success/<str:transaction_id>/', views.payment_success, name='payment_success'),
-    path('failed/<str:transaction_id>/', views.payment_failed, name='payment_failure'),
+    path('failed/<str:transaction_id>/', views.payment_failure, name='payment_failure'),
     path('status/<str:transaction_id>/', views.payment_status, name='payment_detail'),
 
     # History & Management

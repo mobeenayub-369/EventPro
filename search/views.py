@@ -1,48 +1,97 @@
 from django.shortcuts import render
-from django.http import JsonResponse
-from django.db.models import Q, Count
+from django.db.models import Q
 from django.core.paginator import Paginator
-from django.utils import timezone
-from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
-from django.contrib.postgres.search import TrigramSimilarity
-
-from .models import SearchQuery, PopularSearch
-from events.models import Event  # ✅ Only Event import karein
-from categories.models import Category  # ✅ Category alag app se import karein
-from bookings.models import Booking
+from events.models import Event
+from accounts.models import CustomUser
+from django.http import JsonResponse
 
 
-def search_events(request):
-    """Advanced event search with filters"""
-    query = request.GET.get('q', '').strip()
-    category = request.GET.get('category', '')
-    min_price = request.GET.get('min_price', '')
-    max_price = request.GET.get('max_price', '')
-    date = request.GET.get('date', '')
-    location = request.GET.get('location', '')
-    sort_by = request.GET.get('sort_by', 'relevance')
+def search_results(request):
+    query = request.GET.get('q', '')
+    category = request.GET.get('category', 'all')
 
-    # Start with all active events
-    events = Event.objects.filter(is_active=True, is_approved=True)
+    events = Event.objects.none()
+    providers = CustomUser.objects.none()
 
-    # Text search
     if query:
-        # Using PostgreSQL full-text search if available
-        events = events.annotate(
-            search=SearchVector('title', 'description', 'organizer__username')
-        ).filter(search=query)
+        # Base query for events
+        event_query = Q(title__icontains=query) | Q(description__icontains=query)
 
-        # Fallback to basic search
-        if not events.exists():
-            events = Event.objects.filter(
-                Q(title__icontains=query) |
-                Q(description__icontains=query) |
-                Q(organizer__username__icontains=query) |
-                Q(category__name__icontains=query)  # ✅ Yahan category model access ho raha hai
-            ).filter(is_active=True, is_approved=True)
+        if category == 'all' or category == 'events':
+            events = Event.objects.filter(event_query & Q(is_active=True))
+            if category != 'all':
+                events = events.filter(category__name=category)
 
-    # Apply filters
-    if category:
-        events = events.filter(category__slug=category)  # ✅ Yahan bhi category model
+        if category == 'all' or category == 'providers':
+            providers = CustomUser.objects.filter(
+                Q(username__icontains=query) |
+                Q(business_name__icontains=query) |
+                Q(skills__icontains=query) |
+                Q(services_offered__icontains=query)
+            ).filter(is_active=True, user_type='service_provider').distinct()
 
-    # ... rest of the code remains same
+    # Pagination for events
+    event_page = request.GET.get('event_page', 1)
+    event_paginator = Paginator(events, 6)
+    events_page = event_paginator.get_page(event_page)
+
+    # Pagination for providers
+    provider_page = request.GET.get('provider_page', 1)
+    provider_paginator = Paginator(providers, 6)
+    providers_page = provider_paginator.get_page(provider_page)
+
+    context = {
+        'query': query,
+        'category': category,
+        'events': events_page,
+        'providers': providers_page,
+        'event_count': events.count(),
+        'provider_count': providers.count(),
+        'total_results': events.count() + providers.count(),
+    }
+
+    return render(request, 'search/results.html', context)
+
+
+def search_suggestions(request):
+    """
+    AJAX view for search suggestions (like Fiverr's autocomplete)
+    """
+    query = request.GET.get('q', '').strip()
+
+    if len(query) < 2:
+        return JsonResponse({'suggestions': []})
+
+    suggestions = []
+
+    # Event suggestions
+    events = Event.objects.filter(
+        Q(title__icontains=query) |
+        Q(description__icontains=query)
+    ).filter(is_active=True)[:5]
+
+    for event in events:
+        suggestions.append({
+            'type': 'Event',
+            'title': event.title,
+            'url': f'/events/{event.id}/',  # Simple URL
+            'image': '/static/images/default-event.jpg'
+        })
+
+    # Service Provider suggestions
+    providers = CustomUser.objects.filter(
+        Q(username__icontains=query) |
+        Q(business_name__icontains=query) |
+        Q(skills__icontains=query) |
+        Q(services_offered__icontains=query)
+    ).filter(is_active=True, user_type='service_provider')[:5]
+
+    for provider in providers:
+        suggestions.append({
+            'type': 'Provider',
+            'title': provider.business_name or provider.username,
+            'url': f'/providers/{provider.id}/',  # Simple URL
+            'image': '/static/images/default-profile.jpg'
+        })
+
+    return JsonResponse({'suggestions': suggestions})

@@ -23,12 +23,12 @@ class Booking(models.Model):
 
     # Basic Information
     client = models.ForeignKey(
-        'accounts.User',
+        'accounts.CustomUser',
         on_delete=models.CASCADE,
         related_name='bookings_as_client'
     )
     service_provider = models.ForeignKey(
-        'accounts.User',
+        'accounts.CustomUser',
         on_delete=models.CASCADE,
         related_name='bookings_as_provider'
     )
@@ -40,17 +40,17 @@ class Booking(models.Model):
 
     # Booking Details
     booking_date = models.DateTimeField(auto_now_add=True)
-    event_date = models.DateField(help_text="Date when the event will take place")
+    # event_date = models.DateField(help_text="Date when the event will take place")
     event_time = models.TimeField(help_text="Time when the event will start")
     event_duration = models.PositiveIntegerField(
         default=4,
         help_text="Duration of the event in hours",
         validators=[MinValueValidator(1), MaxValueValidator(24)]
     )
-    event_location = models.CharField(
-        max_length=255,
-        help_text="Full address or venue of the event"
-    )
+    # event_location = models.CharField(
+    #     max_length=255,
+    #     help_text="Full address or venue of the event"
+    # )
     number_of_guests = models.PositiveIntegerField(
         default=50,
         validators=[MinValueValidator(1)],
@@ -64,11 +64,11 @@ class Booking(models.Model):
     )
 
     # Pricing & Payment
-    base_price = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        help_text="Original price of the service"
-    )
+    # base_price = models.DecimalField(
+    #     max_digits=10,
+    #     decimal_places=2,
+    #     help_text="Original price of the service"
+    # )
     additional_charges = models.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -123,16 +123,16 @@ class Booking(models.Model):
         indexes = [
             models.Index(fields=['client', 'booking_status']),
             models.Index(fields=['service_provider', 'booking_status']),
-            models.Index(fields=['event_date', 'booking_status']),
+            # models.Index(fields=['event_date', 'booking_status']),
         ]
 
     def __str__(self):
         return f"Booking #{self.id} - {self.event.title} - {self.client.username}"
 
-    def save(self, *args, **kwargs):
-        # Calculate total amount before saving
-        self.total_amount = self.base_price + self.additional_charges - self.discount_amount
-        super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     # Calculate total amount before saving
+    #     self.total_amount = self.base_price + self.additional_charges - self.discount_amount
+    #     super().save(*args, **kwargs)
 
     def get_absolute_url(self):
         from django.urls import reverse
@@ -209,7 +209,7 @@ class BookingMessage(models.Model):
         related_name='messages'
     )
     sender = models.ForeignKey(
-        'accounts.User',
+        'accounts.CustomUser',
         on_delete=models.CASCADE,
         related_name='booking_messages'
     )
@@ -241,7 +241,7 @@ class BookingRevision(models.Model):
         related_name='revisions'
     )
     requested_by = models.ForeignKey(
-        'accounts.User',
+        'accounts.CustomUser',
         on_delete=models.CASCADE
     )
     revision_details = models.TextField(help_text="Details of the requested changes")

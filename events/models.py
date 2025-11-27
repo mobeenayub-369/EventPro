@@ -132,7 +132,7 @@ class EventReview(models.Model):
         (5, '5 Stars - Excellent'),
     ]
 
-    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='reviews')
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='event_reviews')
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     rating = models.PositiveSmallIntegerField(choices=RATING_CHOICES)
     comment = models.TextField(blank=True)
