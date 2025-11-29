@@ -65,9 +65,14 @@ def login_view(request):
 # Profile View
 @login_required
 def profile(request):
-    """
-    Displays user profile with profile picture
-    """
+    if request.method == 'POST':
+        # Handle profile update here
+        user = request.user
+        user.first_name = request.POST.get('first_name', '')
+        user.last_name = request.POST.get('last_name', '')
+        user.save()
+        return redirect('profile')
+
     return render(request, 'accounts/profile.html')
 
 
