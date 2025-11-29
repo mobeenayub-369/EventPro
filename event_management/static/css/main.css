@@ -1,0 +1,75 @@
+/* ===== AVATAR & PROFILE STYLES ===== */
+
+/* Avatar Default (Small - for comments, listings) */
+.avatar-default {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #007bff;
+}
+
+/* Avatar Large (Profile pages) */
+.avatar-large {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #007bff;
+}
+
+/* Profile Pictures (Multiple options) */
+.profile-male-1, .profile-male-2 {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #007bff;
+}
+
+.profile-female-1, .profile-female-2 {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #e83e8c; /* Pink border for female */
+}
+
+/* ===== VERIFIED BADGE ===== */
+.verified-badge {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    background: #007bff;
+    border-radius: 50%;
+    color: white;
+    text-align: center;
+    line-height: 18px;
+    font-size: 10px;
+    font-weight: bold;
+    margin-left: 5px;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+}
+
+.avatar-container {
+    position: relative;
+    display: inline-block;
+}
+
+/* ===== PROFILE DEFAULT PLACEHOLDER ===== */
+.profile-default {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 60px;
+    border: 4px solid #0056b3;
+}

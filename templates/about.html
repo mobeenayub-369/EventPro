@@ -4,28 +4,119 @@
 {% block title %}About Us - EventPro{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <div class="container">
-        <h1>About EventPro</h1>
-        <p>Your trusted partner in creating unforgettable events</p>
-    </div>
-</div>
-
-<section class="about-content">
-    <div class="container">
-        <div class="about-grid">
-            <div class="about-text">
-                <h2>Our Story</h2>
-                <p>EventPro was founded with a simple mission: to make event planning accessible, reliable, and stress-free for everyone. We connect people with the best event organizers and service providers in the industry.</p>
-                
-                <h3>Our Mission</h3>
-                <p>To revolutionize the event industry by providing a platform that empowers both customers and service providers to create amazing experiences together.</p>
-            </div>
-            
-            <div class="about-image">
-                <img src="{% static 'images/about-team.jpg' %}" alt="EventPro Team">
+<div class="container py-5">
+    <!-- Hero Section with Better Spacing -->
+    <div class="row align-items-center mb-5" style="min-height: 400px;">
+        <div class="col-lg-6 mb-4">
+            <h1 class="display-6 fw-bold text-primary mb-4">About EventPro</h1>
+            <p class="lead mb-3 fs-5">Your trusted partner for creating unforgettable moments</p>
+            <p class="mb-4 fs-6">EventPro connects you with the best event service providers for weddings, birthdays, corporate events, and celebrations of all kinds.</p>
+        </div>
+        <div class="col-lg-6 mb-4">
+            <!-- Team Image - Optimized for 277.3KB image -->
+            <div style="width: 100%; height: 350px; overflow: hidden; border-radius: 12px; box-shadow: 0 8px 25px rgba(0,0,0,0.15); background: #f8f9fa; display: flex; align-items: center; justify-content: center;">
+                {% if True %}  <!-- Change to False when image works -->
+                    <div style="color: #666; font-size: 1.1em; text-align: center;">
+                        <div style="font-size: 3em; margin-bottom: 10px;">📷</div>
+                        Team Photo<br>
+                        <small>(277.3KB - Loading...)</small>
+                    </div>
+                {% else %}
+                    <img src="{% static 'images/team-photo.jpeg' %}"
+                         alt="EventPro Team"
+                         style="width: 100%; height: 100%; object-fit: cover; object-position: center;">
+                {% endif %}
             </div>
         </div>
     </div>
-</section>
+
+    <!-- Spacing between sections -->
+    <div style="height: 80px;"></div>
+
+    <!-- Mission & Vision with Better Spacing -->
+    <div class="row mb-5">
+        <div class="col-md-6 mb-4">
+            <div class="card h-100 border-0 shadow-sm" style="border-radius: 15px;">
+                <div class="card-body text-center p-5">
+                    <div style="font-size: 3em; color: #667eea; margin-bottom: 20px;">🎯</div>
+                    <h4 class="mb-3">Our Mission</h4>
+                    <p class="mb-0 text-muted">To make event planning accessible, reliable, and stress-free for everyone through our verified network of service providers.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-4">
+            <div class="card h-100 border-0 shadow-sm" style="border-radius: 15px;">
+                <div class="card-body text-center p-5">
+                    <div style="font-size: 3em; color: #667eea; margin-bottom: 20px;">👁️</div>
+                    <h4 class="mb-3">Our Vision</h4>
+                    <p class="mb-0 text-muted">To become the most trusted and comprehensive event service platform, connecting people with perfect event solutions worldwide.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Spacing between sections -->
+    <div style="height: 80px;"></div>
+
+    <!-- Stats Section with Better Spacing -->
+    <div class="row text-center mb-5">
+        <div class="col-md-3 col-6 mb-4">
+            <div style="padding: 20px;">
+                <h3 class="text-primary fw-bold display-6">500+</h3>
+                <p class="text-muted mb-0 mt-2">Service Providers</p>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-4">
+            <div style="padding: 20px;">
+                <h3 class="text-primary fw-bold display-6">1,000+</h3>
+                <p class="text-muted mb-0 mt-2">Events Completed</p>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-4">
+            <div style="padding: 20px;">
+                <h3 class="text-primary fw-bold display-6">4.9/5</h3>
+                <p class="text-muted mb-0 mt-2">Customer Rating</p>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-4">
+            <div style="padding: 20px;">
+                <h3 class="text-primary fw-bold display-6">50+</h3>
+                <p class="text-muted mb-0 mt-2">Cities</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Spacing between sections -->
+    <div style="height: 80px;"></div>
+
+    <!-- Why Choose Us with Better Spacing -->
+    <div class="row">
+        <div class="col-12">
+            <h2 class="text-center mb-5 display-5">Why Choose EventPro?</h2>
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="text-center p-4" style="border-radius: 12px; background: #f8f9fa; min-height: 220px;">
+                        <div style="font-size: 3em; margin-bottom: 20px; color: #667eea;">✅</div>
+                        <h5 class="mb-3">Verified Providers</h5>
+                        <p class="text-muted mb-0">All our service providers are thoroughly verified and rated by real customers.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="text-center p-4" style="border-radius: 12px; background: #f8f9fa; min-height: 220px;">
+                        <div style="font-size: 3em; margin-bottom: 20px; color: #667eea;">🔒</div>
+                        <h5 class="mb-3">Secure Payments</h5>
+                        <p class="text-muted mb-0">Your payments are protected with our secure and encrypted payment system.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="text-center p-4" style="border-radius: 12px; background: #f8f9fa; min-height: 220px;">
+                        <div style="font-size: 3em; margin-bottom: 20px; color: #667eea;">📞</div>
+                        <h5 class="mb-3">24/7 Support</h5>
+                        <p class="text-muted mb-0">Get help whenever you need it with our round-the-clock customer support team.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

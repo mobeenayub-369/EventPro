@@ -112,51 +112,53 @@
     </main>
 
     <!-- Footer -->
-    <footer class="py-5 mt-5">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-4 mb-4">
-                    <h5><i class="fas fa-calendar-alt me-2"></i>EventPro</h5>
-                    <p>Your trusted partner for memorable events. Find the best event services and create unforgettable experiences.</p>
-                </div>
-                <div class="col-lg-2 mb-4">
-                    <h5>Quick Links</h5>
-                    <ul class="list-unstyled">
-                        <li><a href="/" class="text-light text-decoration-none">Home</a></li>
-                        <li><a href="/events/" class="text-light text-decoration-none">Events</a></li>
-                        <li><a href="/about/" class="text-light text-decoration-none">About</a></li>
-                        <li><a href="/contact/" class="text-light text-decoration-none">Contact</a></li>
-                    </ul>
-                </div>
-                <div class="col-lg-3 mb-4">
-                    <h5>Services</h5>
-                    <ul class="list-unstyled">
-                        <li><a href="/events/?category=wedding" class="text-light text-decoration-none">Wedding Events</a></li>
-                        <li><a href="/events/?category=corporate" class="text-light text-decoration-none">Corporate Events</a></li>
-                        <li><a href="/events/?category=birthday" class="text-light text-decoration-none">Birthday Parties</a></li>
-                        <li><a href="/events/?category=music" class="text-light text-decoration-none">Music Concerts</a></li>
-                    </ul>
-                </div>
-                <div class="col-lg-3 mb-4">
-                    <h5>Connect With Us</h5>
-                    <div class="d-flex gap-3">
-                        <a href="#" class="text-light"><i class="fab fa-facebook fa-lg"></i></a>
-                        <a href="#" class="text-light"><i class="fab fa-twitter fa-lg"></i></a>
-                        <a href="#" class="text-light"><i class="fab fa-instagram fa-lg"></i></a>
-                        <a href="#" class="text-light"><i class="fab fa-linkedin fa-lg"></i></a>
-                    </div>
-                </div>
+   <!-- Footer Section -->
+<footer style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem 0; margin-top: auto;">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-4 col-md-6 mb-4">
+                <h5 style="color: white; font-weight: 600;">EventPro</h5>
+                <p style="color: rgba(255,255,255,0.8);">Your trusted partner for memorable events. Find the best event services and create unforgettable experiences.</p>
             </div>
-            <hr class="my-4">
-            <div class="text-center">
-                <p>&copy; 2024 EventPro. All rights reserved.</p>
+
+            <div class="col-lg-2 col-md-6 mb-4">
+                <h6 style="color: white; font-weight: 600;">Quick Links</h6>
+                <ul class="list-unstyled">
+                    <li><a href="/" style="color: rgba(255,255,255,0.8); text-decoration: none;">Home</a></li>
+                    <li><a href="/events/" style="color: rgba(255,255,255,0.8); text-decoration: none;">Services</a></li>
+                    <li><a href="/about/" style="color: rgba(255,255,255,0.8); text-decoration: none;">About</a></li>
+                    <li><a href="/contact/" style="color: rgba(255,255,255,0.8); text-decoration: none;">Contact</a></li>
+                </ul>
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-4">
+                <h6 style="color: white; font-weight: 600;">Services</h6>
+                <ul class="list-unstyled">
+                    <li><a href="/events/?category=wedding" style="color: rgba(255,255,255,0.8); text-decoration: none;">Wedding Events</a></li>
+                    <li><a href="/events/?category=birthday" style="color: rgba(255,255,255,0.8); text-decoration: none;">Birthday Parties</a></li>
+                    <li><a href="/events/?category=corporate" style="color: rgba(255,255,255,0.8); text-decoration: none;">Corporate Events</a></li>
+                    <li><a href="/events/?category=music" style="color: rgba(255,255,255,0.8); text-decoration: none;">Music Concerts</a></li>
+                </ul>
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-4">
+                <h6 style="color: white; font-weight: 600;">Connect With Us</h6>
+                <div class="social-links">
+                    <!-- Add social media links here -->
+                </div>
             </div>
         </div>
-    </footer>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+        <hr style="border-color: rgba(255,255,255,0.3); margin: 2rem 0 1rem;">
 
-    {% block extra_js %}{% endblock %}
-</body>
-</html>
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <p style="color: rgba(255,255,255,0.8); margin: 0;">&copy; 2024 EventPro. All rights reserved.</p>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <a href="/privacy/" style="color: rgba(255,255,255,0.8); text-decoration: none; margin-right: 15px;">Privacy Policy</a>
+                <a href="/terms/" style="color: rgba(255,255,255,0.8); text-decoration: none;">Terms of Service</a>
+            </div>
+        </div>
+    </div>
+</footer>

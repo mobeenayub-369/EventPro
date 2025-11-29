@@ -4,61 +4,67 @@
 {% block title %}Contact Us - EventPro{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <div class="container">
-        <h1>Contact Us</h1>
-        <p>We're here to help you with any questions</p>
-    </div>
-</div>
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <h1 class="display-4 text-center mb-4">Contact Us</h1>
+            <p class="lead text-center mb-5">We'd love to hear from you. Get in touch with our team!</p>
 
-<section class="contact-section">
-    <div class="container">
-        <div class="contact-grid">
-            <div class="contact-info">
-                <h2>Get In Touch</h2>
-                
-                <div class="contact-item">
-                    <i class="fas fa-envelope"></i>
-                    <div>
-                        <h3>Email</h3>
-                        <p>support@eventpro.com</p>
+            <!-- Contact Information -->
+            <div class="row mb-5">
+                <div class="col-md-4 mb-4">
+                    <div class="text-center">
+                        <div style="font-size: 2.5em; color: #667eea; margin-bottom: 15px;">📍</div>
+                        <h5>Address</h5>
+                        <p class="text-muted">123 Event Street<br>Karachi, Pakistan</p>
                     </div>
                 </div>
-                
-                <div class="contact-item">
-                    <i class="fas fa-phone"></i>
-                    <div>
-                        <h3>Phone</h3>
-                        <p>+92 300 1234567</p>
+                <div class="col-md-4 mb-4">
+                    <div class="text-center">
+                        <div style="font-size: 2.5em; color: #667eea; margin-bottom: 15px;">📞</div>
+                        <h5>Phone</h5>
+                        <p class="text-muted">+92 300 1234567<br>+92 21 1234567</p>
                     </div>
                 </div>
-                
-                <div class="contact-item">
-                    <i class="fas fa-map-marker-alt"></i>
-                    <div>
-                        <h3>Address</h3>
-                        <p>123 Event Street, Karachi, Pakistan</p>
+                <div class="col-md-4 mb-4">
+                    <div class="text-center">
+                        <div style="font-size: 2.5em; color: #667eea; margin-bottom: 15px;">✉️</div>
+                        <h5>Email</h5>
+                        <p class="text-muted">info@eventpro.com<br>support@eventpro.com</p>
                     </div>
                 </div>
             </div>
-            
-            <div class="contact-form">
-                <h2>Send us a Message</h2>
-                <form method="POST">
-                    {% csrf_token %}
-                    <div class="form-group">
-                        <input type="text" name="name" placeholder="Your Name" required>
-                    </div>
-                    <div class="form-group">
-                        <input type="email" name="email" placeholder="Your Email" required>
-                    </div>
-                    <div class="form-group">
-                        <textarea name="message" placeholder="Your Message" rows="5" required></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Send Message</button>
-                </form>
+
+            <!-- Contact Form -->
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <h4 class="mb-4">Send us a Message</h4>
+                    <form>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">Full Name</label>
+                                <input type="text" class="form-control" placeholder="Enter your full name" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">Email Address</label>
+                                <input type="email" class="form-control" placeholder="Enter your email" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Subject</label>
+                            <input type="text" class="form-control" placeholder="What is this regarding?" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Message</label>
+                            <textarea class="form-control" rows="5" placeholder="Tell us how we can help you..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-lg w-100" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
+                            Send Message
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
-</section>
+</div>
 {% endblock %}

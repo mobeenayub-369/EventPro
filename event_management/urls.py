@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.views.generic import TemplateView
 from . import views
 
 urlpatterns = [
@@ -36,6 +37,10 @@ urlpatterns = [
     path('notifications/', include('notifications.urls')),
     path('dashboard/', include('dashboard.urls')),
     path('support/', include('support.urls')),
+
+    path('about/', TemplateView.as_view(template_name='about.html'), name='about'),
+    path('contact/', TemplateView.as_view(template_name='contact.html'), name='contact'),
+
 ]
 
 

@@ -1,111 +1,63 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Event Services - EventPro{% endblock %}
+{% block title %}Event Services - {{ category|title }}{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
+<div class="container-fluid py-4">
     <div class="row">
         <!-- Filters Sidebar -->
-        <div class="col-lg-3 col-md-4">
-            <div class="filter-sidebar">
-                <h5 class="mb-4">Filter Events</h5>
-
-                <!-- Event Type Filter -->
-                <div class="filter-section">
-                    <h6>Event Type</h6>
-                    <div class="filter-option">
-                        <input type="checkbox" id="type-wedding">
-                        <label for="type-wedding">💍 Wedding Events</label>
-                    </div>
-                    <div class="filter-option">
-                        <input type="checkbox" id="type-birthday">
-                        <label for="type-birthday">🎂 Birthday Parties</label>
-                    </div>
-                    <div class="filter-option">
-                        <input type="checkbox" id="type-corporate">
-                        <label for="type-corporate">💼 Corporate Events</label>
-                    </div>
-                    <div class="filter-option">
-                        <input type="checkbox" id="type-charity">
-                        <label for="type-charity">🤝 Charity Events</label>
-                    </div>
-                    <div class="filter-option">
-                        <input type="checkbox" id="type-exhibition">
-                        <label for="type-exhibition">🎪 Exhibitions</label>
-                    </div>
-                    <div class="filter-option">
-                        <input type="checkbox" id="type-private">
-                        <label for="type-private">🎉 Private Parties</label>
-                    </div>
-                    <div class="filter-option">
-                        <input type="checkbox" id="type-religious">
-                        <label for="type-religious">🕌 Religious Events</label>
-                    </div>
-                    <div class="filter-option">
-                        <input type="checkbox" id="type-seminar">
-                        <label for="type-seminar">🎓 Seminars</label>
-                    </div>
-                    <div class="filter-option">
-                        <input type="checkbox" id="type-music">
-                        <label for="type-music">🎵 Music Events</label>
-                    </div>
+        <div class="col-lg-3 col-md-4 mb-4">
+            <div class="card">
+                <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">
+                    <h6 class="mb-0" style="color: white; font-weight: 600;">Filters</h6>
                 </div>
+                <div class="card-body">
+                    <form method="get" id="filter-form">
+                        <!-- Category Filter -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Category</label>
+                            <select name="category" class="form-select" onchange="this.form.submit()">
+                                <option value="">All Categories</option>
+                                <option value="wedding" {% if category == 'wedding' %}selected{% endif %}>Wedding</option>
+                                <option value="birthday" {% if category == 'birthday' %}selected{% endif %}>Birthday</option>
+                                <option value="corporate" {% if category == 'corporate' %}selected{% endif %}>Corporate</option>
+                                <option value="music" {% if category == 'music' %}selected{% endif %}>Music</option>
+                            </select>
+                        </div>
 
-                <!-- Budget Filter -->
-                <div class="filter-section">
-                    <h6>Budget Range</h6>
-                    <div class="filter-option">
-                        <input type="radio" id="price-all" name="price" checked>
-                        <label for="price-all">Any Budget</label>
-                    </div>
-                    <div class="filter-option">
-                        <input type="radio" id="price-under500" name="price">
-                        <label for="price-under500">Under $500</label>
-                    </div>
-                    <div class="filter-option">
-                        <input type="radio" id="price-500-2000" name="price">
-                        <label for="price-500-2000">$500 - $2,000</label>
-                    </div>
-                    <div class="filter-option">
-                        <input type="radio" id="price-2000plus" name="price">
-                        <label for="price-2000plus">$2,000+</label>
-                    </div>
-                </div>
+                        <!-- Price Filter -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Price Range</label>
+                            <select name="price_range" class="form-select" onchange="this.form.submit()">
+                                <option value="">Any Price</option>
+                                <option value="0-5000">Under $5,000</option>
+                                <option value="5000-15000">$5,000 - $15,000</option>
+                                <option value="15000-30000">$15,000 - $30,000</option>
+                                <option value="30000+">Over $30,000</option>
+                            </select>
+                        </div>
 
-                <!-- Event Size -->
-                <div class="filter-section">
-                    <h6>Event Size</h6>
-                    <div class="filter-option">
-                        <input type="checkbox" id="size-small">
-                        <label for="size-small">Small (1-50 people)</label>
-                    </div>
-                    <div class="filter-option">
-                        <input type="checkbox" id="size-medium">
-                        <label for="size-medium">Medium (50-200 people)</label>
-                    </div>
-                    <div class="filter-option">
-                        <input type="checkbox" id="size-large">
-                        <label for="size-large">Large (200+ people)</label>
-                    </div>
+                        <!-- Clear Filters Button -->
+                        <a href="{% url 'event_list' %}"
+                           class="btn w-100"
+                           style="background: white; color: #667eea; border: 2px solid #667eea; transition: all 0.3s ease; font-weight: 500;">
+                            Clear Filters
+                        </a>
+                    </form>
                 </div>
             </div>
         </div>
-
         <!-- Events Grid -->
         <div class="col-lg-9 col-md-8">
             <!-- Page Header -->
-            <div class="page-header mb-4">
-                <h2>Find Perfect Event Services</h2>
-                <p class="text-muted">Browse professional event organizers for your special occasions</p>
-            </div>
-
-            <!-- Search Bar -->
             <div class="row mb-4">
                 <div class="col-12">
-                    <div class="input-group input-group-lg">
-                        <input type="text" class="form-control" placeholder="Search for wedding planners, birthday organizers, corporate event managers...">
-                        <button class="btn btn-primary px-4">Search</button>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="h3 mb-1">{{ category|title }} Services</h1>
+                            <p class="text-muted mb-0">{{ events.count }} services found</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -113,62 +65,102 @@
             <!-- Events Grid -->
             <div class="row">
                 {% for event in events %}
-                <div class="col-xl-4 col-lg-6 mb-4">
-                    <div class="event-card">
-                        <!-- Event Image -->
-                        <img src="{% static 'events/images/event-' %}{{ event.event_type }}.jpg"
-                             class="event-image" alt="{{ event.title }}"
-                             onerror="this.src='{% static 'events/images/event-default.jpg' %}'">
+                <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
+                    <div class="card event-card h-100" style="border: 1px solid #e0e0e0; border-radius: 12px;">
 
-                        <!-- Event Type Badge -->
-                        <div class="event-type-badge">
-                            {{ event.get_event_type_display }}
+                        <!-- Event Image - ACTUAL IMAGES -->
+                        <div style="height: 200px; overflow: hidden; border-radius: 12px 12px 0 0;">
+                            {% if event.event_type == 'wedding' %}
+                                <img src="{% static 'events/images/wedding-event-1.jpeg' %}"
+                                    alt="{{ event.title }}"
+                                    style="width: 100%; height: 100%; object-fit: cover;">
+                            {% elif event.event_type == 'birthday' %}
+                                {% if event.title == "Kids Birthday Party Planner" %}
+                                    <img src="{% static 'events/images/birthday-event-2.jpeg' %}"
+                                         alt="{{ event.title }}"
+                                         style="width: 100%; height: 100%; object-fit: cover;">
+                                {% else %}
+                                    <img src="{% static 'events/images/birthday-event-1.jpeg' %}"
+                                         alt="{{ event.title }}"
+                                         style="width: 100%; height: 100%; object-fit: cover;">
+                                {% endif %}
+                            {% elif event.event_type == 'corporate' %}
+                                <img src="{% static 'events/images/corporate-event-1.jpeg' %}"
+                                    alt="{{ event.title }}"
+                                    style="width: 100%; height: 100%; object-fit: cover;">
+                            {% elif event.event_type == 'music' %}
+                                <img src="{% static 'events/images/music-event-1.jpeg' %}"
+                                    alt="{{ event.title }}"
+                                    style="width: 100%; height: 100%; object-fit: cover;">
+                            {% else %}
+                                <img src="{% static 'events/images/event-default.jpeg' %}"
+                                    alt="{{ event.title }}"
+                                    style="width: 100%; height: 100%; object-fit: cover;">
+                            {% endif %}
                         </div>
 
-                        <div class="event-body">
+                        <div class="card-body d-flex flex-column">
                             <!-- Provider Info -->
-                            <div class="provider-info">
-                                <img src="{% static 'accounts/images/avatar-default.png' %}"
-                                     class="provider-avatar" alt="Provider">
-                                <span class="provider-name">{{ event.organizer.name }}</span>
+                            <div class="mb-3">
+                                <div class="d-flex align-items-center">
+                                    <div style="width: 40px; height: 40px; border-radius: 50%; background: #667eea; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 10px;">
+                                        {{ event.organizer.username|first|upper }}
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div style="font-weight: 600; color: #333;">
+                                            {{ event.organizer.username }}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- Event Title -->
-                            <h6 class="event-title">{{ event.title }}</h6>
+                            <h5 style="font-size: 1.1rem; font-weight: 600; color: #333; margin: 10px 0; line-height: 1.3;">
+                                <a href="{% url 'event_detail' event.pk %}" style="text-decoration: none; color: inherit;">
+                                    {{ event.title }}
+                                </a>
+                            </h5>
 
                             <!-- Event Description -->
-                            <p class="event-description">{{ event.description|truncatewords:15 }}</p>
+                            <p style="color: #666; line-height: 1.5; margin-bottom: 15px; flex-grow: 1;">
+                                {{ event.description|truncatewords:15 }}
+                            </p>
 
                             <!-- Event Details -->
-                            <div class="event-details">
-                                <small class="text-muted">
-                                    <i class="fas fa-users me-1"></i>Up to {{ event.capacity }} people
-                                </small>
-                                <small class="text-muted ms-2">
-                                    <i class="fas fa-clock me-1"></i>{{ event.duration }} hours
-                                </small>
+                            <div style="margin: 10px 0; font-size: 0.9em; color: #666;">
+                                <span style="margin-right: 15px;">👥 Up to {{ event.capacity }} people</span>
+                                <span>⏱️ {{ event.duration }} hours</span>
                             </div>
 
                             <!-- Rating & Price -->
-                            <div class="event-meta">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
                                 <div>
-                                    <div class="rating">
-                                        ⭐⭐⭐⭐⭐ <span class="rating-count">({{ event.review_count }})</span>
+                                    <div style="display: flex; align-items: center; margin-bottom: 5px;">
+                                        <span style="color: #ffc107;">⭐⭐⭐⭐⭐</span>
+                                        <span style="color: #666; font-size: 0.9em; margin-left: 5px;">({{ event.review_count }})</span>
                                     </div>
-                                    <span class="starting-price">From ${{ event.price }}</span>
+                                    <div style="font-weight: 700; color: #333; font-size: 1.1em;">
+                                        From {{ event.get_display_price }}
+                                    </div>
                                 </div>
-                                <button class="btn-heart">♡</button>
+                                <button style="background: none; border: none; font-size: 1.2em; cursor: pointer; color: #ccc; padding: 5px;">
+                                    ♡
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
                 {% empty %}
-                <div class="col-12 text-center py-5">
-                    <div class="empty-state">
-                        <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
-                        <h5>No events found</h5>
-                        <p class="text-muted">Try adjusting your filters or search terms</p>
-                        <a href="#" class="btn btn-outline-primary">Clear All Filters</a>
+                <div class="col-12">
+                    <div style="text-align: center; padding: 40px 0;">
+                        <div style="max-width: 400px; margin: 0 auto;">
+                            <div style="font-size: 3em; color: #6c757d; margin-bottom: 15px;">📅</div>
+                            <h5>No events found</h5>
+                            <p style="color: #6c757d; margin-bottom: 20px;">Try adjusting your filters or search terms</p>
+                            <a href="{% url 'event_list' %}" style="display: inline-block; padding: 8px 16px; border: 1px solid #007bff; color: #007bff; text-decoration: none; border-radius: 4px;">
+                                Clear All Filters
+                            </a>
+                        </div>
                     </div>
                 </div>
                 {% endfor %}
@@ -176,4 +168,14 @@
         </div>
     </div>
 </div>
+
+<!-- Simple CSS to prevent loading issues -->
+<style>
+.event-card {
+    transition: transform 0.2s ease;
+}
+.event-card:hover {
+    transform: translateY(-2px);
+}
+</style>
 {% endblock %}
