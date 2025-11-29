@@ -55,91 +55,55 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-calendar-alt me-2"></i>
+                EventPro
+            </a>
 
-        <!-- Navigation Bar -->
-        <nav class="navbar navbar-expand-lg navbar-light" style="background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-            <div class="container">
-                <!-- Logo/Brand -->
-                <a class="navbar-brand fw-bold" href="/" style="color: #667eea; font-size: 1.5rem;">
-                    EventPro
-                </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
 
-                <!-- Mobile Toggle -->
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/events/">Events</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/about/">About</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/contact/">Contact</a>
+                    </li>
+                </ul>
 
-                <!-- Navigation Links -->
-                <div class="collapse navbar-collapse" id="navbarNav">
-                    <ul class="navbar-nav me-auto">
-                        <li class="nav-item">
-                            <a class="nav-link" href="/">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/about/">About</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/events/">Services</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/contact/">Contact</a>
-                        </li>
-                    </ul>
-
-                    <!-- Right Side - Auth Links & Profile -->
-                    <div class="d-flex align-items-center">
-                        {% if user.is_authenticated %}
-                        <!-- User is Logged In - Show Profile Dropdown -->
-                        <div class="dropdown">
-                            <button class="btn dropdown-toggle d-flex align-items-center"
-                                    type="button"
-                                    id="profileDropdown"
-                                    data-bs-toggle="dropdown"
-                                    aria-expanded="false"
-                                    style="background: none; border: none; color: #667eea;">
-                                <!-- Profile Icon -->
-                                <div style="width: 35px; height: 35px; background: #667eea; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 8px;">
-                                    <span style="color: white; font-weight: 600; font-size: 0.9rem;">
-                                        {{ user.username|first|upper }}
-                                    </span>
-                                </div>
-                                {{ user.username }}
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
-                                <li>
-                                    <a class="dropdown-item" href="{% url 'profile' %}">
-                                        👤 My Profile
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" href="{% url 'my_events' %}">
-                                        📅 My Events
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" href="{% url 'event_create' %}">
-                                        ➕ Create Service
-                                    </a>
-                                </li>
+                <div class="navbar-nav">
+                    {% if user.is_authenticated %}
+                        <div class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-user me-1"></i> {{ user.username }}
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="/accounts/profile/">Profile</a></li>
+                                <li><a class="dropdown-item" href="/accounts/dashboard/">Dashboard</a></li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <a class="dropdown-item" href="{% url 'logout' %}">
-                                        🚪 Logout
-                                    </a>
-                                </li>
+                                <li><a class="dropdown-item" href="/accounts/logout/">Logout</a></li>
                             </ul>
                         </div>
-                        {% else %}
-                        <!-- User is Not Logged In - Show Auth Links -->
-                        <div class="d-flex gap-2">
-                            <a href="{% url 'login' %}" class="btn btn-outline-primary btn-sm">Login</a>
-                            <a href="{% url 'register' %}" class="btn btn-primary btn-sm">Sign Up</a>
-                        </div>
-                        {% endif %}
-                    </div>
+                    {% else %}
+                        <a class="nav-link" href="/accounts/login/">Login</a>
+                        <a class="btn btn-primary ms-2" href="/accounts/register/">Sign Up</a>
+                    {% endif %}
                 </div>
             </div>
-        </nav>
+        </div>
+    </nav>
 
     <!-- Main Content -->
     <main>
